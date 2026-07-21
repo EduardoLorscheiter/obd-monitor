@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">OBDMonitor</string>
+    <string name="ativado">Ativado</string>
+    <string name="desativado">Desativado</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="dispositivos_pareados">Dispositivos pareados</string>
+    <string name="dispositivos_disponiveis">Dispositivos disponíveis</string>
+    <string name="voltar">Voltar</string>
+    <string name="conectar">Conectar</string>
+    <string name="configuracoes">Configurações</string>
+    <string name="obd_monitor">OBD Monitor</string>
+    <string name="ecu">ECU</string>
+    <string name="bluetooth_obd_ii">Bluetooth ⇄ OBD-II</string>
+</resources>

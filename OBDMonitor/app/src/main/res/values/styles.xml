@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="ButtonComponent">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">@drawable/button</item>
+    </style>
+
+    <style name="SettingsButtonComponent" parent="ButtonComponent">
+        <item name="android:src">@drawable/ic_settings</item>
+        <item name="android:contentDescription">@string/configuracoes</item>
+    </style>
+
+    <style name="ConnectButtonComponent" parent="ButtonComponent">
+        <item name="android:src">@drawable/ic_connect</item>
+        <item name="android:contentDescription">@string/conectar</item>
+    </style>
+
+    <style name="BackButtonComponent" parent="ButtonComponent">
+        <item name="android:src">@drawable/ic_back</item>
+        <item name="android:contentDescription">@string/voltar</item>
+    </style>
+</resources>

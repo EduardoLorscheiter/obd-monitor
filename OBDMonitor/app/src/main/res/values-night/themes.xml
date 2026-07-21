@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.OBDMonitor" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- Cores principais -->
+        <item name="colorPrimary">@color/colorPrimaryDarkMode</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariantDarkMode</item>
+        <item name="colorOnPrimary">@color/colorOnPrimaryDarkMode</item>
+        <item name="colorPrimaryContainer">@color/colorPrimaryContainerDarkMode</item>
+        <item name="android:textColorHighlight">@color/colorPrimaryVariantDarkMode</item>
+        <item name="android:colorControlActivated">@color/colorPrimaryVariantDarkMode</item>
+        <!-- Cor de fundo de componentes (surface) -->
+        <item name="colorSurface">@color/colorSurfaceDarkMode</item>
+        <item name="colorOnSurface">@color/colorOnSurfaceDarkMode</item>
+    </style>
+</resources>
