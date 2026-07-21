@@ -18,14 +18,14 @@ public interface ObdListener {
     /**
      * Ao conectar ao OBD-II.
      *
-     * @param device dispositivo de conexão com o OBD-II.
+     * @param device Dispositivo de conexão com o OBD-II.
      */
     void onObdConnected(Device device);
 
     /**
      * Ao dar erro na conexão com o OBD-II.
      *
-     * @param message mensagem de erro.
+     * @param message Mensagem de erro.
      */
     void onObdConnectionFailed(String message);
 

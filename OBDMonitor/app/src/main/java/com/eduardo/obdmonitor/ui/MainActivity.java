@@ -57,17 +57,29 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
         setListeners();
     }
 
+    /**
+     * Inicializa os componentes visuais da Activity.
+     *
+     * <p>Realiza a associação entre os elementos da interface e seus respectivos
+     * componentes declarados no layout.</p>
+     */
     private void initViews() {
         btnSettings = findViewById(R.id.btnSettings);
         btnConnect = findViewById(R.id.btnConnect);
         txtRpm = findViewById(R.id.txtRpm);
     }
 
+    /**
+     * Inicializa os gerenciadores responsáveis pela comunicação OBD-II.
+     */
     private void initConnection() {
         obdManager = ObdManager.getInstance();
         obdManager.setListener(this);
     }
 
+    /**
+     * Configura os eventos dos componentes da interface.
+     */
     private void setListeners() {
         btnConnect.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ConnectionActivity.class);

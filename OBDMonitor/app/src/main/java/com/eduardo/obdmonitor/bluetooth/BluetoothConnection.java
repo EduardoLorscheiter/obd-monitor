@@ -49,19 +49,20 @@ public class BluetoothConnection {
     /**
      * Cria uma nova conexão Bluetooth.
      *
-     * @param bluetoothManager gerenciador Bluetooth.
+     * @param bluetoothManager Gerenciador Bluetooth.
      */
-    public BluetoothConnection(BluetoothManager bluetoothManager) {
+    protected BluetoothConnection(BluetoothManager bluetoothManager) {
         this.bluetoothManager = bluetoothManager;
+        closeResources();
     }
 
     /**
      * Conecta ao dispositivo Bluetooth.
      *
-     * @param bluetoothDevice dispositivo Android.
-     * @param device          dispositivo utilizado pela aplicação.
+     * @param bluetoothDevice Dispositivo Bluetooth remoto.
+     * @param device          Dispositivo utilizado pela aplicação.
      */
-    public void connect(BluetoothDevice bluetoothDevice, Device device) {
+    protected void connect(BluetoothDevice bluetoothDevice, Device device) {
         if (connected) {
             return;
         }
@@ -69,12 +70,7 @@ public class BluetoothConnection {
         new Thread(() -> {
             try {
                 bluetoothManager.cancelDiscovery();
-                bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(SERIAL_UUID);
-                bluetoothSocket.connect();
-                inputStream = bluetoothSocket.getInputStream();
-                outputStream = bluetoothSocket.getOutputStream();
-                connected = true;
-                connectedDevice = device;
+                openResources(bluetoothDevice, device);
                 bluetoothManager.notifyConnected(device);
             } catch (IOException e) {
                 closeResources();
@@ -84,30 +80,29 @@ public class BluetoothConnection {
     }
 
     /**
-     * Desconecta do dispositivo Bluetooth.
+     * Desconecta o dispositivo Bluetooth.
      */
-    public void disconnect() {
-        closeResources();
+    protected void disconnect() {
         bluetoothManager.notifyDisconnected(connectedDevice);
-        connectedDevice = null;
+        closeResources();
     }
 
     /**
      * Retorna se existe conexão ativa.
      *
-     * @return true se conectado, false caso contrário.
+     * @return True se conectado, false caso contrário.
      */
-    public boolean isConnected() {
+    protected boolean isConnected() {
         return connected;
     }
 
     /**
      * Envia uma mensagem ao dispositivo Bluetooth.
      *
-     * @param command comando a ser enviado.
-     * @return resposta ao comando enviado.
+     * @param command Comando a ser enviado.
+     * @return Resposta ao comando enviado.
      */
-    public String sendCommand(String command) {
+    protected String sendCommand(String command) {
         if (!connected || outputStream == null) {
             return null;
         }
@@ -133,9 +128,28 @@ public class BluetoothConnection {
     }
 
     /**
+     * Estabelece a conexão Bluetooth e abre os fluxos de comunicação.
+     *
+     * @param bluetoothDevice Dispositivo Bluetooth remoto.
+     * @param device          Dispositivo utilizado pela aplicação.
+     * @throws IOException Caso ocorra falha na conexão.
+     */
+    private void openResources(BluetoothDevice bluetoothDevice, Device device) throws IOException {
+        bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(SERIAL_UUID);
+        bluetoothSocket.connect();
+
+        inputStream = bluetoothSocket.getInputStream();
+        outputStream = bluetoothSocket.getOutputStream();
+
+        connectedDevice = device;
+        connected = true;
+    }
+
+    /**
      * Fecha todos os recursos da conexão.
      */
     private void closeResources() {
+        connectedDevice = null;
         connected = false;
 
         try {

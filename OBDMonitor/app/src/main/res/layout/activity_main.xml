@@ -200,7 +200,6 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
-
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

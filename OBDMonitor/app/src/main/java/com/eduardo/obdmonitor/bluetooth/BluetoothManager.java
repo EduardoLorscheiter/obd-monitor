@@ -46,8 +46,8 @@ public class BluetoothManager {
     /**
      * Cria uma nova instância do gerenciador Bluetooth.
      *
-     * @param context  contexto da aplicação ou Activity.
-     * @param listener listener que receberá eventos do Bluetooth.
+     * @param context  Contexto da aplicação ou Activity.
+     * @param listener Listener que receberá eventos do Bluetooth.
      */
     public BluetoothManager(Context context, BluetoothListener listener) {
         this.context = context;
@@ -110,7 +110,7 @@ public class BluetoothManager {
     /**
      * Verifica se o Bluetooth do dispositivo está ativado.
      *
-     * @return true caso o Bluetooth esteja disponível e ativado, false caso contrário.
+     * @return True caso o Bluetooth esteja disponível e ativado, false caso contrário.
      */
     @SuppressLint("MissingPermission")
     public boolean isBluetoothEnabled() {
@@ -166,7 +166,7 @@ public class BluetoothManager {
     /**
      * Inicia a conexão com um dispositivo Bluetooth.
      *
-     * @param device dispositivo a ser conectado.
+     * @param device Dispositivo a ser conectado.
      */
     @SuppressLint("MissingPermission")
     public void connect(Device device) {
@@ -198,7 +198,7 @@ public class BluetoothManager {
     /**
      * Retorna se existe uma conexão Bluetooth ativa.
      *
-     * @return true se houver conexão ativa, false caso contrário.
+     * @return True se houver conexão ativa, false caso contrário.
      */
     public boolean isConnected() {
         return connection.isConnected();
@@ -223,8 +223,8 @@ public class BluetoothManager {
     /**
      * Envia um comando ao dispositivo Bluetooth conectado.
      *
-     * @param command comando a ser enviado.
-     * @return a resposta do comando enviado ao dispositivo.
+     * @param command Comando a ser enviado.
+     * @return Resposta do comando enviado ao dispositivo.
      */
     public String sendCommand(String command) {
         return connection.sendCommand(command);
@@ -233,7 +233,7 @@ public class BluetoothManager {
     /**
      * Obtém e valida o adaptador Bluetooth do sistema.
      *
-     * @return instância válida de BluetoothAdapter ou null caso alguma validação falhe.
+     * @return Instância válida de BluetoothAdapter ou null caso alguma validação falhe.
      */
     private BluetoothAdapter getBluetoothAdapter() {
         android.bluetooth.BluetoothManager bluetoothManager = context.getSystemService(android.bluetooth.BluetoothManager.class);
@@ -265,7 +265,7 @@ public class BluetoothManager {
      * necessária. Em Android 12 (API 31) ou superior, a permissão é validada
      * explicitamente.</p>
      *
-     * @return true se a permissão estiver concedida, false caso contrário.
+     * @return True se a permissão estiver concedida, false caso contrário.
      */
     private boolean hasBluetoothPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -281,7 +281,7 @@ public class BluetoothManager {
     /**
      * Notifica que a conexão com o dispositivo Bluetooth foi estabelecida.
      *
-     * @param device dispositivo conectado.
+     * @param device Dispositivo conectado.
      */
     protected void notifyConnected(Device device) {
         listener.onConnected(device);
@@ -290,7 +290,7 @@ public class BluetoothManager {
     /**
      * Notifica que a conexão Bluetooth foi encerrada.
      *
-     * @param device dispositivo desconectado.
+     * @param device Dispositivo desconectado.
      */
     protected void notifyDisconnected(Device device) {
         listener.onDisconnected(device);
@@ -299,7 +299,7 @@ public class BluetoothManager {
     /**
      * Notifica a ocorrência de um erro durante uma operação Bluetooth.
      *
-     * @param message mensagem descritiva do erro.
+     * @param message Mensagem do erro.
      */
     protected void notifyError(String message) {
         listener.onError(message);

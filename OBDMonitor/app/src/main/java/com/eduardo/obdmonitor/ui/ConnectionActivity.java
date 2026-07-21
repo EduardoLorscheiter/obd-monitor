@@ -92,6 +92,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         finishConnection();
     }
 
+    /**
+     * Inicializa os componentes visuais da Activity.
+     *
+     * <p>Realiza a associação entre os elementos da interface e seus respectivos
+     * componentes declarados no layout.</p>
+     */
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
         txtBluetoothStatus = findViewById(R.id.txtBluetoothStatus);
@@ -101,6 +107,9 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         containerBondedDevices = findViewById(R.id.containerBondedDevices);
     }
 
+    /**
+     * Inicializa os gerenciadores responsáveis pela comunicação Bluetooth e OBD-II.
+     */
     private void initConnection() {
         bluetoothManager = new BluetoothManager(this, this);
         bluetoothManager.registerReceivers();
@@ -108,6 +117,9 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         obdManager.setListener(this);
     }
 
+    /**
+     * Configura os eventos dos componentes da interface.
+     */
     private void setListeners() {
         btnBack.setOnClickListener(v -> {
             obdManager.setListener(null);
@@ -128,6 +140,9 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         });
     }
 
+    /**
+     * Finaliza os recursos utilizados pela Activity.
+     */
     private void finishConnection() {
         bluetoothManager.unregisterReceivers();
     }
@@ -209,6 +224,9 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
     }
 
+    /**
+     * Atualiza a interface de acordo com o estado atual do Bluetooth.
+     */
     private void updateDevices() {
         if (bluetoothManager.isBluetoothEnabled()) {
             updateBluetoothStatus(true);
@@ -219,11 +237,19 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         }
     }
 
+    /**
+     * Limpa a lista de dispositivos e solicita novamente os dispositivos
+     * Bluetooth pareados ao sistema.
+     */
     private void loadDevices() {
         cleanDevices();
         bluetoothManager.loadBondedDevices();
     }
 
+    /**
+     * Remove todos os dispositivos armazenados e limpa os componentes
+     * visuais responsáveis por exibi-los na interface.
+     */
     private void cleanDevices() {
         bondedDevices.clear();
         statusDevices.clear();
@@ -231,6 +257,11 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         containerBondedDevices.removeAllViews();
     }
 
+    /**
+     * Atualiza os componentes visuais relacionados ao estado do Bluetooth.
+     *
+     * @param enabled Indica se o Bluetooth está ativado.
+     */
     private void updateBluetoothStatus(boolean enabled) {
         switchBluetooth.setChecked(enabled);
 
@@ -245,6 +276,14 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         }
     }
 
+    /**
+     * Adiciona um dispositivo Bluetooth à interface e configura sua ação de
+     * conexão ou desconexão quando selecionado pelo usuário.
+     *
+     * @param device    Dispositivo Bluetooth.
+     * @param list      Lista onde o dispositivo será armazenado.
+     * @param container Container responsável pela exibição do dispositivo.
+     */
     private void addBluetoothDevice(Device device, List<Device> list, LinearLayout container) {
         // Adiciona o dispositivo Bluetooth na lista
         list.add(device);

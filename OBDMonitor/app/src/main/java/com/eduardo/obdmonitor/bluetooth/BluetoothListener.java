@@ -28,35 +28,35 @@ public interface BluetoothListener {
     /**
      * Ao encontrar um dispositivo Bluetooth pareado.
      *
-     * @param device dispositivo Bluetooth pareado encontrado.
+     * @param device Dispositivo Bluetooth pareado encontrado.
      */
     void onBondedDeviceFound(Device device);
 
     /**
      * Ao iniciar a conexão com um dispositivo Bluetooth.
      *
-     * @param device dispositivo Bluetooth que iniciou a conexão.
+     * @param device Dispositivo Bluetooth que iniciou a conexão.
      */
     void onConnecting(Device device);
 
     /**
      * Ao conectar um dispositivo Bluetooth.
      *
-     * @param device dispositivo Bluetooth conectado.
+     * @param device Dispositivo Bluetooth conectado.
      */
     void onConnected(Device device);
 
     /**
      * Ao desconectar um dispositivo Bluetooth.
      *
-     * @param device dispositivo Bluetooth desconectado.
+     * @param device Dispositivo Bluetooth desconectado.
      */
     void onDisconnected(Device device);
 
     /**
      * Ao ocorrer algum erro.
      *
-     * @param message mensagem de erro.
+     * @param message Mensagem de erro.
      */
     void onError(String message);
 }
