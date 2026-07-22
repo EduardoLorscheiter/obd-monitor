@@ -1,6 +1,6 @@
 /*
  **===========================================================================
- **  @file    MainActivity.java
+ **  @file    DashboardActivity.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    Julho/2026
@@ -13,6 +13,7 @@ package com.eduardo.obdmonitor.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -29,11 +30,14 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.obd.ObdListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
+import com.eduardo.obdmonitor.utils.ToastUtils;
+import com.eduardo.obdmonitor.utils.ViewUtils;
 
-public class MainActivity extends AppCompatActivity implements ObdListener {
+public class DashboardActivity extends AppCompatActivity implements ObdListener {
     // Componentes da janela da Activity
-    private ImageButton btnSettings, btnConnect;
+    private ImageButton btnConnect;
     private TextView txtRpm;
+    private View viewBluetooth, viewEcu;
 
     // Conexão com o OBD-II
     private ObdManager obdManager;
@@ -44,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_dashboard);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -57,6 +61,12 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
         setListeners();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        obdManager.disconnect();
+    }
+
     /**
      * Inicializa os componentes visuais da Activity.
      *
@@ -64,9 +74,10 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
      * componentes declarados no layout.</p>
      */
     private void initViews() {
-        btnSettings = findViewById(R.id.btnSettings);
         btnConnect = findViewById(R.id.btnConnect);
         txtRpm = findViewById(R.id.txtRpm);
+        viewBluetooth = findViewById(R.id.viewBluetooth);
+        viewEcu = findViewById(R.id.viewEcu);
     }
 
     /**
@@ -82,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
      */
     private void setListeners() {
         btnConnect.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, ConnectionActivity.class);
+            Intent intent = new Intent(DashboardActivity.this, ConnectionActivity.class);
             connectionLauncher.launch(intent);
         });
 
@@ -116,9 +127,27 @@ public class MainActivity extends AppCompatActivity implements ObdListener {
     }
 
     @Override
-    public void onRpmChanged(int rpm) {
-        runOnUiThread(() -> {
-            txtRpm.setText(String.valueOf(rpm));
-        });
+    public void onObdBluetoothStatusChanged(boolean bluetoothConnected) {
+        ViewUtils.setStatusIndicator(viewBluetooth, bluetoothConnected);
+    }
+
+    @Override
+    public void onObdEcuStatusChanged(boolean ecuConnected) {
+        ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
+    }
+
+    @Override
+    public void onObdProtocolChanged(String protocol) {
+
+    }
+
+    @Override
+    public void onObdRpmChanged(int rpm) {
+        runOnUiThread(() -> txtRpm.setText(String.valueOf(rpm)));
+    }
+
+    @Override
+    public void onObdError(String message) {
+        ToastUtils.showToast(this, message);
     }
 }

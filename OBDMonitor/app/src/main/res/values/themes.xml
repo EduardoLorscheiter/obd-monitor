@@ -3,15 +3,16 @@
     <style name="Base.Theme.OBDMonitor" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- Cores principais -->
-        <item name="colorPrimary">@color/colorPrimaryLightMode</item>
-        <item name="colorPrimaryVariant">@color/colorPrimaryVariantLightMode</item>
-        <item name="colorOnPrimary">@color/colorOnPrimaryLightMode</item>
-        <item name="colorPrimaryContainer">@color/colorPrimaryContainerLightMode</item>
-        <item name="android:textColorHighlight">@color/colorPrimaryVariantLightMode</item>
-        <item name="android:colorControlActivated">@color/colorPrimaryLightMode</item>
+        <item name="colorPrimary">@color/primary_light_mode</item>
+        <item name="colorPrimaryVariant">@color/primary_variant_light_mode</item>
+        <item name="colorOnPrimary">@color/on_primary_light_mode</item>
+        <item name="colorPrimaryContainer">@color/primary_container_light_mode</item>
+        <item name="colorSecondaryContainer">@color/secondary_container_light_mode</item>
+        <item name="android:textColorHighlight">@color/primary_variant_light_mode</item>
+        <item name="android:colorControlActivated">@color/primary_light_mode</item>
         <!-- Cor de fundo de componentes (surface) -->
-        <item name="colorSurface">@color/colorSurfaceLightMode</item>
-        <item name="colorOnSurface">@color/colorOnSurfaceLightMode</item>
+        <item name="colorSurface">@color/surface_light_mode</item>
+        <item name="colorOnSurface">@color/on_surface_light_mode</item>
     </style>
 
     <style name="Theme.OBDMonitor" parent="Base.Theme.OBDMonitor" />

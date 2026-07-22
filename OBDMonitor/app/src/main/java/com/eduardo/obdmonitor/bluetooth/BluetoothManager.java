@@ -159,7 +159,7 @@ public class BluetoothManager {
             Device device = new Device(
                     bluetoothDevice.getName(),
                     bluetoothDevice.getAddress());
-            listener.onBondedDeviceFound(device);
+            listener.onBondedBluetoothDeviceFound(device);
         }
     }
 
@@ -170,7 +170,7 @@ public class BluetoothManager {
      */
     @SuppressLint("MissingPermission")
     public void connect(Device device) {
-        listener.onConnecting(device);
+        listener.onBluetoothConnecting(device);
 
         BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
 
@@ -181,7 +181,7 @@ public class BluetoothManager {
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
 
         if (bluetoothDevice == null) {
-            listener.onError("Dispositivo não encontrado!");
+            listener.onBluetoothError("Dispositivo não encontrado!");
             return;
         }
 
@@ -239,19 +239,19 @@ public class BluetoothManager {
         android.bluetooth.BluetoothManager bluetoothManager = context.getSystemService(android.bluetooth.BluetoothManager.class);
 
         if (bluetoothManager == null) {
-            listener.onError("Bluetooth não disponível!");
+            listener.onBluetoothError("Bluetooth não disponível!");
             return null;
         }
 
         BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
 
         if (bluetoothAdapter == null) {
-            listener.onError("Bluetooth não suportado!");
+            listener.onBluetoothError("Bluetooth não suportado!");
             return null;
         }
 
         if (!hasBluetoothPermission()) {
-            listener.onError("Permissão Bluetooth não concedida!");
+            listener.onBluetoothError("Permissão Bluetooth não concedida!");
             return null;
         }
 
@@ -284,7 +284,7 @@ public class BluetoothManager {
      * @param device Dispositivo conectado.
      */
     protected void notifyConnected(Device device) {
-        listener.onConnected(device);
+        listener.onBluetoothConnected(device);
     }
 
     /**
@@ -293,7 +293,7 @@ public class BluetoothManager {
      * @param device Dispositivo desconectado.
      */
     protected void notifyDisconnected(Device device) {
-        listener.onDisconnected(device);
+        listener.onBluetoothDisconnected(device);
     }
 
     /**
@@ -302,6 +302,6 @@ public class BluetoothManager {
      * @param message Mensagem do erro.
      */
     protected void notifyError(String message) {
-        listener.onError(message);
+        listener.onBluetoothError(message);
     }
 }

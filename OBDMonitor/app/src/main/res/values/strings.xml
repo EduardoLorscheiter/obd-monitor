@@ -11,4 +11,5 @@
     <string name="obd_monitor">OBD Monitor</string>
     <string name="ecu">ECU</string>
     <string name="bluetooth_obd_ii">Bluetooth ⇄ OBD-II</string>
+    <string name="__">--</string>
 </resources>

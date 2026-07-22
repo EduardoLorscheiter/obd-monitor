@@ -48,4 +48,9 @@ public final class Elm327Commands {
      * Seleciona automaticamente o protocolo OBD-II utilizado pelo veículo.
      */
     public static final String AUTO_PROTOCOL = "ATSP0";
+
+    /**
+     * Solicita ao ELM327 o protocolo atualmente utilizado para comunicação com a ECU.
+     */
+    public static final String DESCRIBE_PROTOCOL = "ATDP";
 }

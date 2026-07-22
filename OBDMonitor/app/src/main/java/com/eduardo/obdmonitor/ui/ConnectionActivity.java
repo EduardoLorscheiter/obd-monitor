@@ -102,6 +102,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         btnBack = findViewById(R.id.btnBack);
         txtBluetoothStatus = findViewById(R.id.txtBluetoothStatus);
         switchBluetooth = findViewById(R.id.switchBluetooth);
+        ViewUtils.applySwitchColors(this, switchBluetooth);
         containerBluetooth = findViewById(R.id.containerBluetooth);
         containerDevices = findViewById(R.id.containerDevices);
         containerBondedDevices = findViewById(R.id.containerBondedDevices);
@@ -164,12 +165,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onBondedDeviceFound(Device device) {
+    public void onBondedBluetoothDeviceFound(Device device) {
         runOnUiThread(() -> addBluetoothDevice(device, bondedDevices, containerBondedDevices));
     }
 
     @Override
-    public void onConnecting(Device device) {
+    public void onBluetoothConnecting(Device device) {
         runOnUiThread(() -> {
             device.setStatus(Device.DEVICE_STATUS_CONNECTING);
             updateStatus(device);
@@ -177,7 +178,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onConnected(Device device) {
+    public void onBluetoothConnected(Device device) {
         runOnUiThread(() -> {
             device.setStatus(Device.DEVICE_STATUS_CONNECTED);
             updateStatus(device);
@@ -186,7 +187,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onDisconnected(Device device) {
+    public void onBluetoothDisconnected(Device device) {
         runOnUiThread(() -> {
             device.setStatus(Device.DEVICE_STATUS_NOT_CONNECTED);
             updateStatus(device);
@@ -194,7 +195,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onError(String message) {
+    public void onBluetoothError(String message) {
         runOnUiThread(() -> {
             ToastUtils.showToast(this, message);
             for (Device device : bondedDevices) {
@@ -220,7 +221,27 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onRpmChanged(int rpm) {
+    public void onObdBluetoothStatusChanged(boolean bluetoothConnected) {
+
+    }
+
+    @Override
+    public void onObdEcuStatusChanged(boolean obdConnected) {
+
+    }
+
+    @Override
+    public void onObdProtocolChanged(String protocol) {
+
+    }
+
+    @Override
+    public void onObdRpmChanged(int rpm) {
+
+    }
+
+    @Override
+    public void onObdError(String message) {
 
     }
 
@@ -267,10 +288,14 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
         if (enabled) {
             txtBluetoothStatus.setText(R.string.ativado);
+            int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorSecondaryContainer);
+            txtBluetoothStatus.setTextColor(color);
             containerBluetooth.setBackgroundResource(R.drawable.container_bluetooth_enabled);
             containerDevices.setVisibility(View.VISIBLE);
         } else {
             txtBluetoothStatus.setText(R.string.desativado);
+            int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorOnPrimary);
+            txtBluetoothStatus.setTextColor(color);
             containerBluetooth.setBackgroundResource(R.drawable.container_bluetooth_disabled);
             containerDevices.setVisibility(View.GONE);
         }
@@ -324,6 +349,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         });
     }
 
+    /**
+     * Cria e configura o CardView utilizado para representar um dispositivo
+     * Bluetooth na interface.
+     *
+     * @return CardView configurado.
+     */
     private CardView getCardView() {
         CardView cardView = new CardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
@@ -341,6 +372,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         return cardView;
     }
 
+    /**
+     * Cria o layout vertical utilizado para organizar o nome e o status
+     * do dispositivo Bluetooth.
+     *
+     * @return Layout configurado.
+     */
     private LinearLayout getVerticalLayout() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -350,6 +387,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         return layout;
     }
 
+    /**
+     * Cria o componente responsável por exibir o nome do dispositivo.
+     *
+     * @param name Nome do dispositivo Bluetooth.
+     * @return TextView configurado.
+     */
     private TextView getTvName(String name) {
         TextView tvName = new TextView(this);
         tvName.setText(name);
@@ -360,6 +403,12 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         return tvName;
     }
 
+    /**
+     * Cria o componente responsável por exibir o status do dispositivo.
+     *
+     * @param status Status inicial do dispositivo.
+     * @return TextView configurado.
+     */
     private TextView getTvStatus(String status) {
         TextView tvStatus = new TextView(this);
         tvStatus.setText(status);
@@ -369,6 +418,11 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         return tvStatus;
     }
 
+    /**
+     * Atualiza o status exibido na interface para um determinado dispositivo.
+     *
+     * @param device Dispositivo cujo status será atualizado.
+     */
     private void updateStatus(Device device) {
         TextView tvStatus = statusDevices.get(device.getMacAddress());
 
@@ -377,6 +431,13 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         }
     }
 
+    /**
+     * Configura o texto e a aparência visual do componente responsável por
+     * exibir o status de um dispositivo Bluetooth.
+     *
+     * @param tvStatus Componente que exibirá o status.
+     * @param status   Novo status do dispositivo.
+     */
     private void configureStatusTextView(TextView tvStatus, String status) {
         tvStatus.setText(status);
         tvStatus.setTextColor(getColor(R.color.ios_grey));

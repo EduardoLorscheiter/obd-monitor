@@ -1,43 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Cores gerais -->
-    <color name="white">#FFFFFFFF</color>
-    <color name="very_light_grey">#D1D1D1</color>
-    <color name="light_grey">#5F5F5F</color>
-    <color name="ios_grey">#A1A1A6</color>
+    <color name="black">#000000</color>
     <color name="dark_grey">#1A1A1A</color>
-    <color name="black">#FF000000</color>
-    <color name="very_light_blue">#6FB6D9</color>
-    <color name="light_blue">#039BE5</color>
-    <color name="dark_blue">#112D4A</color>
+    <color name="grey">#5F5F5F</color>
+    <color name="light_grey">#D1D1D1</color>
+    <color name="ios_grey">#A1A1A6</color>
+    <color name="white">#FFFFFF</color>
     <color name="green">#388E3C</color>
     <color name="vibrant_green">#00C853</color>
     <color name="red">#B00020</color>
     <color name="vibrant_red">#FF1744</color>
+    <color name="light_red">#8E343C</color>
     <color name="dark_red">#280000</color>
-    <color name="orange">#FF5722</color>
-    <color name="primary_container_light_mode">#1E000000</color>
-    <color name="primary_container_dark_mode">#33FFFFFF</color>
+    <!-- Cores com transparência -->
+    <color name="black_transparency">#1E000000</color>
+    <color name="white_transparency">#1EFFFFFF</color>
     <!-- Cores para o status da conexão -->
     <color name="status_off">@color/red</color>
     <color name="status_on">@color/green</color>
-    <color name="status_process">@color/orange</color>
+    <!-- Cores para o switch -->
+    <color name="switch_thumb_checked">@color/light_red</color>
+    <color name="switch_thumb_unchecked">@color/grey</color>
+    <color name="switch_track_checked">@color/dark_red</color>
+    <color name="switch_track_unchecked">@color/dark_grey</color>
     <!-- Cores para o tema claro -->
-    <color name="colorPrimaryLightMode">@color/black</color>
-    <color name="colorPrimaryVariantLightMode">@color/light_grey</color>
-    <color name="colorOnPrimaryLightMode">@color/very_light_grey</color>
-    <color name="colorSurfaceLightMode">@color/black</color>
-    <color name="colorOnSurfaceLightMode">@color/very_light_grey</color>
-    <color name="colorSuccessLightMode">@color/vibrant_green</color>
-    <color name="colorErrorLightMode">@color/vibrant_red</color>
-    <color name="colorPrimaryContainerLightMode">@color/primary_container_dark_mode</color>
+    <color name="primary_light_mode">@color/black</color>
+    <color name="primary_variant_light_mode">@color/grey</color>
+    <color name="on_primary_light_mode">@color/light_grey</color>
+    <color name="surface_light_mode">@color/black</color>
+    <color name="on_surface_light_mode">@color/light_grey</color>
+    <color name="success_light_mode">@color/vibrant_green</color>
+    <color name="error_light_mode">@color/vibrant_red</color>
+    <color name="primary_container_light_mode">@color/white_transparency</color>
+    <color name="secondary_container_light_mode">@color/dark_red</color>
     <!-- Cores para o tema escuro -->
-    <color name="colorPrimaryDarkMode">@color/black</color>
-    <color name="colorPrimaryVariantDarkMode">@color/light_grey</color>
-    <color name="colorOnPrimaryDarkMode">@color/very_light_grey</color>
-    <color name="colorSurfaceDarkMode">@color/black</color>
-    <color name="colorOnSurfaceDarkMode">@color/very_light_grey</color>
-    <color name="colorSuccessDarkMode">@color/vibrant_green</color>
-    <color name="colorErrorDarkMode">@color/vibrant_red</color>
-    <color name="colorPrimaryContainerDarkMode">@color/primary_container_dark_mode</color>
+    <color name="primary_dark_mode">@color/black</color>
+    <color name="primary_variant_dark_mode">@color/grey</color>
+    <color name="on_primary_dark_mode">@color/light_grey</color>
+    <color name="surface_dark_mode">@color/black</color>
+    <color name="on_surface_dark_mode">@color/light_grey</color>
+    <color name="success_dark_mode">@color/vibrant_green</color>
+    <color name="error_dark_mode">@color/vibrant_red</color>
+    <color name="primary_container_dark_mode">@color/white_transparency</color>
+    <color name="secondary_container_dark_mode">@color/dark_red</color>
 </resources>
