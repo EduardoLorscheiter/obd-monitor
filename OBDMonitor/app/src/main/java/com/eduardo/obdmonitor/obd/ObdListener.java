@@ -3,10 +3,11 @@
  **  @file    ObdListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
- **  @date    Julho/2026
+ **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de callbacks para notificar eventos relacionados à
- **           conexão e comunicação com o dispositivo OBD-II.
+ **  @brief   Interface de callbacks utilizada para notificar eventos
+ **           relacionados à comunicação com o adaptador OBD-II ELM327 e
+ **           com a ECU do veículo.
  **===========================================================================
  */
 
@@ -16,53 +17,45 @@ import com.eduardo.obdmonitor.model.Device;
 
 public interface ObdListener {
     /**
-     * Ao conectar ao OBD-II.
+     * Chamado quando o OBD-II é conectado.
      *
-     * @param device Dispositivo de conexão com o OBD-II.
+     * @param device Dispositivo OBD-II conectado
      */
     void onObdConnected(Device device);
 
     /**
-     * Ao dar erro na conexão com o OBD-II.
-     *
-     * @param message Mensagem de erro.
-     */
-    void onObdConnectionFailed(String message);
-
-    /**
-     * Notifica alterações no estado da conexão Bluetooth com o adaptador ELM327.
+     * Chamado quando houver alterações no estado da conexão Bluetooth com o adaptador ELM327.
      *
      * @param bluetoothConnected Indica se o adaptador Bluetooth está conectado.
      */
     void onObdBluetoothStatusChanged(boolean bluetoothConnected);
 
     /**
-     * Notifica alterações no estado da comunicação entre o adaptador ELM327 e a ECU do veículo.
+     * Chamado quando houver alterações no estado da comunicação entre o adaptador ELM327 e
+     * a ECU do veículo.
      *
      * @param ecuConnected Indica se a comunicação com a ECU foi estabelecida com sucesso.
      */
     void onObdEcuStatusChanged(boolean ecuConnected);
 
     /**
-     * Notifica o protocolo de comunicação detectado automaticamente pelo ELM327.
-     *
-     * <p>Exemplos de protocolos: "CAN 500 kbps", "ISO 9141-2" e "SAE J1850 PWM".</p>
+     * Chamado quando o protocolo de comunicação for detectado automaticamente pelo ELM327.
      *
      * @param protocol Nome do protocolo de comunicação utilizado pela ECU do veículo.
      */
     void onObdProtocolChanged(String protocol);
 
     /**
-     * Ao receber a rotação do motor (RPM).
+     * Chamado quando receber um novo valor de rotação do motor.
      *
-     * @param rpm RPM do motor.
+     * @param rpm Rotação do motor, em RPM.
      */
     void onObdRpmChanged(int rpm);
 
     /**
-     * Ao ocorrer algum erro.
+     * Chamado quando ocorre um erro relacionado ao OBD-II.
      *
-     * @param message Mensagem de erro.
+     * @param message Mensagem descritiva do erro.
      */
     void onObdError(String message);
 }

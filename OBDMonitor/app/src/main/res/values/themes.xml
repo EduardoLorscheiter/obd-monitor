@@ -6,6 +6,8 @@
         <item name="colorPrimary">@color/primary_light_mode</item>
         <item name="colorPrimaryVariant">@color/primary_variant_light_mode</item>
         <item name="colorOnPrimary">@color/on_primary_light_mode</item>
+        <item name="colorSecondary">@color/secondary_light_mode</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant_light_mode</item>
         <item name="colorPrimaryContainer">@color/primary_container_light_mode</item>
         <item name="colorSecondaryContainer">@color/secondary_container_light_mode</item>
         <item name="android:textColorHighlight">@color/primary_variant_light_mode</item>

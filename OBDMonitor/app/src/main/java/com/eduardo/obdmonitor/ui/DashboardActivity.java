@@ -3,7 +3,7 @@
  **  @file    DashboardActivity.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
- **  @date    Julho/2026
+ **  @date    julho/2026
  **  @version 1.0
  **  @brief   OBDMonitor
  **===========================================================================
@@ -36,7 +36,7 @@ import com.eduardo.obdmonitor.utils.ViewUtils;
 public class DashboardActivity extends AppCompatActivity implements ObdListener {
     // Componentes da janela da Activity
     private ImageButton btnConnect;
-    private TextView txtRpm;
+    private TextView txtRpm, txtProtocol;
     private View viewBluetooth, viewEcu;
 
     // Conexão com o OBD-II
@@ -78,6 +78,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
         txtRpm = findViewById(R.id.txtRpm);
         viewBluetooth = findViewById(R.id.viewBluetooth);
         viewEcu = findViewById(R.id.viewEcu);
+        txtProtocol = findViewById(R.id.txtProtocol);
     }
 
     /**
@@ -122,11 +123,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
     }
 
     @Override
-    public void onObdConnectionFailed(String message) {
-
-    }
-
-    @Override
     public void onObdBluetoothStatusChanged(boolean bluetoothConnected) {
         ViewUtils.setStatusIndicator(viewBluetooth, bluetoothConnected);
     }
@@ -138,7 +134,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
 
     @Override
     public void onObdProtocolChanged(String protocol) {
-
+        txtProtocol.setText(protocol);
     }
 
     @Override

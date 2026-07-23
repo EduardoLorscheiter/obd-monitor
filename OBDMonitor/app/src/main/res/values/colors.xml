@@ -16,32 +16,37 @@
     <!-- Cores com transparência -->
     <color name="black_transparency">#1E000000</color>
     <color name="white_transparency">#1EFFFFFF</color>
+    <color name="red_transparency">#80280000</color>
     <!-- Cores para o status da conexão -->
     <color name="status_off">@color/red</color>
     <color name="status_on">@color/green</color>
     <!-- Cores para o switch -->
     <color name="switch_thumb_checked">@color/light_red</color>
-    <color name="switch_thumb_unchecked">@color/grey</color>
+    <color name="switch_thumb_unchecked">@color/light_grey</color>
     <color name="switch_track_checked">@color/dark_red</color>
     <color name="switch_track_unchecked">@color/dark_grey</color>
     <!-- Cores para o tema claro -->
     <color name="primary_light_mode">@color/black</color>
     <color name="primary_variant_light_mode">@color/grey</color>
     <color name="on_primary_light_mode">@color/light_grey</color>
+    <color name="secondary_light_mode">@color/dark_red</color>
+    <color name="secondary_variant_light_mode">@color/light_red</color>
     <color name="surface_light_mode">@color/black</color>
     <color name="on_surface_light_mode">@color/light_grey</color>
     <color name="success_light_mode">@color/vibrant_green</color>
     <color name="error_light_mode">@color/vibrant_red</color>
     <color name="primary_container_light_mode">@color/white_transparency</color>
-    <color name="secondary_container_light_mode">@color/dark_red</color>
+    <color name="secondary_container_light_mode">@color/red_transparency</color>
     <!-- Cores para o tema escuro -->
     <color name="primary_dark_mode">@color/black</color>
     <color name="primary_variant_dark_mode">@color/grey</color>
     <color name="on_primary_dark_mode">@color/light_grey</color>
+    <color name="secondary_dark_mode">@color/dark_red</color>
+    <color name="secondary_variant_dark_mode">@color/light_red</color>
     <color name="surface_dark_mode">@color/black</color>
     <color name="on_surface_dark_mode">@color/light_grey</color>
     <color name="success_dark_mode">@color/vibrant_green</color>
     <color name="error_dark_mode">@color/vibrant_red</color>
     <color name="primary_container_dark_mode">@color/white_transparency</color>
-    <color name="secondary_container_dark_mode">@color/dark_red</color>
+    <color name="secondary_container_dark_mode">@color/red_transparency</color>
 </resources>

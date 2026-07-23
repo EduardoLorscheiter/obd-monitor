@@ -6,6 +6,8 @@
         <item name="colorPrimary">@color/primary_dark_mode</item>
         <item name="colorPrimaryVariant">@color/primary_variant_dark_mode</item>
         <item name="colorOnPrimary">@color/on_primary_dark_mode</item>
+        <item name="colorSecondary">@color/secondary_dark_mode</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant_dark_mode</item>
         <item name="colorPrimaryContainer">@color/primary_container_dark_mode</item>
         <item name="colorSecondaryContainer">@color/secondary_container_dark_mode</item>
         <item name="android:textColorHighlight">@color/primary_variant_dark_mode</item>

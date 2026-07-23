@@ -3,22 +3,22 @@
  **  @file    ObdManager.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
- **  @date    Julho/2026
+ **  @date    julho/2026
  **  @version 1.0
- **  @brief   OBDMonitor
+ **  @brief Gerencia a comunicação entre a aplicação, o adaptador
+ **         ELM327 e a ECU do veículo, realizando a inicialização,
+ **         monitoramento e leitura dos dados OBD-II.
  **===========================================================================
  */
 
 package com.eduardo.obdmonitor.obd;
-
-import androidx.annotation.NonNull;
 
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
 
 public class ObdManager {
-    // Instância única da classe (singleton)
+    // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
 
     // Listener utilizado para reportar eventos Bluetooth à interface
@@ -27,6 +27,9 @@ public class ObdManager {
     // Gerenciador responsável pela comunicação Bluetooth
     private BluetoothManager bluetoothManager;
 
+    // Indica se está realizando o monitoramento dos dados do OBD-II
+    private boolean monitoring;
+
     // Indica se o Bluetooth está conectado
     private boolean bluetoothConnected;
 
@@ -34,10 +37,7 @@ public class ObdManager {
     private boolean ecuConnected;
 
     // Protocolo OBD-II identificado durante a conexão
-    private String protocol;
-
-    // Indica se está realizando o monitoramento dos dados do OBD-II
-    private boolean monitoring;
+    private String obdProtocol;
 
     /**
      * Retorna a instância única do gerenciador OBD-II.
@@ -45,9 +45,8 @@ public class ObdManager {
      * @return Instância única de {@code ObdManager}.
      */
     public static synchronized ObdManager getInstance() {
-        if (instance == null) {
+        if (instance == null)
             instance = new ObdManager();
-        }
 
         return instance;
     }
@@ -56,38 +55,43 @@ public class ObdManager {
      * Cria uma nova instância do gerenciador do OBD-II.
      */
     private ObdManager() {
+        listener = null;
+        monitoring = false;
+
         bluetoothConnected = false;
         ecuConnected = false;
-        protocol = null;
-        monitoring = false;
+        obdProtocol = null;
+
+        updateObdInformation();
     }
 
     /**
-     * Define o listener dos eventos do OBD-II
+     * Define o listener dos eventos do OBD-II.
      *
-     * @param listener listener que receberá eventos do OBD-II
+     * @param listener Listener que receberá eventos do OBD-II.
      */
     public void setListener(ObdListener listener) {
         this.listener = listener;
 
-        if (listener != null) {
-            listener.onObdBluetoothStatusChanged(bluetoothConnected);
-            listener.onObdEcuStatusChanged(ecuConnected);
-            listener.onObdProtocolChanged(protocol);
-        }
+        updateObdInformation();
     }
 
     /**
-     * Solicita conexão com um dispositivo OBD-II através de um ELM327.
+     * Inicializa a comunicação com o adaptador ELM327 e estabelece
+     * a comunicação com a ECU do veículo.
      *
-     * <p>O BluetoothManager fará a conexão Bluetooth e retornará o resultado.
-     * O dispositivo Bluetooth já deve estar conectado neste momento.</p>
+     * <p>Caso a inicialização seja concluída com sucesso, o monitoramento
+     * contínuo dos dados da ECU é iniciado automaticamente.</p>
+     *
+     * @param device           Dispositivo OBD-II conectado.
+     * @param bluetoothManager Gerenciador responsável pela comunicação Bluetooth.
+     * @throws InterruptedException Caso a thread seja interrompida durante a inicialização.
      */
-    public void connect(Device device, BluetoothManager bluetoothManager) {
+    public void connect(Device device, BluetoothManager bluetoothManager) throws InterruptedException {
         this.bluetoothManager = bluetoothManager;
-        bluetoothConnected = true;
 
         if (initializeElm327()) {
+            bluetoothConnected = true;
             ecuConnected = true;
             startMonitoring();
             if (listener != null) {
@@ -95,78 +99,82 @@ public class ObdManager {
             }
         } else {
             bluetoothManager.disconnect();
+            bluetoothConnected = false;
             ecuConnected = false;
             if (listener != null) {
-                listener.onObdConnectionFailed("O dispositivo não respondeu como um ELM327!");
+                listener.onObdError("O dispositivo não respondeu como um ELM327!");
             }
+        }
+
+        updateObdInformation();
+    }
+
+    /**
+     * Encerra o monitoramento dos dados da ECU e finaliza a comunicação com o adaptador OBD-II.
+     */
+    public void disconnect() {
+        monitoring = false;
+
+        bluetoothConnected = false;
+        ecuConnected = false;
+        obdProtocol = null;
+
+        updateObdInformation();
+
+        if (bluetoothManager != null) {
+            bluetoothManager.disconnect();
+            bluetoothManager = null;
+        }
+
+        if (listener != null) {
+            listener = null;
         }
     }
 
     /**
-     * Inicializa o adaptador ELM327 para comunicação com a ECU.
+     * Inicializa o adaptador ELM327.
      *
-     * <p>São enviados os comandos de configuração do ELM327 e, em seguida,
-     * é realizada uma requisição dos PIDs suportados pelo veículo para
-     * validar a comunicação com a ECU.</p>
+     * <p>Durante a inicialização são enviados os comandos AT necessários
+     * para configurar o adaptador antes da comunicação com a ECU.</p>
      *
-     * @return True caso a inicialização seja concluída com sucesso, false caso contrário
+     * <p>Ao final, é realizada uma leitura dos PIDs suportados para validar
+     * a comunicação com o veículo.</p>
+     *
+     * @return {@code true} caso a inicialização seja concluída com sucesso,
+     * {@code false} caso contrário.
      */
-    private boolean initializeElm327() {
+    private boolean initializeElm327() throws InterruptedException {
         if (!sendOk(Elm327Commands.RESET)) return false;
+        Thread.sleep(1000);
         if (!sendOk(Elm327Commands.ECHO_OFF)) return false;
         if (!sendOk(Elm327Commands.LINE_FEEDS_OFF)) return false;
         if (!sendOk(Elm327Commands.SPACES_OFF)) return false;
         if (!sendOk(Elm327Commands.HEADERS_OFF)) return false;
         if (!sendOk(Elm327Commands.AUTO_PROTOCOL)) return false;
+        Thread.sleep(10000);
 
         String response = executeElm327Command(ObdCommands.SUPPORTED_PIDS_01_20);
 
-        if (response == null) {
+        if (response == null)
             return false;
-        }
 
-        response = normalizeResponse(response);
-        return response.contains("41 00");
+        return response.contains("4100");
     }
 
     /**
      * Envia um comando AT ao ELM327 e verifica se a resposta indica sucesso.
      *
      * @param command comando AT a ser enviado.
-     * @return True caso o ELM327 responda com "OK" ou durante o processo de
-     * inicialização, false caso contrário.
+     * @return {@code true} caso o ELM327 contenha a resposta "OK" ou durante o processo de
+     * inicialização, {@code false} caso contrário.
      */
     private boolean sendOk(String command) {
         String response = executeElm327Command(command);
 
-        if (response == null) {
+        if (response == null)
             return false;
-        }
 
-        response = normalizeResponse(response);
         return response.contains("OK") || response.contains("ELM327");
-    }
-
-    /**
-     * Normaliza uma resposta recebida do ELM327.
-     *
-     * <p>Remove o caractere de prompt, quebras de linha, espaços
-     * excedentes e converte todos os caracteres para letras maiúsculas,
-     * facilitando o processamento da resposta.</p>
-     *
-     * @param response Resposta recebida do ELM327.
-     * @return Resposta normalizada.
-     */
-    @NonNull
-    private static String normalizeResponse(String response) {
-        response = response
-                .replace(">", "")
-                .replace("\r", " ")
-                .replace("\n", " ")
-                .trim()
-                .replaceAll("\\s+", " ")
-                .toUpperCase();
-        return response;
     }
 
     /**
@@ -175,11 +183,12 @@ public class ObdManager {
      * <p>Enquanto o monitoramento estiver ativo, uma thread realiza
      * leituras periódicas da ECU e notifica o listener com os valores
      * obtidos.</p>
+     *
+     * <p>O monitoramento é executado em uma thread dedicada.</p>
      */
     private void startMonitoring() {
-        if (!ecuConnected || monitoring) {
+        if (!ecuConnected || monitoring)
             return;
-        }
 
         monitoring = true;
 
@@ -205,82 +214,81 @@ public class ObdManager {
     }
 
     /**
+     * Consulta o protocolo de comunicação utilizado entre o ELM327 e a ECU.
+     *
+     * @return Nome do protocolo detectado ou {@code null}
+     * caso não seja possível identificá-lo.
+     */
+    private String readProtocol() {
+        obdProtocol = executeElm327Command(Elm327Commands.GET_PROTOCOL);
+        return obdProtocol;
+    }
+
+    /**
      * Realiza a leitura da rotação do motor (RPM).
      *
-     * @return valor da rotação do motor em RPM ou zero caso não seja
+     * @return Valor da rotação do motor em RPM ou zero caso não seja
      * possível obter uma resposta válida.
      */
     private int readRpm() {
         String response = executeElm327Command(ObdCommands.ENGINE_RPM);
-        return parseRpm(response);
-    }
-
-    /**
-     * Converte a resposta do PID de RPM em seu valor numérico.
-     *
-     * <p>O PID 0x0C retorna dois bytes (A e B), cujo valor é calculado
-     * pela expressão:</p>
-     *
-     * <pre>
-     * RPM = ((A × 256) + B) / 4
-     * </pre>
-     *
-     * @param response Resposta recebida do ELM327.
-     * @return Rotação do motor em RPM ou zero caso a resposta seja inválida.
-     */
-    private int parseRpm(String response) {
-        if (response == null) {
-            return 0;
-        }
-
-        response = normalizeResponse(response);
-
-        String[] data = response.split(" ");
-
-        for (int i = 0; i < data.length - 3; i++) {
-            if (data[i].equals("41") && data[i + 1].equals("0C")) {
-                try {
-                    int A = Integer.parseInt(data[i + 2], 16);
-                    int B = Integer.parseInt(data[i + 3], 16);
-                    return ((A * 256) + B) / 4;
-                } catch (Exception e) {
-                    return 0;
-                }
-            }
-        }
-
-        return 0;
+        return ObdParser.parseRpm(response);
     }
 
     /**
      * Envia um comando ao ELM327 e retorna sua resposta.
      *
-     * <p>O caractere de retorno de carro ('\r') é acrescentado
-     * automaticamente ao final do comando antes do envio.</p>
+     * <p>O caractere de retorno de carro ('\r') é acrescentado automaticamente
+     * ao final do comando antes do envio.</p>
+     *
+     * <p>A resposta retornada é normalizada antes de ser entregue ao chamador.</p>
      *
      * @param command Comando a ser enviado
      * @return Resposta retornada pelo ELM327 ou {@code null} em caso de falha.
      */
     private String executeElm327Command(String command) {
-        return bluetoothManager.sendCommand(command + "\r");
+        String response = bluetoothManager.sendCommand(command + "\r");
+
+        if (response == null) {
+            return null;
+        }
+
+        return normalizeResponse(response);
     }
 
     /**
-     * Desconecta do dispositivo atual.
+     * Normaliza uma resposta recebida do ELM327.
+     *
+     * <p>Remove o prompt de término ('>'), quebras de linha, espaços
+     * excedentes e converte todos os caracteres para letras maiúsculas,
+     * facilitando o processamento da resposta.</p>
+     *
+     * @param response Resposta recebida do ELM327.
+     * @return Resposta normalizada.
      */
-    public void disconnect() {
-        bluetoothConnected = false;
-        ecuConnected = false;
-        protocol = null;
-        monitoring = false;
+    private static String normalizeResponse(String response) {
+        response = response
+                .replace(">", "")
+                .replace("\r", " ")
+                .replace("\n", " ")
+                .trim()
+                .replaceAll("\\s+", " ")
+                .toUpperCase();
+        return response;
+    }
 
-        if (bluetoothManager != null) {
-            bluetoothManager.disconnect();
-            bluetoothManager = null;
-        }
 
+    /**
+     * Atualiza o listener com o estado atual da conexão OBD-II.
+     *
+     * <p>São notificadas as informações de conexão Bluetooth,
+     * comunicação com a ECU e protocolo utilizado.</p>
+     */
+    private void updateObdInformation() {
         if (listener != null) {
-            listener = null;
+            listener.onObdBluetoothStatusChanged(bluetoothConnected);
+            listener.onObdEcuStatusChanged(ecuConnected);
+            listener.onObdProtocolChanged(obdProtocol);
         }
     }
 }

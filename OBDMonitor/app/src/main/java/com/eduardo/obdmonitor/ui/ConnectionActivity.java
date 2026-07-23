@@ -3,7 +3,7 @@
  **  @file    ConnectionActivity.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
- **  @date    Julho/2026
+ **  @date    julho/2026
  **  @version 1.0
  **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador
  **           OBD-II ELM327.
@@ -165,7 +165,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onBondedBluetoothDeviceFound(Device device) {
+    public void onBluetoothDeviceBondedFound(Device device) {
         runOnUiThread(() -> addBluetoothDevice(device, bondedDevices, containerBondedDevices));
     }
 
@@ -182,7 +182,11 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         runOnUiThread(() -> {
             device.setStatus(Device.DEVICE_STATUS_CONNECTED);
             updateStatus(device);
-            obdManager.connect(device, bluetoothManager);
+            try {
+                obdManager.connect(device, bluetoothManager);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
@@ -194,10 +198,17 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         });
     }
 
+    private final StringBuilder debug = new StringBuilder();
+    private String txtDebug;
+
     @Override
     public void onBluetoothError(String message) {
         runOnUiThread(() -> {
-            ToastUtils.showToast(this, message);
+            debug.append(message).append("\n");
+
+            runOnUiThread(() -> txtDebug = debug.toString());
+
+            ToastUtils.showToast(this, txtDebug);
             for (Device device : bondedDevices) {
                 if (Device.DEVICE_STATUS_CONNECTING.equals(device.getStatus())) {
                     device.setStatus(Device.DEVICE_STATUS_NOT_CONNECTED);
@@ -213,11 +224,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         obdManager.setListener(null);
         setResult(RESULT_OK);
         finish();
-    }
-
-    @Override
-    public void onObdConnectionFailed(String message) {
-        runOnUiThread(() -> ToastUtils.showToast(this, message));
     }
 
     @Override
@@ -242,7 +248,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
     @Override
     public void onObdError(String message) {
-
+        runOnUiThread(() -> ToastUtils.showToast(this, message));
     }
 
     /**
@@ -288,7 +294,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
         if (enabled) {
             txtBluetoothStatus.setText(R.string.ativado);
-            int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorSecondaryContainer);
+            int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorSecondaryVariant);
             txtBluetoothStatus.setTextColor(color);
             containerBluetooth.setBackgroundResource(R.drawable.container_bluetooth_enabled);
             containerDevices.setVisibility(View.VISIBLE);
