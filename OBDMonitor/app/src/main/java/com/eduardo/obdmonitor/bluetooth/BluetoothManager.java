@@ -253,9 +253,8 @@ public class BluetoothManager {
     protected void cancelDiscovery() {
         BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
 
-        if (bluetoothAdapter != null) {
+        if (bluetoothAdapter != null)
             bluetoothAdapter.cancelDiscovery();
-        }
     }
 
     /**

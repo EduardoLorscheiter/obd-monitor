@@ -15,6 +15,9 @@
 package com.eduardo.obdmonitor.obd;
 
 public final class ObdCommands {
+    // Código que identifica uma requisição do Modo de Serviço 01 (Current Data)
+    private static final String SERVICE_CURRENT_DATA = "01";
+
     /**
      * Classe utilitária. Não permite instanciação.
      */
@@ -22,7 +25,7 @@ public final class ObdCommands {
     }
 
     /**
-     * Solicita os PIDs suportados pela ECU no intervalo de 0x01 a 0x20.
+     * PID {@code 0x00} - Indica os PIDs suportados pela ECU no intervalo de 0x01 a 0x20.
      *
      * <p>Normalmente utilizado para validar a comunicação com a ECU
      * antes da leitura dos demais parâmetros.</p>
@@ -30,61 +33,71 @@ public final class ObdCommands {
      * <p>Resposta: 41 00 AA BB CC DD</p>
      * <p>Cada bit representa um PID suportado.</p>
      */
-    public static final String SUPPORTED_PIDS_01_20 = "01 00";
+    static final String SUPPORTED_PIDS_01_20 = buildCommand(ObdPids.SUPPORTED_PIDS_01_20);
 
     /**
-     * PID 0x0C - Rotação do motor (RPM).
+     * PID {@code 0x0C} - Rotação do motor (RPM).
      *
      * <p>Resposta: 41 0C A B</p>
      * <p>Fórmula: RPM = ((A × 256) + B) / 4</p>
      */
-    public static final String ENGINE_RPM = "01 0C";
+    static final String ENGINE_RPM = buildCommand(ObdPids.ENGINE_RPM);
 
     /**
-     * PID 0x0D - Velocidade do veículo.
+     * PID {@code 0x0D} - Velocidade do veículo.
      *
      * <p>Resposta: 41 0D A</p>
      * <p>Fórmula: Velocidade (km/h) = A</p>
      */
-    public static final String VEHICLE_SPEED = "01 0D";
+    static final String VEHICLE_SPEED = buildCommand(ObdPids.VEHICLE_SPEED);
 
     /**
-     * PID 0x05 - Temperatura do líquido de arrefecimento.
+     * PID {@code 0x05} - Temperatura do líquido de arrefecimento.
      *
      * <p>Resposta: 41 05 A</p>
      * <p>Fórmula: Temperatura (°C) = A - 40</p>
      */
-    public static final String ENGINE_COOLANT_TEMPERATURE = "01 05";
+    static final String ENGINE_COOLANT_TEMPERATURE = buildCommand(ObdPids.ENGINE_COOLANT_TEMPERATURE);
 
     /**
-     * PID 0x0F - Temperatura do ar admitido.
+     * PID {@code 0x0F} - Temperatura do ar admitido.
      *
      * <p>Resposta: 41 0F A</p>
      * <p>Fórmula: Temperatura (°C) = A - 40</p>
      */
-    public static final String INTAKE_AIR_TEMPERATURE = "01 0F";
+    static final String INTAKE_AIR_TEMPERATURE = buildCommand(ObdPids.INTAKE_AIR_TEMPERATURE);
 
     /**
-     * PID 0x0B - Pressão absoluta do coletor de admissão (MAP).
+     * PID {@code 0x0B} - Pressão absoluta do coletor de admissão (MAP).
      *
      * <p>Resposta: 41 0B A</p>
      * <p>Fórmula: Pressão (kPa) = A</p>
      */
-    public static final String INTAKE_MANIFOLD_PRESSURE = "01 0B";
+    static final String INTAKE_MANIFOLD_PRESSURE = buildCommand(ObdPids.INTAKE_MANIFOLD_PRESSURE);
 
     /**
-     * PID 0x11 - Posição absoluta da borboleta de aceleração.
+     * PID {@code 0x11} - Posição absoluta da borboleta de aceleração.
      *
      * <p>Resposta: 41 11 A</p>
      * <p>Fórmula: Posição (%) = (A × 100) / 255</p>
      */
-    public static final String THROTTLE_POSITION = "01 11";
+    static final String THROTTLE_POSITION = buildCommand(ObdPids.THROTTLE_POSITION);
 
     /**
-     * PID 0x42 - Tensão de alimentação do módulo de controle (ECU).
+     * PID {@code 0x42} - Tensão de alimentação do módulo de controle (ECU).
      *
      * <p>Resposta: 41 42 A B</p>
      * <p>Fórmula: Tensão (V) = ((A × 256) + B) / 1000</p>
      */
-    public static final String CONTROL_MODULE_VOLTAGE = "01 42";
+    static final String CONTROL_MODULE_VOLTAGE = buildCommand(ObdPids.CONTROL_MODULE_VOLTAGE);
+
+    /**
+     * Monta um comando OBD-II do Modo de Serviço 01.
+     *
+     * @param pid PID a ser consultado.
+     * @return Comando OBD-II correspondente.
+     */
+    private static String buildCommand(String pid) {
+        return SERVICE_CURRENT_DATA + " " + pid;
+    }
 }

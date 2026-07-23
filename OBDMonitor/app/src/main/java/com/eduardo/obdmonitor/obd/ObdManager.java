@@ -5,9 +5,9 @@
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief Gerencia a comunicação entre a aplicação, o adaptador
- **         ELM327 e a ECU do veículo, realizando a inicialização,
- **         monitoramento e leitura dos dados OBD-II.
+ **  @brief   Gerencia a comunicação entre a aplicação, o adaptador
+ **           ELM327 e a ECU do veículo, realizando a inicialização,
+ **           monitoramento e leitura dos dados OBD-II.
  **===========================================================================
  */
 
@@ -21,7 +21,7 @@ public class ObdManager {
     // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
 
-    // Listener utilizado para reportar eventos Bluetooth à interface
+    // Listener utilizado para reportar eventos OBD-II à interface
     private ObdListener listener;
 
     // Gerenciador responsável pela comunicação Bluetooth
@@ -142,6 +142,8 @@ public class ObdManager {
      *
      * @return {@code true} caso a inicialização seja concluída com sucesso,
      * {@code false} caso contrário.
+     * @throws InterruptedException Caso a thread seja interrompida durante
+     *                              o tempo de espera entre os comandos de inicialização.
      */
     private boolean initializeElm327() throws InterruptedException {
         if (!sendOk(Elm327Commands.RESET)) return false;
@@ -194,7 +196,7 @@ public class ObdManager {
 
         new Thread(() -> {
             while (monitoring) {
-                int rpm = readRpm();
+                int rpm = readEngineRpm();
 
                 if (listener != null) {
                     listener.onObdRpmChanged(rpm);
@@ -230,9 +232,75 @@ public class ObdManager {
      * @return Valor da rotação do motor em RPM ou zero caso não seja
      * possível obter uma resposta válida.
      */
-    private int readRpm() {
+    private int readEngineRpm() {
         String response = executeElm327Command(ObdCommands.ENGINE_RPM);
-        return ObdParser.parseRpm(response);
+        return ObdParser.parseEngineRpm(response);
+    }
+
+    /**
+     * Realiza a leitura da velocidade atual do veículo.
+     *
+     * @return Velocidade do veículo em km/h ou {@code 0} caso não seja
+     * possível obter uma resposta válida.
+     */
+    private int readVehicleSpeed() {
+        String response = executeElm327Command(ObdCommands.VEHICLE_SPEED);
+        return ObdParser.parseVehicleSpeed(response);
+    }
+
+    /**
+     * Realiza a leitura da temperatura do líquido de arrefecimento do motor.
+     *
+     * @return Temperatura do líquido de arrefecimento em °C ou
+     * {@code 0} caso não seja possível obter uma resposta válida.
+     */
+    private int readEngineCoolantTemperature() {
+        String response = executeElm327Command(ObdCommands.ENGINE_COOLANT_TEMPERATURE);
+        return ObdParser.parseEngineCoolantTemperature(response);
+    }
+
+    /**
+     * Realiza a leitura da temperatura do ar admitido pelo motor.
+     *
+     * @return Temperatura do ar admitido em °C ou {@code 0}
+     * caso não seja possível obter uma resposta válida.
+     */
+    private int readIntakeAirTemperature() {
+        String response = executeElm327Command(ObdCommands.INTAKE_AIR_TEMPERATURE);
+        return ObdParser.parseIntakeAirTemperature(response);
+    }
+
+    /**
+     * Realiza a leitura da pressão absoluta do coletor de admissão (MAP).
+     *
+     * @return Pressão absoluta do coletor de admissão em kPa ou
+     * {@code 0} caso não seja possível obter uma resposta válida.
+     */
+    private int readIntakeManifoldPressure() {
+        String response = executeElm327Command(ObdCommands.INTAKE_MANIFOLD_PRESSURE);
+        return ObdParser.parseIntakeManifoldPressure(response);
+    }
+
+    /**
+     * Realiza a leitura da posição absoluta da borboleta de aceleração.
+     *
+     * @return Posição da borboleta em porcentagem (%) ou
+     * {@code 0} caso não seja possível obter uma resposta válida.
+     */
+    private int readThrottlePosition() {
+        String response = executeElm327Command(ObdCommands.THROTTLE_POSITION);
+        return ObdParser.parseThrottlePosition(response);
+    }
+
+    /**
+     * Realiza a leitura da tensão de alimentação do módulo de controle (ECU).
+     *
+     * @return Tensão de alimentação da ECU em volts (V) ou
+     * {@code 0} caso não seja possível obter uma resposta válida.
+     */
+    private double readControlModuleVoltage() {
+        String response = executeElm327Command(ObdCommands.CONTROL_MODULE_VOLTAGE);
+        return ObdParser.parseControlModuleVoltage(response);
     }
 
     /**
@@ -249,9 +317,8 @@ public class ObdManager {
     private String executeElm327Command(String command) {
         String response = bluetoothManager.sendCommand(command + "\r");
 
-        if (response == null) {
+        if (response == null)
             return null;
-        }
 
         return normalizeResponse(response);
     }
@@ -276,7 +343,6 @@ public class ObdManager {
                 .toUpperCase();
         return response;
     }
-
 
     /**
      * Atualiza o listener com o estado atual da conexão OBD-II.
