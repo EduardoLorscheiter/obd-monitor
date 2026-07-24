@@ -111,7 +111,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      * Inicializa os gerenciadores responsáveis pela comunicação Bluetooth e OBD-II.
      */
     private void initConnection() {
-        bluetoothManager = BluetoothManager.getInstance(this);
+        bluetoothManager = BluetoothManager.getInstance();
         bluetoothManager.setListener(this);
         bluetoothManager.registerReceivers();
         obdManager = ObdManager.getInstance();
@@ -192,7 +192,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
             device.setStatus(Device.DEVICE_STATUS_CONNECTED);
             updateStatus(device);
             try {
-                obdManager.connect(device, bluetoothManager);
+                obdManager.connect(device);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

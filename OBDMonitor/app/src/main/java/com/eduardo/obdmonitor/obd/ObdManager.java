@@ -17,8 +17,20 @@ import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
 
 public class ObdManager {
+    // Tempo de espera após o envio do comando de reset ao ELM327 (em milissegundos)
+    private static final int ELM327_RESET_DELAY_MS = 1000;
+
+    // Tempo de espera para identificação automática do protocolo OBD-II (em milissegundos)
+    private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
+
+    // Intervalo entre leituras consecutivas da ECU durante o monitoramento (em milissegundos)
+    private static final int MONITORING_INTERVAL_MS = 100;
+
     // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
+
+    // Gerenciador responsável pela comunicação Bluetooth
+    private final BluetoothManager bluetoothManager;
 
     // Listener responsável por receber eventos relacionados ao estado da conexão OBD-II
     private ObdConnectionListener connectionListener;
@@ -26,11 +38,8 @@ public class ObdManager {
     // Listener responsável por receber os dados monitorados da ECU
     private ObdDataListener dataListener;
 
-    // Gerenciador responsável pela comunicação Bluetooth
-    private BluetoothManager bluetoothManager;
-
-    // Indica se está realizando o monitoramento dos dados do OBD-II
-    // Obs.: O 'volatile' garante visibilidade entre threads
+    // Indica se o monitoramento contínuo da ECU está ativo
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre as threads
     private volatile boolean monitoring;
 
     // Indica se o Bluetooth está conectado
@@ -42,7 +51,7 @@ public class ObdManager {
     // Protocolo OBD-II identificado durante a conexão
     private String obdProtocol;
 
-    // Thread de monitoramento contínuo dos dados da ECU.
+    // Thread responsável pelo monitoramento contínuo dos dados da ECU
     private Thread monitoringThread;
 
     /**
@@ -61,10 +70,9 @@ public class ObdManager {
      * Cria uma nova instância do gerenciador OBD-II.
      */
     private ObdManager() {
+        bluetoothManager = BluetoothManager.getInstance();
         connectionListener = null;
         dataListener = null;
-        bluetoothManager = null;
-
         resetConnectionState();
     }
 
@@ -78,11 +86,9 @@ public class ObdManager {
      * @param connectionListener Listener que receberá os eventos de conexão OBD-II.
      * @param dataListener       Listener que receberá os dados monitorados da ECU.
      */
-    public void setListeners(ObdConnectionListener connectionListener,
-                             ObdDataListener dataListener) {
+    public void setListeners(ObdConnectionListener connectionListener, ObdDataListener dataListener) {
         this.connectionListener = connectionListener;
         this.dataListener = dataListener;
-
         notifyConnectionState();
     }
 
@@ -93,27 +99,51 @@ public class ObdManager {
      * <p>Caso a inicialização seja concluída com sucesso, o monitoramento contínuo dos dados da ECU
      * é iniciado automaticamente.</p>
      *
-     * @param device           Dispositivo OBD-II conectado.
-     * @param bluetoothManager Gerenciador responsável pela comunicação Bluetooth.
+     * @param device Dispositivo OBD-II conectado.
      * @throws InterruptedException Caso a thread seja interrompida durante a inicialização.
      */
-    public void connect(Device device, BluetoothManager bluetoothManager) throws InterruptedException {
-        this.bluetoothManager = bluetoothManager;
+    public void connect(Device device) throws InterruptedException {
         bluetoothConnected = true;
 
         if (initializeElm327()) {
-            ecuConnected = true;
-            readProtocol();
-            notifyConnectionState();
-            startMonitoring();
-            if (connectionListener != null)
-                connectionListener.onObdConnected(device);
+            finishConnection(device);
         } else {
-            bluetoothManager.disconnect();
-            resetConnectionState();
-            if (connectionListener != null)
-                connectionListener.onObdError("O dispositivo não respondeu como um ELM327!");
+            handleInitializationError();
         }
+    }
+
+    /**
+     * Finaliza o processo de conexão com o adaptador OBD-II.
+     *
+     * <p>Atualiza o estado interno da conexão, identifica o protocolo de comunicação, inicia o
+     * monitoramento contínuo da ECU e notifica o listener sobre o sucesso da conexão.</p>
+     *
+     * @param device Dispositivo OBD-II conectado.
+     */
+    private void finishConnection(Device device) {
+        ecuConnected = true;
+        obdProtocol = readProtocol();
+        notifyConnectionState();
+
+        if (connectionListener != null)
+            connectionListener.onObdConnected(device);
+
+        startMonitoring();
+    }
+
+    /**
+     * Finaliza a tentativa de conexão após uma falha na inicialização do ELM327.
+     *
+     * <p>A conexão Bluetooth é encerrada, os estados internos são redefinidos e o listener é
+     * notificado sobre o erro ocorrido.</p>
+     */
+    private void handleInitializationError() {
+        bluetoothManager.disconnect();
+        resetConnectionState();
+        notifyConnectionState();
+
+        if (connectionListener != null)
+            connectionListener.onObdError("O dispositivo não respondeu como um ELM327!");
     }
 
     /**
@@ -122,17 +152,13 @@ public class ObdManager {
     public void disconnect() {
         monitoring = false;
 
-        if (monitoringThread != null) {
+        if (monitoringThread != null)
             monitoringThread.interrupt();
-            monitoringThread = null;
-        }
 
-        if (bluetoothManager != null) {
-            bluetoothManager.disconnect();
-            bluetoothManager = null;
-        }
+        bluetoothManager.disconnect();
 
         resetConnectionState();
+        notifyConnectionState();
     }
 
     /**
@@ -151,24 +177,24 @@ public class ObdManager {
      */
     private boolean initializeElm327() throws InterruptedException {
         if (!sendCommandOk(Elm327Commands.RESET)) return false;
-        Thread.sleep(1000);
+        Thread.sleep(ELM327_RESET_DELAY_MS);
         if (!sendCommandOk(Elm327Commands.ECHO_OFF)) return false;
         if (!sendCommandOk(Elm327Commands.LINE_FEEDS_OFF)) return false;
         if (!sendCommandOk(Elm327Commands.SPACES_OFF)) return false;
         if (!sendCommandOk(Elm327Commands.HEADERS_OFF)) return false;
         if (!sendCommandOk(Elm327Commands.AUTO_PROTOCOL)) return false;
-        Thread.sleep(5000);
+        Thread.sleep(ELM327_PROTOCOL_DELAY_MS);
 
-        String response = executeElm327Command(ObdCommands.SUPPORTED_PIDS_01_20);
-        return response != null && response.contains("4100");
+        String supportedPids = executeElm327Command(ObdCommands.SUPPORTED_PIDS_01_20);
+        return supportedPids != null && supportedPids.contains("4100");
     }
 
     /**
-     * Envia um comando AT ao ELM327 e verifica se a resposta indica sucesso.
+     * Envia um comando ao ELM327 e verifica se a resposta indica sucesso.
      *
-     * @param command comando AT a ser enviado.
-     * @return {@code true} caso o ELM327 contenha a resposta "OK" ou durante o processo de
-     * inicialização, {@code false} caso contrário.
+     * @param command Comando a ser enviado.
+     * @return {@code true} caso a resposta contenha "OK" ou a identificação do ELM327 durante o
+     * processo de inicialização, {@code false} caso contrário.
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean sendCommandOk(String command) {
@@ -188,7 +214,6 @@ public class ObdManager {
      *
      * <p>O monitoramento é executado em uma thread dedicada.</p>
      */
-    @SuppressWarnings("BusyWait")
     private void startMonitoring() {
         if (!ecuConnected || monitoring)
             return;
@@ -196,45 +221,66 @@ public class ObdManager {
         monitoring = true;
 
         monitoringThread = new Thread(() -> {
-            while (monitoring) {
-                int engineRpm = readEngineRpm();
-                int vehicleSpeed = readVehicleSpeed();
-                int engineCoolantTemperature = readEngineCoolantTemperature();
-                int intakeAirTemperature = readIntakeAirTemperature();
-                int intakeManifoldPressure = readIntakeManifoldPressure();
-                int throttlePosition = readThrottlePosition();
-                double controlModuleVoltage = readControlModuleVoltage();
-
-                if (dataListener != null) {
-                    dataListener.onObdEngineRpmChanged(engineRpm);
-                    dataListener.onObdVehicleSpeedChanged(vehicleSpeed);
-                    dataListener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
-                    dataListener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
-                    dataListener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
-                    dataListener.onObdThrottlePositionChanged(throttlePosition);
-                    dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+            try {
+                while (monitoring) {
+                    readVehicleData();
+                    sleepMonitoring();
                 }
-
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    if (monitoring && connectionListener != null)
-                        connectionListener.onObdError("Monitoramento do OBD-II interrompido!");
-                    return;
-                } finally {
-                    monitoringThread = null;
-                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                if (monitoring && connectionListener != null)
+                    connectionListener.onObdError("Monitoramento do OBD-II interrompido!");
+            } finally {
+                monitoringThread = null;
             }
         }, "OBD-Monitor");
         monitoringThread.start();
     }
 
     /**
-     * Consulta o protocolo de comunicação utilizado entre o ELM327 e a ECU.
+     * Realiza a leitura dos principais parâmetros da ECU e notifica o listener responsável pelos
+     * dados monitorados.
+     *
+     * <p>Os valores são obtidos por meio dos respectivos PIDs OBD-II e enviados ao
+     * {@link ObdDataListener}, quando definido.</p>
      */
-    private void readProtocol() {
-        obdProtocol = executeElm327Command(Elm327Commands.GET_PROTOCOL);
+    private void readVehicleData() {
+        int engineRpm = readEngineRpm();
+        int vehicleSpeed = readVehicleSpeed();
+        int engineCoolantTemperature = readEngineCoolantTemperature();
+        int intakeAirTemperature = readIntakeAirTemperature();
+        int intakeManifoldPressure = readIntakeManifoldPressure();
+        int throttlePosition = readThrottlePosition();
+        double controlModuleVoltage = readControlModuleVoltage();
+
+        if (dataListener != null) {
+            dataListener.onObdEngineRpmChanged(engineRpm);
+            dataListener.onObdVehicleSpeedChanged(vehicleSpeed);
+            dataListener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
+            dataListener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
+            dataListener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
+            dataListener.onObdThrottlePositionChanged(throttlePosition);
+            dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+        }
+    }
+
+    /**
+     * Aguarda o intervalo configurado entre duas leituras consecutivas da ECU.
+     *
+     * @throws InterruptedException Caso a thread de monitoramento seja interrompida durante a
+     *                              espera.
+     */
+    private void sleepMonitoring() throws InterruptedException {
+        Thread.sleep(MONITORING_INTERVAL_MS);
+    }
+
+    /**
+     * Realiza a leitura do protocolo de comunicação utilizado entre o ELM327 e a ECU.
+     *
+     * @return Protocolo OBD-II identificado durante a conexão.
+     */
+    private String readProtocol() {
+        return executeElm327Command(Elm327Commands.GET_PROTOCOL);
     }
 
     /**
@@ -326,9 +372,6 @@ public class ObdManager {
      * @return Resposta retornada pelo ELM327 ou {@code null} em caso de falha.
      */
     private String executeElm327Command(String command) {
-        if (bluetoothManager == null)
-            return null;
-
         String response = bluetoothManager.sendCommand(command + "\r");
 
         if (response == null)
@@ -347,14 +390,13 @@ public class ObdManager {
      * @return Resposta normalizada.
      */
     private static String normalizeResponse(String response) {
-        response = response
+        return response
                 .replace(">", "")
                 .replace("\r", " ")
                 .replace("\n", " ")
                 .trim()
                 .replaceAll("\\s+", " ")
                 .toUpperCase();
-        return response;
     }
 
     /**
@@ -365,7 +407,6 @@ public class ObdManager {
         bluetoothConnected = false;
         ecuConnected = false;
         obdProtocol = null;
-        notifyConnectionState();
     }
 
     /**

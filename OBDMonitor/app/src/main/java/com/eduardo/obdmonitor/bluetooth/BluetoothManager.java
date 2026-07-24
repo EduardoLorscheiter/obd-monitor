@@ -39,7 +39,7 @@ public class BluetoothManager {
     private final Context applicationContext;
 
     // Responsável pela comunicação Bluetooth de baixo nível
-    private final BluetoothConnection connection;
+    private final BluetoothConnection bluetoothConnection;
 
     // Listener utilizado para reportar eventos Bluetooth à interface
     private BluetoothListener bluetoothListener;
@@ -67,6 +67,23 @@ public class BluetoothManager {
     }
 
     /**
+     * Retorna a instância única do gerenciador Bluetooth previamente inicializada.
+     *
+     * <p>Deve ser utilizado após a criação da instância através de {@link #getInstance(Context)}.
+     * Caso o gerenciador ainda não tenha sido inicializado, uma {@link IllegalStateException} será
+     * lançada.</p>
+     *
+     * @return Instância única de {@code BluetoothManager}.
+     * @throws IllegalStateException Caso o gerenciador ainda não tenha sido inicializado.
+     */
+    public static synchronized BluetoothManager getInstance() {
+        if (instance == null)
+            throw new IllegalStateException("BluetoothManager não foi inicializado.");
+
+        return instance;
+    }
+
+    /**
      * Cria uma nova instância do gerenciador Bluetooth.
      *
      * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
@@ -76,8 +93,10 @@ public class BluetoothManager {
      */
     private BluetoothManager(Context context) {
         this.applicationContext = context.getApplicationContext();
-        connection = new BluetoothConnection(this);
+        bluetoothConnection = new BluetoothConnection(this);
         bluetoothListener = null;
+        receiverRegistered = false;
+        connectedDevice = null;
     }
 
     /**
@@ -127,18 +146,6 @@ public class BluetoothManager {
     }
 
     /**
-     * Verifica se o Bluetooth do dispositivo está ativado.
-     *
-     * @return {@code true} caso o Bluetooth esteja disponível e ativado, {@code false} caso
-     * contrário.
-     */
-    @SuppressLint("MissingPermission")
-    public boolean isBluetoothEnabled() {
-        BluetoothAdapter adapter = getBluetoothAdapter();
-        return adapter != null && adapter.isEnabled();
-    }
-
-    /**
      * Solicita ao sistema a ativação do Bluetooth através da interface de confirmação do usuário.
      *
      * <p>Se o dispositivo não possuir suporte a Bluetooth ou ocorrer alguma falha ao obter o
@@ -150,15 +157,22 @@ public class BluetoothManager {
      */
     @SuppressLint("MissingPermission")
     public void requestEnableBluetooth(Activity activity) {
-        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
-
-        if (bluetoothAdapter == null)
-            return;
-
-        if (!bluetoothAdapter.isEnabled()) {
+        if (!isBluetoothEnabled()) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivity(intent);
         }
+    }
+
+    /**
+     * Verifica se o Bluetooth do dispositivo está ativado.
+     *
+     * @return {@code true} caso o Bluetooth esteja disponível e ativado, {@code false} caso
+     * contrário.
+     */
+    @SuppressLint("MissingPermission")
+    public boolean isBluetoothEnabled() {
+        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
+        return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }
 
     /**
@@ -219,7 +233,7 @@ public class BluetoothManager {
             return;
         }
 
-        connection.connect(bluetoothDevice, device);
+        bluetoothConnection.connect(bluetoothDevice, device);
     }
 
     /**
@@ -228,7 +242,7 @@ public class BluetoothManager {
      * <p>Caso não exista uma conexão ativa, nenhuma ação é realizada.</p>
      */
     public void disconnect() {
-        connection.disconnect();
+        bluetoothConnection.disconnect();
     }
 
     /**
@@ -237,7 +251,7 @@ public class BluetoothManager {
      * @return {@code true} se houver conexão ativa, {@code false} caso contrário.
      */
     public boolean isConnected() {
-        return connection.isConnected();
+        return bluetoothConnection.isConnected();
     }
 
     /**
@@ -281,13 +295,13 @@ public class BluetoothManager {
         if (command == null || command.isEmpty())
             return null;
 
-        return connection.sendCommand(command);
+        return bluetoothConnection.sendCommand(command);
     }
 
     /**
      * Cancela uma eventual descoberta de dispositivos Bluetooth em andamento.
      *
-     * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de* busca pode reduzir
+     * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de busca pode reduzir
      * significativamente o desempenho ou até impedir o estabelecimento da conexão Bluetooth.</p>
      */
     @SuppressLint("MissingPermission")
@@ -349,9 +363,9 @@ public class BluetoothManager {
             return null;
         }
 
-        BluetoothAdapter bluetoothAdapter = systemBluetoothManager.getAdapter();
+        BluetoothAdapter systemBluetoothAdapter = systemBluetoothManager.getAdapter();
 
-        if (bluetoothAdapter == null) {
+        if (systemBluetoothAdapter == null) {
             if (bluetoothListener != null)
                 bluetoothListener.onBluetoothError("Bluetooth não suportado!");
             return null;
@@ -363,7 +377,7 @@ public class BluetoothManager {
             return null;
         }
 
-        return bluetoothAdapter;
+        return systemBluetoothAdapter;
     }
 
     /**
