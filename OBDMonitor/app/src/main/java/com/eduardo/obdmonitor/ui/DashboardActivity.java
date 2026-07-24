@@ -28,18 +28,19 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.model.Device;
-import com.eduardo.obdmonitor.obd.ObdListener;
+import com.eduardo.obdmonitor.obd.ObdConnectionListener;
+import com.eduardo.obdmonitor.obd.ObdDataListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 
-public class DashboardActivity extends AppCompatActivity implements ObdListener {
+public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private TextView txtRpm, txtProtocol;
     private View viewBluetooth, viewEcu;
 
-    // Conexão com o OBD-II
+    // Gerenciador responsável pela comunicação OBD-II
     private ObdManager obdManager;
 
     private ActivityResultLauncher<Intent> connectionLauncher;
@@ -64,6 +65,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        obdManager.setListeners(null, null);
         obdManager.disconnect();
     }
 
@@ -86,7 +88,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
      */
     private void initConnection() {
         obdManager = ObdManager.getInstance();
-        obdManager.setListener(this);
+        obdManager.setListeners(this, this);
     }
 
     /**
@@ -110,8 +112,12 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
         connectionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
+                    obdManager.setListeners(this, this);
+
                     if (result.getResultCode() == RESULT_OK) {
-                        obdManager.setListener(this);
+                        ToastUtils.showToast(this, "Conectado com sucesso ao dispositivo OBD-II!");
+                    } else {
+                        ToastUtils.showToast(this, "Não foi possível conectar ao dispositivo OBD-II.");
                     }
                 }
         );
@@ -134,16 +140,46 @@ public class DashboardActivity extends AppCompatActivity implements ObdListener 
 
     @Override
     public void onObdProtocolChanged(String protocol) {
-        txtProtocol.setText(protocol);
-    }
-
-    @Override
-    public void onObdRpmChanged(int rpm) {
-        runOnUiThread(() -> txtRpm.setText(String.valueOf(rpm)));
+        txtProtocol.setText(protocol == null ? getString(R.string.__) : protocol);
     }
 
     @Override
     public void onObdError(String message) {
         ToastUtils.showToast(this, message);
+    }
+
+    @Override
+    public void onObdEngineRpmChanged(int rpm) {
+        runOnUiThread(() -> txtRpm.setText(String.valueOf(rpm)));
+    }
+
+    @Override
+    public void onObdVehicleSpeedChanged(int speed) {
+
+    }
+
+    @Override
+    public void onObdEngineCoolantTemperatureChanged(int temperature) {
+
+    }
+
+    @Override
+    public void onObdIntakeAirTemperatureChanged(int temperature) {
+
+    }
+
+    @Override
+    public void onObdIntakeManifoldPressureChanged(int pressure) {
+
+    }
+
+    @Override
+    public void onObdThrottlePositionChanged(int position) {
+
+    }
+
+    @Override
+    public void onObdControlModuleVoltageChanged(double voltage) {
+
     }
 }

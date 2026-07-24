@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
@@ -36,7 +37,7 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.bluetooth.BluetoothListener;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.model.Device;
-import com.eduardo.obdmonitor.obd.ObdListener;
+import com.eduardo.obdmonitor.obd.ObdConnectionListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
@@ -45,17 +46,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ConnectionActivity extends AppCompatActivity implements BluetoothListener, ObdListener {
+public class ConnectionActivity extends AppCompatActivity implements BluetoothListener, ObdConnectionListener {
     // Componentes da janela da Activity
     private ImageButton btnBack;
     private TextView txtBluetoothStatus;
     private SwitchCompat switchBluetooth;
     private LinearLayout containerBluetooth, containerDevices, containerBondedDevices;
 
-    // Conexão com o Bluetooth
+    // Gerenciador responsável pela comunicação Bluetooth
     private BluetoothManager bluetoothManager;
 
-    // Conexão com o OBD-II
+    // Gerenciador responsável pela comunicação OBD-II
     private ObdManager obdManager;
 
     // Lista de dispositivos Bluetooth pareados
@@ -115,7 +116,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         bluetoothManager = new BluetoothManager(this, this);
         bluetoothManager.registerReceivers();
         obdManager = ObdManager.getInstance();
-        obdManager.setListener(this);
+        obdManager.setListeners(this, null);
     }
 
     /**
@@ -123,7 +124,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      */
     private void setListeners() {
         btnBack.setOnClickListener(v -> {
-            obdManager.setListener(null);
+            obdManager.setListeners(null, null);
+            setResult(RESULT_OK);
             finish();
         });
 
@@ -137,6 +139,15 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
             } else {
                 switchBluetooth.setChecked(true);
                 ToastUtils.showToast(this, "Desligue o Bluetooth pelas configurações do Android!");
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                obdManager.setListeners(null, null);
+                setResult(RESULT_OK);
+                finish();
             }
         });
     }
@@ -198,17 +209,10 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         });
     }
 
-    private final StringBuilder debug = new StringBuilder();
-    private String txtDebug;
-
     @Override
     public void onBluetoothError(String message) {
         runOnUiThread(() -> {
-            debug.append(message).append("\n");
-
-            runOnUiThread(() -> txtDebug = debug.toString());
-
-            ToastUtils.showToast(this, txtDebug);
+            ToastUtils.showToast(this, message);
             for (Device device : bondedDevices) {
                 if (Device.DEVICE_STATUS_CONNECTING.equals(device.getStatus())) {
                     device.setStatus(Device.DEVICE_STATUS_NOT_CONNECTED);
@@ -221,9 +225,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
     @Override
     public void onObdConnected(Device device) {
-        obdManager.setListener(null);
-        setResult(RESULT_OK);
-        finish();
+
     }
 
     @Override
@@ -238,11 +240,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
 
     @Override
     public void onObdProtocolChanged(String protocol) {
-
-    }
-
-    @Override
-    public void onObdRpmChanged(int rpm) {
 
     }
 

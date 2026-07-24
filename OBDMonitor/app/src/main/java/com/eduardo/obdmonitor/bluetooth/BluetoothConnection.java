@@ -30,7 +30,7 @@ public class BluetoothConnection {
     private static final UUID SERIAL_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     // Tempo máximo de espera pela resposta do dispositivo (ms)
-    private static final long RESPONSE_TIMEOUT = 3000;
+    private static final long RESPONSE_TIMEOUT = 5000;
 
     // Gerenciador da conexão Bluetooth
     private final BluetoothManager bluetoothManager;

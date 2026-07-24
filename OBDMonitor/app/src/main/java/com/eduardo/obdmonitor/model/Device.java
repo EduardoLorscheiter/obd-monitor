@@ -28,6 +28,7 @@ public class Device implements Parcelable {
     private String macAddress;
     private String status;
 
+    @SuppressWarnings("unused")
     public Device() {
     }
 
@@ -66,6 +67,7 @@ public class Device implements Parcelable {
         return macAddress;
     }
 
+    @SuppressWarnings("unused")
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
     }

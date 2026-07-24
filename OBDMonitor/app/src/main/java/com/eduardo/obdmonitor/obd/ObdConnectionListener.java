@@ -1,13 +1,13 @@
 /*
  **===========================================================================
- **  @file    ObdListener.java
+ **  @file    ObdConnectionListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de callbacks utilizada para notificar eventos
- **           relacionados à comunicação com o adaptador OBD-II ELM327 e
- **           com a ECU do veículo.
+ **  @brief   Interface de callbacks responsável por notificar alterações
+ **           no estado da conexão Bluetooth, da comunicação com a ECU
+ **           e dos eventos de inicialização do OBD-II.
  **===========================================================================
  */
 
@@ -15,7 +15,7 @@ package com.eduardo.obdmonitor.obd;
 
 import com.eduardo.obdmonitor.model.Device;
 
-public interface ObdListener {
+public interface ObdConnectionListener {
     /**
      * Chamado quando o OBD-II é conectado.
      *
@@ -44,13 +44,6 @@ public interface ObdListener {
      * @param protocol Nome do protocolo de comunicação utilizado pela ECU do veículo.
      */
     void onObdProtocolChanged(String protocol);
-
-    /**
-     * Chamado quando receber um novo valor de rotação do motor.
-     *
-     * @param rpm Rotação do motor, em RPM.
-     */
-    void onObdRpmChanged(int rpm);
 
     /**
      * Chamado quando ocorre um erro relacionado ao OBD-II.
