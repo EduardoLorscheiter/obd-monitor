@@ -33,10 +33,12 @@ import com.eduardo.obdmonitor.obd.ObdDataListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
+import com.eduardo.obdmonitor.view.ShiftLightView;
 
 public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
     // Componentes da janela da Activity
     private ImageButton btnConnect;
+    private ShiftLightView shiftLight;
     private TextView txtRpm, txtProtocol;
     private View viewBluetooth, viewEcu;
 
@@ -77,6 +79,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      */
     private void initViews() {
         btnConnect = findViewById(R.id.btnConnect);
+        shiftLight = findViewById(R.id.shiftLight);
         txtRpm = findViewById(R.id.txtRpm);
         viewBluetooth = findViewById(R.id.viewBluetooth);
         viewEcu = findViewById(R.id.viewEcu);
@@ -150,7 +153,10 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
     @Override
     public void onObdEngineRpmChanged(int rpm) {
-        runOnUiThread(() -> txtRpm.setText(String.valueOf(rpm)));
+        runOnUiThread(() -> {
+            txtRpm.setText(String.valueOf(rpm));
+            shiftLight.setRpm(rpm);
+        });
     }
 
     @Override

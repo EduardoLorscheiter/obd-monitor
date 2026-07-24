@@ -130,9 +130,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         });
 
         switchBluetooth.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!buttonView.isPressed()) {
+            if (!buttonView.isPressed())
                 return;
-            }
 
             if (isChecked) {
                 bluetoothManager.requestEnableBluetooth(this);

@@ -77,7 +77,7 @@ public class ObdManager {
      * os valores monitorados durante a comunicação.</p>
      *
      * @param connectionListener Listener que receberá os eventos de conexão OBD-II.
-     * @param dataListener Listener que receberá os dados monitorados da ECU.
+     * @param dataListener       Listener que receberá os dados monitorados da ECU.
      */
     public void setListeners(ObdConnectionListener connectionListener,
                              ObdDataListener dataListener) {
