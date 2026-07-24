@@ -113,7 +113,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      * Inicializa os gerenciadores responsáveis pela comunicação Bluetooth e OBD-II.
      */
     private void initConnection() {
-        bluetoothManager = new BluetoothManager(this, this);
+        bluetoothManager = BluetoothManager.getInstance(this);
+        bluetoothManager.setListener(this);
         bluetoothManager.registerReceivers();
         obdManager = ObdManager.getInstance();
         obdManager.setListeners(this, null);
@@ -124,7 +125,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      */
     private void setListeners() {
         btnBack.setOnClickListener(v -> {
-            obdManager.setListeners(null, null);
             setResult(RESULT_OK);
             finish();
         });
@@ -144,7 +144,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                obdManager.setListeners(null, null);
                 setResult(RESULT_OK);
                 finish();
             }
@@ -156,6 +155,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      */
     private void finishConnection() {
         bluetoothManager.unregisterReceivers();
+        bluetoothManager.setListener(null);
+        obdManager.setListeners(null, null);
     }
 
     @Override
@@ -324,12 +325,10 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
         // Cria o TextView do nome do dispositivo Bluetooth
         TextView tvName = getTvName(device.getName());
         verticalLayout.addView(tvName);
-        cardView.setTag(tvName);
 
         // Cria o TextView do status do dispositivo Bluetooth
         TextView tvStatus = getTvStatus(device.getStatus());
         verticalLayout.addView(tvStatus);
-        cardView.setTag(tvStatus);
 
         statusDevices.put(device.getMacAddress(), tvStatus);
 

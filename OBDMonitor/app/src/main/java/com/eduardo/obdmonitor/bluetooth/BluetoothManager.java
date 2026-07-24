@@ -34,28 +34,64 @@ import com.eduardo.obdmonitor.model.Device;
 import java.util.Set;
 
 public class BluetoothManager {
-    // Contexto da aplicação ou Activity
-    private final Context context;
+    // Instância única do gerenciador Bluetooth (Singleton)
+    private static BluetoothManager instance;
+
+    // Contexto global da aplicação utilizado para acessar serviços Android
+    private final Context applicationContext;
 
     // Responsável pela comunicação Bluetooth de baixo nível
     private final BluetoothConnection connection;
 
     // Listener utilizado para reportar eventos Bluetooth à interface
-    private final BluetoothListener listener;
+    private BluetoothListener bluetoothListener;
 
     // Indica se o BroadcastReceiver está registrado
     private boolean receiverRegistered;
 
+    private Device connectedDevice;
+
+    /**
+     * Retorna a instância única do gerenciador Bluetooth.
+     *
+     * <p>O contexto recebido é convertido internamente para o contexto
+     * da aplicação, evitando retenção de referências de Activity.</p>
+     *
+     * @param context Contexto utilizado para obter o contexto da aplicação.
+     * @return Instância única de {@code BluetoothManager}.
+     */
+    public static synchronized BluetoothManager getInstance(Context context) {
+        if (instance == null)
+            instance = new BluetoothManager(context);
+
+        return instance;
+    }
+
     /**
      * Cria uma nova instância do gerenciador Bluetooth.
      *
-     * @param context  Contexto da aplicação ou Activity.
-     * @param listener Listener que receberá eventos do Bluetooth.
+     * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton
+     * não mantenha referência a componentes com ciclo de vida curto, como Activities.</p>
+     *
+     * @param context Contexto utilizado para obter o contexto da aplicação.
      */
-    public BluetoothManager(Context context, BluetoothListener listener) {
-        this.context = context;
-        this.listener = listener;
+    private BluetoothManager(Context context) {
+        this.applicationContext = context.getApplicationContext();
         connection = new BluetoothConnection(this);
+        bluetoothListener = null;
+    }
+
+    /**
+     * Define o listener responsável por receber os eventos do Bluetooth.
+     *
+     * <p>O listener de conexão recebe as alterações de estado do adaptador,
+     * descoberta de dispositivos pareados, conexão, desconexão e erros durante
+     * a comunicação.</p>
+     *
+     * @param bluetoothListener Listener que receberá eventos do Bluetooth.
+     */
+    public void setListener(BluetoothListener bluetoothListener) {
+        this.bluetoothListener = bluetoothListener;
     }
 
     /**
@@ -73,7 +109,7 @@ public class BluetoothManager {
             return;
 
         IntentFilter bluetoothFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        context.registerReceiver(bluetoothReceiver, bluetoothFilter);
+        applicationContext.registerReceiver(bluetoothReceiver, bluetoothFilter);
 
         receiverRegistered = true;
     }
@@ -88,7 +124,7 @@ public class BluetoothManager {
         if (!receiverRegistered)
             return;
 
-        context.unregisterReceiver(bluetoothReceiver);
+        applicationContext.unregisterReceiver(bluetoothReceiver);
 
         receiverRegistered = false;
     }
@@ -144,15 +180,19 @@ public class BluetoothManager {
         Set<BluetoothDevice> bondedBluetoothDevices = bluetoothAdapter.getBondedDevices();
 
         if (bondedBluetoothDevices.isEmpty()) {
-            listener.onBluetoothError("Nenhum dispositivo Bluetooth pareado encontrado!");
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothError("Nenhum dispositivo Bluetooth pareado encontrado!");
             return;
         }
 
         for (BluetoothDevice bluetoothDevice : bondedBluetoothDevices) {
-            Device device = new Device(
-                    bluetoothDevice.getName(),
-                    bluetoothDevice.getAddress());
-            listener.onBluetoothDeviceBondedFound(device);
+            Device device = new Device(bluetoothDevice.getName(), bluetoothDevice.getAddress());
+
+            if (connectedDevice != null && connectedDevice.getMacAddress().equals(device.getMacAddress()))
+                device.setStatus(Device.DEVICE_STATUS_CONNECTED);
+
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothDeviceBondedFound(device);
         }
     }
 
@@ -171,12 +211,14 @@ public class BluetoothManager {
         if (bluetoothAdapter == null)
             return;
 
-        listener.onBluetoothConnecting(device);
+        if (bluetoothListener != null)
+            bluetoothListener.onBluetoothConnecting(device);
 
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
 
         if (bluetoothDevice == null) {
-            listener.onBluetoothError("Dispositivo não encontrado!");
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothError("Dispositivo não encontrado!");
             return;
         }
 
@@ -210,6 +252,9 @@ public class BluetoothManager {
             if (!BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction()))
                 return;
 
+            if (bluetoothListener == null)
+                return;
+
             int state = intent.getIntExtra(
                     BluetoothAdapter.EXTRA_STATE,
                     BluetoothAdapter.ERROR
@@ -217,10 +262,10 @@ public class BluetoothManager {
 
             switch (state) {
                 case BluetoothAdapter.STATE_ON:
-                    listener.onBluetoothEnabled();
+                    bluetoothListener.onBluetoothEnabled();
                     break;
                 case BluetoothAdapter.STATE_OFF:
-                    listener.onBluetoothDisabled();
+                    bluetoothListener.onBluetoothDisabled();
                     break;
             }
         }
@@ -264,7 +309,10 @@ public class BluetoothManager {
      * @param device Dispositivo conectado.
      */
     protected void notifyConnected(Device device) {
-        listener.onBluetoothConnected(device);
+        connectedDevice = device;
+
+        if (bluetoothListener != null)
+            bluetoothListener.onBluetoothConnected(device);
     }
 
     /**
@@ -274,7 +322,10 @@ public class BluetoothManager {
      * @param device Dispositivo desconectado.
      */
     protected void notifyDisconnected(Device device) {
-        listener.onBluetoothDisconnected(device);
+        connectedDevice = null;
+
+        if (bluetoothListener != null)
+            bluetoothListener.onBluetoothDisconnected(device);
     }
 
     /**
@@ -283,7 +334,8 @@ public class BluetoothManager {
      * @param message Mensagem do erro.
      */
     protected void notifyError(String message) {
-        listener.onBluetoothError(message);
+        if (bluetoothListener != null)
+            bluetoothListener.onBluetoothError(message);
     }
 
     /**
@@ -292,23 +344,26 @@ public class BluetoothManager {
      * @return Adaptador Bluetooth válido ou {@code null} caso alguma validação falhe.
      */
     private BluetoothAdapter getBluetoothAdapter() {
-        android.bluetooth.BluetoothManager bluetoothManager =
-                context.getSystemService(android.bluetooth.BluetoothManager.class);
+        android.bluetooth.BluetoothManager systemBluetoothManager =
+                applicationContext.getSystemService(android.bluetooth.BluetoothManager.class);
 
-        if (bluetoothManager == null) {
-            listener.onBluetoothError("Bluetooth não disponível!");
+        if (systemBluetoothManager == null) {
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothError("Bluetooth não disponível!");
             return null;
         }
 
-        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
+        BluetoothAdapter bluetoothAdapter = systemBluetoothManager.getAdapter();
 
         if (bluetoothAdapter == null) {
-            listener.onBluetoothError("Bluetooth não suportado!");
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothError("Bluetooth não suportado!");
             return null;
         }
 
         if (!hasBluetoothPermission()) {
-            listener.onBluetoothError("Permissão Bluetooth não concedida!");
+            if (bluetoothListener != null)
+                bluetoothListener.onBluetoothError("Permissão Bluetooth não concedida!");
             return null;
         }
 
@@ -329,7 +384,7 @@ public class BluetoothManager {
             return true;
 
         return ActivityCompat.checkSelfPermission(
-                context,
+                applicationContext,
                 Manifest.permission.BLUETOOTH_CONNECT)
                 == PackageManager.PERMISSION_GRANTED;
     }

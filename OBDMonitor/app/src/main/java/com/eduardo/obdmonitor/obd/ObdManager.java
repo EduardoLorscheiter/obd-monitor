@@ -59,7 +59,7 @@ public class ObdManager {
     }
 
     /**
-     * Cria uma nova instância do gerenciador do OBD-II.
+     * Cria uma nova instância do gerenciador OBD-II.
      */
     private ObdManager() {
         connectionListener = null;
@@ -100,9 +100,9 @@ public class ObdManager {
      */
     public void connect(Device device, BluetoothManager bluetoothManager) throws InterruptedException {
         this.bluetoothManager = bluetoothManager;
+        bluetoothConnected = true;
 
         if (initializeElm327()) {
-            bluetoothConnected = true;
             ecuConnected = true;
             readProtocol();
             notifyConnectionState();
@@ -377,10 +377,13 @@ public class ObdManager {
      * comunicação com a ECU e protocolo utilizado.</p>
      */
     private void notifyConnectionState() {
-        if (connectionListener != null) {
-            connectionListener.onObdBluetoothStatusChanged(bluetoothConnected);
-            connectionListener.onObdEcuStatusChanged(ecuConnected);
-            connectionListener.onObdProtocolChanged(obdProtocol);
-        }
+        ObdConnectionListener listener = connectionListener;
+
+        if (listener == null)
+            return;
+
+        listener.onObdBluetoothStatusChanged(bluetoothConnected);
+        listener.onObdEcuStatusChanged(ecuConnected);
+        listener.onObdProtocolChanged(obdProtocol);
     }
 }
