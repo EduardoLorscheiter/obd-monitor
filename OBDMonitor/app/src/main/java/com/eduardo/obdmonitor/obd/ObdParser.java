@@ -1,13 +1,13 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdParser.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Responsável por interpretar as respostas retornadas pela ECU
- **           através do protocolo OBD-II.
- **===========================================================================
+ **  @brief   Responsável por interpretar as respostas retornadas pela ECU através do protocolo
+ **           OBD-II.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;
@@ -52,8 +52,8 @@ public final class ObdParser {
     /**
      * Converte a resposta do PID de velocidade do veículo.
      *
-     * <p>O PID {@code 0x0D} retorna um único byte (A), cujo valor
-     * representa diretamente a velocidade em quilômetros por hora.</p>
+     * <p>O PID {@code 0x0D} retorna um único byte (A), cujo valor representa diretamente a
+     * velocidade em quilômetros por hora.</p>
      *
      * <pre>
      * Velocidade (km/h) = A
@@ -85,8 +85,8 @@ public final class ObdParser {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Temperatura do líquido de arrefecimento em ºC ou
-     * {@code 0} caso a resposta seja inválida.
+     * @return Temperatura do líquido de arrefecimento em ºC ou* {@code 0} caso a resposta seja
+     * inválida.
      */
     static int parseEngineCoolantTemperature(String response) {
         String data = getPidData(response, ObdPids.ENGINE_COOLANT_TEMPERATURE, 1);
@@ -131,16 +131,16 @@ public final class ObdParser {
     /**
      * Converte a resposta do PID de pressão absoluta do coletor de admissão (MAP).
      *
-     * <p>O PID {@code 0x0B} retorna um único byte (A), cujo valor
-     * representa diretamente a pressão em quilopascal.</p>
+     * <p>O PID {@code 0x0B} retorna um único byte (A), cujo valor representa diretamente a pressão
+     * em quilopascal.</p>
      *
      * <pre>
      * Pressão (kPa) = A
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Pressão absoluta do coletor de admissão (MAP) em kPa ou
-     * {@code 0} caso a resposta seja inválida.
+     * @return Pressão absoluta do coletor de admissão (MAP) em kPa ou {@code 0} caso a resposta
+     * seja inválida.
      */
     static int parseIntakeManifoldPressure(String response) {
         String data = getPidData(response, ObdPids.INTAKE_MANIFOLD_PRESSURE, 1);
@@ -165,8 +165,8 @@ public final class ObdParser {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Posição absoluta da borboleta de aceleração em % ou
-     * {@code 0} caso a resposta seja inválida.
+     * @return Posição absoluta da borboleta de aceleração em % ou {@code 0} caso a resposta seja
+     * inválida.
      */
     static int parseThrottlePosition(String response) {
         String data = getPidData(response, ObdPids.THROTTLE_POSITION, 1);
@@ -192,8 +192,8 @@ public final class ObdParser {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Tensão de alimentação do módulo de controle em V ou
-     * {@code 0.0} caso a resposta seja inválida.
+     * @return Tensão de alimentação do módulo de controle em V ou {@code 0.0} caso a resposta seja
+     * inválida.
      */
     static double parseControlModuleVoltage(String response) {
         String data = getPidData(response, ObdPids.CONTROL_MODULE_VOLTAGE, 2);
@@ -213,15 +213,14 @@ public final class ObdParser {
     /**
      * Obtém os bytes de dados associados a um PID em uma resposta OBD-II.
      *
-     * <p>Localiza a resposta correspondente ao PID informado e retorna
-     * apenas os bytes de dados, desconsiderando o código da resposta e o
-     * identificador do PID.</p>
+     * <p>Localiza a resposta correspondente ao PID informado e retorna apenas os bytes de dados,
+     * desconsiderando o código da resposta e o identificador do PID.</p>
      *
      * @param response Resposta normalizada recebida do ELM327.
      * @param pid      PID que será localizado na resposta.
      * @param bytes    Quantidade de bytes esperada para o PID.
-     * @return Sequência hexadecimal correspondente aos dados do PID ou
-     * {@code null} caso a resposta seja inválida.
+     * @return Sequência hexadecimal correspondente aos dados do PID ou {@code null} caso a resposta
+     * seja inválida.
      */
     private static String getPidData(String response, String pid, int bytes) {
         int index = response.indexOf(SERVICE_01_RESPONSE + pid);
@@ -241,8 +240,8 @@ public final class ObdParser {
     /**
      * Converte um byte representado em hexadecimal para seu valor inteiro.
      *
-     * <p>O valor informado deve conter exatamente dois caracteres
-     * hexadecimais, por exemplo {@code "0A"}, {@code "7F"} ou {@code "FF"}.</p>
+     * <p>O valor informado deve conter exatamente dois caracteres* hexadecimais, por exemplo
+     * {@code "0A"}, {@code "7F"} ou {@code "FF"}.</p>
      *
      * @param value Byte em formato hexadecimal.
      * @return Valor inteiro correspondente ao byte hexadecimal.

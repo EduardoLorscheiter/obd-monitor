@@ -1,16 +1,14 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    BluetoothManager.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Gerencia as operações Bluetooth da aplicação, incluindo o
- **           monitoramento do estado do adaptador, carregamento de
- **           dispositivos pareados, estabelecimento e encerramento de
- **           conexões, além da comunicação com a interface por meio de
- **           eventos.
- **===========================================================================
+ **  @brief   Gerencia as operações Bluetooth da aplicação, incluindo o monitoramento do estado do
+ **           adaptador, carregamento de dispositivos pareados, estabelecimento e encerramento de
+ **           conexões, além da comunicação com a interface por meio de eventos.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.bluetooth;
@@ -49,13 +47,14 @@ public class BluetoothManager {
     // Indica se o BroadcastReceiver está registrado
     private boolean receiverRegistered;
 
+    // Dispositivo atualmente conectado
     private Device connectedDevice;
 
     /**
      * Retorna a instância única do gerenciador Bluetooth.
      *
-     * <p>O contexto recebido é convertido internamente para o contexto
-     * da aplicação, evitando retenção de referências de Activity.</p>
+     * <p>O contexto recebido é convertido internamente para o contexto da aplicação, evitando
+     * retenção de referências de Activity.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      * @return Instância única de {@code BluetoothManager}.
@@ -70,8 +69,8 @@ public class BluetoothManager {
     /**
      * Cria uma nova instância do gerenciador Bluetooth.
      *
-     * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton
-     * não mantenha referência a componentes com ciclo de vida curto, como Activities.</p>
+     * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
+     * mantenha referência a componentes com ciclo de vida curto, como Activities.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      */
@@ -84,9 +83,8 @@ public class BluetoothManager {
     /**
      * Define o listener responsável por receber os eventos do Bluetooth.
      *
-     * <p>O listener de conexão recebe as alterações de estado do adaptador,
-     * descoberta de dispositivos pareados, conexão, desconexão e erros durante
-     * a comunicação.</p>
+     * <p>O listener de conexão recebe as alterações de estado do adaptador, descoberta de
+     * dispositivos pareados, conexão, desconexão e erros durante a comunicação.</p>
      *
      * @param bluetoothListener Listener que receberá eventos do Bluetooth.
      */
@@ -97,12 +95,11 @@ public class BluetoothManager {
     /**
      * Registra o BroadcastReceiver utilizado pelo gerenciador Bluetooth.
      *
-     * <p>O receptor monitora alterações no estado do adaptador Bluetooth,
-     * permitindo identificar quando o Bluetooth é habilitado ou desabilitado.</p>
+     * <p>O receptor monitora alterações no estado do adaptador Bluetooth, permitindo identificar
+     * quando o Bluetooth é habilitado ou desabilitado.</p>
      *
-     * <p>Deve ser chamado antes de iniciar o monitoramento do Bluetooth e deve
-     * ser acompanhado da chamada do {@link #unregisterReceivers()} quando não
-     * for mais necessário.</p>
+     * <p>Deve ser chamado antes de iniciar o monitoramento do Bluetooth e deve ser acompanhado da
+     * chamada do {@link #unregisterReceivers()} quando não for mais necessário.</p>
      */
     public void registerReceivers() {
         if (receiverRegistered)
@@ -117,8 +114,8 @@ public class BluetoothManager {
     /**
      * Remove os BroadcastReceivers previamente registrados.
      *
-     * <p>Deve ser chamado quando o componente responsável pelo Bluetooth for finalizado,
-     * evitando vazamentos de memória e registros duplicados dos receptores.</p>
+     * <p>Deve ser chamado quando o componente responsável pelo Bluetooth for finalizado, evitando
+     * vazamentos de memória e registros duplicados dos receptores.</p>
      */
     public void unregisterReceivers() {
         if (!receiverRegistered)
@@ -132,8 +129,8 @@ public class BluetoothManager {
     /**
      * Verifica se o Bluetooth do dispositivo está ativado.
      *
-     * @return {@code true} caso o Bluetooth esteja disponível e ativado,
-     * {@code false} caso contrário.
+     * @return {@code true} caso o Bluetooth esteja disponível e ativado, {@code false} caso
+     * contrário.
      */
     @SuppressLint("MissingPermission")
     public boolean isBluetoothEnabled() {
@@ -144,8 +141,8 @@ public class BluetoothManager {
     /**
      * Solicita ao sistema a ativação do Bluetooth através da interface de confirmação do usuário.
      *
-     * <p>Se o dispositivo não possuir suporte a Bluetooth ou ocorrer alguma
-     * falha ao obter o adaptador Bluetooth, a solicitação não será realizada.</p>
+     * <p>Se o dispositivo não possuir suporte a Bluetooth ou ocorrer alguma falha ao obter o
+     * adaptador Bluetooth, a solicitação não será realizada.</p>
      *
      * <p>Quando o Bluetooth já estiver ativado, nenhum diálogo é exibido.</p>
      *
@@ -167,8 +164,8 @@ public class BluetoothManager {
     /**
      * Carrega os dispositivos Bluetooth previamente pareados com o sistema.
      *
-     * <p>Cada dispositivo encontrado é convertido para o modelo da aplicação
-     * e enviado ao listener através de callback.</p>
+     * <p>Cada dispositivo encontrado é convertido para o modelo da aplicação e enviado ao listener
+     * através de callback.</p>
      */
     @SuppressLint("MissingPermission")
     public void loadBondedDevices() {
@@ -199,8 +196,8 @@ public class BluetoothManager {
     /**
      * Inicia uma conexão Bluetooth com um dispositivo previamente pareado.
      *
-     * <p>A conexão é realizada em segundo plano e os resultados são enviados
-     * através dos callbacks do {@link BluetoothListener}.</p>
+     * <p>A conexão é realizada em segundo plano e os resultados são enviados através dos callbacks
+     * do {@link BluetoothListener}.</p>
      *
      * @param device Dispositivo Bluetooth alvo da conexão.
      */
@@ -274,8 +271,8 @@ public class BluetoothManager {
     /**
      * Envia um comando ao dispositivo Bluetooth conectado.
      *
-     * <p>Utilizado para comunicação com dispositivos que utilizam
-     * comunicação serial Bluetooth, como adaptadores OBD-II ELM327.</p>
+     * <p>Utilizado para comunicação com dispositivos que utilizam comunicação serial Bluetooth,
+     * como adaptadores OBD-II ELM327.</p>
      *
      * @param command Comando a ser enviado.
      * @return Resposta recebida do dispositivo ou {@code null} caso ocorra erro.
@@ -290,9 +287,8 @@ public class BluetoothManager {
     /**
      * Cancela uma eventual descoberta de dispositivos Bluetooth em andamento.
      *
-     * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de
-     * busca pode reduzir significativamente o desempenho ou até impedir o
-     * estabelecimento da conexão Bluetooth.</p>
+     * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de* busca pode reduzir
+     * significativamente o desempenho ou até impedir o estabelecimento da conexão Bluetooth.</p>
      */
     @SuppressLint("MissingPermission")
     protected void cancelDiscovery() {
@@ -303,8 +299,8 @@ public class BluetoothManager {
     }
 
     /**
-     * Encaminha ao listener a notificação de que a conexão
-     * com o dispositivo Bluetooth foi estabelecida.
+     * Encaminha ao listener a notificação de que a conexão com o dispositivo Bluetooth foi
+     * estabelecida.
      *
      * @param device Dispositivo conectado.
      */
@@ -316,8 +312,8 @@ public class BluetoothManager {
     }
 
     /**
-     * Encaminha ao listener a notificação de que a conexão
-     * com o dispositivo Bluetooth foi encerrada.
+     * Encaminha ao listener a notificação de que a conexão com o dispositivo Bluetooth foi
+     * encerrada.
      *
      * @param device Dispositivo desconectado.
      */
@@ -373,9 +369,8 @@ public class BluetoothManager {
     /**
      * Verifica se o aplicativo possui permissão para operações Bluetooth.
      *
-     * <p>Em versões anteriores ao Android 12 (API 31) a permissão BLUETOOTH_CONNECT
-     * não é necessária. Em Android 12 (API 31) ou superior, a permissão é validada
-     * explicitamente.</p>
+     * <p>Em versões anteriores ao Android 12 (API 31) a permissão {@code BLUETOOTH_CONNECT} não é
+     * necessária. Em Android 12 (API 31) ou superior, a permissão é validada explicitamente.</p>
      *
      * @return {@code true} se a permissão estiver concedida, {@code false} caso contrário.
      */

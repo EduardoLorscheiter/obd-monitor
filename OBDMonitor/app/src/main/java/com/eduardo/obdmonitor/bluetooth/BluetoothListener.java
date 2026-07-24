@@ -1,14 +1,13 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    BluetoothListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de callbacks utilizada para notificar eventos
- **           relacionados ao estado do Bluetooth e à conexão com dispositivos
- **           remotos.
- **===========================================================================
+ **  @brief   Interface de callbacks utilizada para notificar eventos relacionados ao estado do
+ **           Bluetooth e à conexão com dispositivos remotos.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.bluetooth;

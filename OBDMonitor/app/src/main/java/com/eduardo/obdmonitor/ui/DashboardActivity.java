@@ -1,12 +1,12 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    DashboardActivity.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
  **  @brief   OBDMonitor
- **===========================================================================
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.ui;
@@ -74,8 +74,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     /**
      * Inicializa os componentes visuais da Activity.
      *
-     * <p>Realiza a associação entre os elementos da interface e seus respectivos
-     * componentes declarados no layout.</p>
+     * <p>Realiza a associação entre os elementos da interface e seus respectivos componentes
+     * declarados no layout.</p>
      */
     private void initViews() {
         btnConnect = findViewById(R.id.btnConnect);

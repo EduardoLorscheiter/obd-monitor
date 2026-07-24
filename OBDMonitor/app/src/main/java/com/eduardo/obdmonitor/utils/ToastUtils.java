@@ -1,12 +1,14 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ToastUtils.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   OBDMonitor
- **===========================================================================
+ **  @brief   Classe utilitária responsável por exibir mensagens Toast personalizadas, aplicando
+ **           automaticamente as cores do tema atual e evitando a sobreposição de múltiplas
+ **           notificações.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.utils;
@@ -19,7 +21,10 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.R;
+
 public class ToastUtils {
+    // Referência para o Toast atual
     private static Toast currentToast;
 
     public static void showToast(Activity activity, String text) {
@@ -38,13 +43,13 @@ public class ToastUtils {
             Drawable background = toastView.getBackground();
 
             // Define a cor de fundo de acordo com o tema atual
-            int backgroundColor = ViewUtils.getThemeAttrColor(activity, com.google.android.material.R.attr.colorSurface);
+            int backgroundColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorSurface);
             background.setColorFilter(new BlendModeColorFilter(backgroundColor, BlendMode.SRC_IN));
             toastView.setBackground(background);
 
             // Define a cor do texto de acordo com o tema atual
             TextView toastText = toastView.findViewById(android.R.id.message);
-            int textColor = ViewUtils.getThemeAttrColor(activity, com.google.android.material.R.attr.colorOnSurface);
+            int textColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorOnSurface);
             toastText.setTextColor(textColor);
         }
 

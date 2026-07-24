@@ -1,14 +1,13 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdConnectionListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de callbacks responsável por notificar alterações
- **           no estado da conexão Bluetooth, da comunicação com a ECU
- **           e dos eventos de inicialização do OBD-II.
- **===========================================================================
+ **  @brief   Interface de callbacks responsável por notificar alterações no estado da conexão
+ **           Bluetooth, da comunicação com a ECU e dos eventos de inicialização do OBD-II.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;
@@ -31,8 +30,8 @@ public interface ObdConnectionListener {
     void onObdBluetoothStatusChanged(boolean bluetoothConnected);
 
     /**
-     * Chamado quando houver alterações no estado da comunicação entre o adaptador ELM327 e
-     * a ECU do veículo.
+     * Chamado quando houver alterações no estado da comunicação entre o adaptador ELM327 e a ECU do
+     * veículo.
      *
      * @param ecuConnected Indica se a comunicação com a ECU foi estabelecida com sucesso.
      */

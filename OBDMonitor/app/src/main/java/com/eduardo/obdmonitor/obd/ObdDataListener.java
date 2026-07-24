@@ -1,14 +1,13 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdDataListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de callbacks responsável por notificar os valores
- **           dos parâmetros monitorados da ECU, como RPM, velocidade,
- **           temperatura e demais PIDs OBD-II.
- **===========================================================================
+ **  @brief   Interface de callbacks responsável por notificar os valores dos parâmetros monitorados
+ **           da ECU, como RPM, velocidade, temperatura e demais PIDs OBD-II.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;

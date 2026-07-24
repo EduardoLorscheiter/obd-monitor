@@ -1,19 +1,18 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ShiftLightView.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Componente gráfico responsável por exibir uma Shift Light
- **           dinâmica baseada na rotação do motor (RPM).
- **  @details A barra é composta por LEDs desenhados em Canvas, que acendem
- **           progressivamente conforme o aumento da rotação do motor,
- **           alterando sua coloração de verde para amarelo, laranja e
- **           vermelho. Além disso, os LEDs possuem altura crescente,
- **           proporcionando um efeito visual semelhante aos painéis de
- **           gerenciamento eletrônico de motores (ECUs), como FuelTech.
- **===========================================================================
+ **  @brief   Componente gráfico responsável por exibir uma Shift Light dinâmica baseada na rotação
+ **           do motor (RPM).
+ **  @details A barra é composta por LEDs desenhados em Canvas, que acendem progressivamente
+ **           conforme o aumento da rotação do motor, alterando sua coloração de verde para amarelo,
+ **           laranja e vermelho. Além disso, os LEDs possuem altura crescente, proporcionando um
+ **           efeito visual semelhante aos painéis de gerenciamento eletrônico de motores (ECUs),
+ **           como FuelTech.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.view;
@@ -73,8 +72,8 @@ public class ShiftLightView extends View {
     /**
      * Inicializa os recursos necessários para a View.
      *
-     * <p>Pode ser utilizado para configuração de atributos customizados, carregamento
-     * de recursos ou inicialização de objetos utilizados pela Shift Light.</p>
+     * <p>Pode ser utilizado para configuração de atributos customizados, carregamento de recursos
+     * ou inicialização de objetos utilizados pela Shift Light.</p>
      */
     private void init() {
 
@@ -83,8 +82,8 @@ public class ShiftLightView extends View {
     /**
      * Atualiza o valor da rotação do motor (RPM) exibido pela Shift Light.
      *
-     * <p>Após atualizar o RPM, solicita o redesenho da View para refletir
-     * imediatamente o novo estado da barra.</p>
+     * <p>Após atualizar o RPM, solicita o redesenho da View para refletir imediatamente o novo
+     * estado da barra.</p>
      *
      * @param rpm Rotação atual do motor, em RPM.
      */
@@ -96,10 +95,10 @@ public class ShiftLightView extends View {
     /**
      * Desenha a barra da Shift Light.
      *
-     * <p>Os LEDs são desenhados horizontalmente, aumentando sua altura de forma progressiva
-     * da esquerda para a direita. Conforme o RPM aumenta, novos LEDs são acesos, alterando
-     * sua coloração entre verde, amarelo, laranja e vermelho. LEDs ainda não ativos permanecem
-     * na cor cinza escuro.</p>
+     * <p>Os LEDs são desenhados horizontalmente, aumentando sua altura de forma progressiva da
+     * esquerda para a direita. Conforme o RPM aumenta, novos LEDs são acesos, alterando sua
+     * coloração entre verde, amarelo, laranja e vermelho. LEDs ainda não ativos permanecem na cor
+     * cinza escuro.</p>
      *
      * @param canvas Canvas utilizado para renderização da View.
      */
@@ -151,7 +150,6 @@ public class ShiftLightView extends View {
                 } else {
                     paint.setColor(getContext().getColor(R.color.led_red));
                 }
-
             } else {
                 // LEDs ainda não atingidos pelo RPM permanecem apagados
                 paint.setColor(getContext().getColor(R.color.led_off));
@@ -172,12 +170,12 @@ public class ShiftLightView extends View {
     }
 
     /**
-     * Desenha um único LED utilizando um gradiente vertical para simular
-     * profundidade e efeito de iluminação.
+     * Desenha um único LED utilizando um gradiente vertical para simular profundidade e efeito de
+     * iluminação.
      *
-     * <p>O gradiente é composto por uma tonalidade mais clara na parte superior
-     * e outra mais escura na parte inferior, proporcionando um aspecto semelhante
-     * ao de LEDs encontrados em painéis automotivos.</p>
+     * <p>O gradiente é composto por uma tonalidade mais clara na parte superior e outra mais escura
+     * na parte inferior, proporcionando um aspecto semelhante ao de LEDs encontrados em painéis
+     * automotivos.</p>
      *
      * @param canvas Canvas utilizado para renderização.
      * @param left   Coordenada horizontal esquerda do LED.

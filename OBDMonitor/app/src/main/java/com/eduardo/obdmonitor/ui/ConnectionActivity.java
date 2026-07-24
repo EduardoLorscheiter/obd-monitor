@@ -1,18 +1,16 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ConnectionActivity.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador
- **           OBD-II ELM327.
- **  @details Esta Activity permite ao usuário verificar o estado do Bluetooth,
- **           visualizar dispositivos pareados, estabelecer conexão com o
- **           adaptador OBD-II e iniciar a comunicação com a ECU do veículo.
- **           Também realiza o controle visual dos estados de conexão e erros
- **           durante o processo de comunicação.
- **===========================================================================
+ **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador OBD-II ELM327.
+ **  @details Esta Activity permite ao usuário verificar o estado do Bluetooth, visualizar
+ **           dispositivos pareados, estabelecer conexão com o adaptador OBD-II e iniciar a
+ **           comunicação com a ECU do veículo. Também realiza o controle visual dos estados de
+ **           conexão e erros durante o processo de comunicação.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.ui;
@@ -96,8 +94,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     /**
      * Inicializa os componentes visuais da Activity.
      *
-     * <p>Realiza a associação entre os elementos da interface e seus respectivos
-     * componentes declarados no layout.</p>
+     * <p>Realiza a associação entre os elementos da interface e seus respectivos componentes
+     * declarados no layout.</p>
      */
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
@@ -262,8 +260,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Limpa a lista de dispositivos e solicita novamente os dispositivos
-     * Bluetooth pareados ao sistema.
+     * Limpa a lista de dispositivos e solicita novamente os dispositivos Bluetooth pareados ao
+     * sistema.
      */
     private void loadDevices() {
         cleanDevices();
@@ -271,8 +269,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Remove todos os dispositivos armazenados e limpa os componentes
-     * visuais responsáveis por exibi-los na interface.
+     * Remove todos os dispositivos armazenados e limpa os componentes visuais responsáveis por
+     * exibi-los na interface.
      */
     private void cleanDevices() {
         bondedDevices.clear();
@@ -305,8 +303,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Adiciona um dispositivo Bluetooth à interface e configura sua ação de
-     * conexão ou desconexão quando selecionado pelo usuário.
+     * Adiciona um dispositivo Bluetooth à interface e configura sua ação de conexão ou desconexão
+     * quando selecionado pelo usuário.
      *
      * @param device    Dispositivo Bluetooth.
      * @param list      Lista onde o dispositivo será armazenado.
@@ -351,8 +349,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Cria e configura o CardView utilizado para representar um dispositivo
-     * Bluetooth na interface.
+     * Cria e configura o CardView utilizado para representar um dispositivo Bluetooth na interface.
      *
      * @return CardView configurado.
      */
@@ -374,8 +371,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Cria o layout vertical utilizado para organizar o nome e o status
-     * do dispositivo Bluetooth.
+     * Cria o layout vertical utilizado para organizar o nome e o status do dispositivo Bluetooth.
      *
      * @return Layout configurado.
      */
@@ -433,8 +429,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     /**
-     * Configura o texto e a aparência visual do componente responsável por
-     * exibir o status de um dispositivo Bluetooth.
+     * Configura o texto e a aparência visual do componente responsável por exibir o status de um
+     * dispositivo Bluetooth.
      *
      * @param tvStatus Componente que exibirá o status.
      * @param status   Novo status do dispositivo.

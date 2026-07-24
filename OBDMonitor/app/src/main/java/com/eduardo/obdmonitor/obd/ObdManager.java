@@ -1,14 +1,13 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdManager.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Gerencia a comunicação entre a aplicação, o adaptador
- **           ELM327 e a ECU do veículo, realizando a inicialização,
- **           monitoramento e leitura dos dados OBD-II.
- **===========================================================================
+ **  @brief   Gerencia a comunicação entre a aplicação, o adaptador ELM327 e a ECU do veículo,
+ **           realizando a inicialização, monitoramento e leitura dos dados OBD-II.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;
@@ -72,9 +71,9 @@ public class ObdManager {
     /**
      * Define os listeners responsáveis por receber os eventos da comunicação OBD-II.
      *
-     * <p>O listener de conexão recebe as alterações de estado da comunicação
-     * com o adaptador ELM327 e a ECU, enquanto o listener de dados recebe
-     * os valores monitorados durante a comunicação.</p>
+     * <p>O listener de conexão recebe as alterações de estado da comunicação com o adaptador ELM327
+     * e a ECU, enquanto o listener de dados recebe os valores monitorados durante a comunicação.
+     * </p>
      *
      * @param connectionListener Listener que receberá os eventos de conexão OBD-II.
      * @param dataListener       Listener que receberá os dados monitorados da ECU.
@@ -88,11 +87,11 @@ public class ObdManager {
     }
 
     /**
-     * Inicializa a comunicação com o adaptador ELM327 e estabelece
-     * a comunicação com a ECU do veículo.
+     * Inicializa a comunicação com o adaptador ELM327 e estabelece a comunicação com a ECU do
+     * veículo.
      *
-     * <p>Caso a inicialização seja concluída com sucesso, o monitoramento
-     * contínuo dos dados da ECU é iniciado automaticamente.</p>
+     * <p>Caso a inicialização seja concluída com sucesso, o monitoramento contínuo dos dados da ECU
+     * é iniciado automaticamente.</p>
      *
      * @param device           Dispositivo OBD-II conectado.
      * @param bluetoothManager Gerenciador responsável pela comunicação Bluetooth.
@@ -139,16 +138,16 @@ public class ObdManager {
     /**
      * Inicializa o adaptador ELM327.
      *
-     * <p>Durante a inicialização são enviados os comandos AT necessários
-     * para configurar o adaptador antes da comunicação com a ECU.</p>
+     * <p>Durante a inicialização são enviados os comandos AT necessários para configurar o
+     * adaptador antes da comunicação com a ECU.</p>
      *
-     * <p>Ao final, é realizada uma leitura dos PIDs suportados para validar
-     * a comunicação com o veículo.</p>
+     * <p>Ao final, é realizada uma leitura dos PIDs suportados para validar a comunicação com o
+     * veículo.</p>
      *
-     * @return {@code true} caso a inicialização seja concluída com sucesso,
-     * {@code false} caso contrário.
-     * @throws InterruptedException Caso a thread seja interrompida durante
-     *                              o tempo de espera entre os comandos de inicialização.
+     * @return {@code true} caso a inicialização seja concluída com sucesso, {@code false} caso
+     * contrário.
+     * @throws InterruptedException Caso a thread seja interrompida durante o tempo de espera entre
+     *                              os comandos de inicialização.
      */
     private boolean initializeElm327() throws InterruptedException {
         if (!sendCommandOk(Elm327Commands.RESET)) return false;
@@ -184,8 +183,8 @@ public class ObdManager {
     /**
      * Inicia o monitoramento contínuo dos dados da ECU.
      *
-     * <p>Enquanto o monitoramento estiver ativo, uma thread realiza leituras periódicas
-     * da ECU e notifica o listener responsável pelos dados monitorados.</p>
+     * <p>Enquanto o monitoramento estiver ativo, uma thread realiza leituras periódicas da ECU e
+     * notifica o listener responsável pelos dados monitorados.</p>
      *
      * <p>O monitoramento é executado em uma thread dedicada.</p>
      */
@@ -241,8 +240,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da rotação do motor (RPM).
      *
-     * @return Valor da rotação do motor em RPM ou zero caso não seja
-     * possível obter uma resposta válida.
+     * @return Valor da rotação do motor em RPM ou zero caso não seja possível obter uma resposta
+     * válida.
      */
     private int readEngineRpm() {
         String response = executeElm327Command(ObdCommands.ENGINE_RPM);
@@ -252,8 +251,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da velocidade atual do veículo.
      *
-     * @return Velocidade do veículo em km/h ou {@code 0} caso não seja
-     * possível obter uma resposta válida.
+     * @return Velocidade do veículo em km/h ou {@code 0} caso não seja possível obter uma resposta
+     * válida.
      */
     private int readVehicleSpeed() {
         String response = executeElm327Command(ObdCommands.VEHICLE_SPEED);
@@ -263,8 +262,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da temperatura do líquido de arrefecimento do motor.
      *
-     * @return Temperatura do líquido de arrefecimento em °C ou
-     * {@code 0} caso não seja possível obter uma resposta válida.
+     * @return Temperatura do líquido de arrefecimento em °C ou {@code 0} caso não seja possível
+     * obter uma resposta válida.
      */
     private int readEngineCoolantTemperature() {
         String response = executeElm327Command(ObdCommands.ENGINE_COOLANT_TEMPERATURE);
@@ -274,8 +273,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da temperatura do ar admitido pelo motor.
      *
-     * @return Temperatura do ar admitido em °C ou {@code 0}
-     * caso não seja possível obter uma resposta válida.
+     * @return Temperatura do ar admitido em °C ou {@code 0} caso não seja possível obter uma
+     * resposta válida.
      */
     private int readIntakeAirTemperature() {
         String response = executeElm327Command(ObdCommands.INTAKE_AIR_TEMPERATURE);
@@ -285,8 +284,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da pressão absoluta do coletor de admissão (MAP).
      *
-     * @return Pressão absoluta do coletor de admissão em kPa ou
-     * {@code 0} caso não seja possível obter uma resposta válida.
+     * @return Pressão absoluta do coletor de admissão em kPa ou {@code 0} caso não seja possível
+     * obter uma resposta válida.
      */
     private int readIntakeManifoldPressure() {
         String response = executeElm327Command(ObdCommands.INTAKE_MANIFOLD_PRESSURE);
@@ -296,8 +295,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da posição absoluta da borboleta de aceleração.
      *
-     * @return Posição da borboleta em porcentagem (%) ou
-     * {@code 0} caso não seja possível obter uma resposta válida.
+     * @return Posição da borboleta em porcentagem (%) ou {@code 0} caso não seja possível obter uma
+     * resposta válida.
      */
     private int readThrottlePosition() {
         String response = executeElm327Command(ObdCommands.THROTTLE_POSITION);
@@ -307,8 +306,8 @@ public class ObdManager {
     /**
      * Realiza a leitura da tensão de alimentação do módulo de controle (ECU).
      *
-     * @return Tensão de alimentação da ECU em volts (V) ou
-     * {@code 0} caso não seja possível obter uma resposta válida.
+     * @return Tensão de alimentação da ECU em volts (V) ou {@code 0} caso não seja possível obter
+     * uma resposta válida.
      */
     private double readControlModuleVoltage() {
         String response = executeElm327Command(ObdCommands.CONTROL_MODULE_VOLTAGE);
@@ -318,12 +317,12 @@ public class ObdManager {
     /**
      * Envia um comando ao ELM327 e retorna sua resposta.
      *
-     * <p>O caractere de retorno de carro ('\r') é acrescentado automaticamente
-     * ao final do comando antes do envio.</p>
+     * <p>O caractere de retorno de carro ('\r') é acrescentado automaticamente ao final do comando
+     * antes do envio.</p>
      *
      * <p>A resposta retornada é normalizada antes de ser entregue ao chamador.</p>
      *
-     * @param command Comando a ser enviado
+     * @param command Comando a ser enviado.
      * @return Resposta retornada pelo ELM327 ou {@code null} em caso de falha.
      */
     private String executeElm327Command(String command) {
@@ -341,9 +340,8 @@ public class ObdManager {
     /**
      * Normaliza uma resposta recebida do ELM327.
      *
-     * <p>Remove o prompt de término ('>'), quebras de linha, espaços
-     * excedentes e converte todos os caracteres para letras maiúsculas,
-     * facilitando o processamento da resposta.</p>
+     * <p>Remove o prompt de término ('>'), quebras de linha, espaços excedentes e converte todos os
+     * caracteres para letras maiúsculas, facilitando o processamento da resposta.</p>
      *
      * @param response Resposta recebida do ELM327.
      * @return Resposta normalizada.
@@ -373,8 +371,8 @@ public class ObdManager {
     /**
      * Notifica o listener da conexão com o estado atual da conexão OBD-II.
      *
-     * <p>São notificadas as informações de conexão Bluetooth,
-     * comunicação com a ECU e protocolo utilizado.</p>
+     * <p>São notificadas as informações de conexão Bluetooth, comunicação com a ECU e protocolo
+     * utilizado.</p>
      */
     private void notifyConnectionState() {
         ObdConnectionListener listener = connectionListener;

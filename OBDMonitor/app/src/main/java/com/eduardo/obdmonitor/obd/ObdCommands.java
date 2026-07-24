@@ -1,15 +1,15 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdCommands.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Define os comandos OBD-II utilizados para consulta de parâmetros
- **           da ECU (Engine Control Unit).
- **  @details Os comandos desta classe utilizam o Modo de Serviço 01,
- **           responsável pela leitura de dados em tempo real do veículo.
- **===========================================================================
+ **  @brief   Define os comandos OBD-II utilizados para consulta de parâmetros da ECU (Engine
+ **           Control Unit).
+ **  @details Os comandos desta classe utilizam o Modo de Serviço 01, responsável pela leitura de
+ **           dados em tempo real do veículo.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;
@@ -27,8 +27,8 @@ public final class ObdCommands {
     /**
      * PID {@code 0x00} - Indica os PIDs suportados pela ECU no intervalo de 0x01 a 0x20.
      *
-     * <p>Normalmente utilizado para validar a comunicação com a ECU
-     * antes da leitura dos demais parâmetros.</p>
+     * <p>Normalmente utilizado para validar a comunicação com a ECU antes da leitura dos demais
+     * parâmetros.</p>
      *
      * <p>Resposta: 41 00 AA BB CC DD</p>
      * <p>Cada bit representa um PID suportado.</p>

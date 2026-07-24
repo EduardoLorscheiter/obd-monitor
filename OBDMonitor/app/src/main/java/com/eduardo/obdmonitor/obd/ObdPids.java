@@ -1,14 +1,14 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    ObdPids.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
  **  @brief   Define os Parameter IDs (PIDs) utilizados pelo protocolo OBD-II.
- **  @details Cada PID identifica um parâmetro da ECU que pode ser consultado
- **           através do Modo de Serviço 01 do protocolo OBD-II.
- **===========================================================================
+ **  @details Cada PID identifica um parâmetro da ECU que pode ser consultado através do Modo de
+ **           Serviço 01 do protocolo OBD-II.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.obd;

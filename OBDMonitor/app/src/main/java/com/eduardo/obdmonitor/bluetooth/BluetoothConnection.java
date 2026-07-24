@@ -1,15 +1,14 @@
 /*
- **===========================================================================
+ **=================================================================================================
  **  @file    BluetoothConnection.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
  **  @version 1.0
- **  @brief   Gerencia a conexão Bluetooth com um dispositivo remoto,
- **           realizando o estabelecimento e encerramento da conexão, além do
- **           envio de comandos e gerenciamento do socket e dos fluxos de
- **           comunicação.
- **===========================================================================
+ **  @brief   Gerencia a conexão Bluetooth com um dispositivo remoto, realizando o estabelecimento e
+ **           encerramento da conexão, além do envio de comandos e gerenciamento do socket e dos
+ **           fluxos de comunicação.
+ **=================================================================================================
  */
 
 package com.eduardo.obdmonitor.bluetooth;
@@ -143,9 +142,8 @@ public class BluetoothConnection {
     /**
      * Lê a resposta enviada pelo dispositivo Bluetooth.
      *
-     * <p>A leitura é encerrada quando o adaptador ELM327 envia o caractere
-     * {@code '>'}, indicando que terminou o processamento do comando, ou quando
-     * o tempo limite de espera é atingido.</p>
+     * <p>A leitura é encerrada quando o adaptador ELM327 envia o caractere {@code '>'}, indicando
+     * que terminou o processamento do comando, ou quando o tempo limite de espera é atingido.</p>
      *
      * @return Resposta recebida do dispositivo.
      * @throws IOException Caso ocorra erro durante a leitura.
@@ -156,8 +154,8 @@ public class BluetoothConnection {
         // Define o instante máximo para aguardar a resposta
         long timeout = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
-        // Lê os dados recebidos até encontrar o caractere de término
-        // ('>') ou até que o tempo limite seja atingido
+        // Lê os dados recebidos até encontrar o caractere de término ('>') ou até que o tempo
+        // limite seja atingido
         while (System.currentTimeMillis() < timeout) {
             // Lê um byte do fluxo de entrada
             int data = inputStream.read();
@@ -168,8 +166,8 @@ public class BluetoothConnection {
 
             char receivedChar = (char) data;
 
-            // O ELM327 utiliza o caractere '>' para indicar que finalizou
-            // o processamento do comando
+            // O ELM327 utiliza o caractere '>' para indicar que finalizou o processamento do
+            // comando
             if (receivedChar == '>')
                 break;
 
