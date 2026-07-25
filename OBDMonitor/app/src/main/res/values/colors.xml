@@ -8,6 +8,7 @@
     <color name="ios_grey">#A1A1A6</color>
     <color name="white">#FFFFFF</color>
     <color name="green">#388E3C</color>
+    <color name="automotive_green">@android:color/holo_green_light</color>
     <color name="red">#B00020</color>
     <color name="light_red">#8E343C</color>
     <color name="dark_red">#280000</color>

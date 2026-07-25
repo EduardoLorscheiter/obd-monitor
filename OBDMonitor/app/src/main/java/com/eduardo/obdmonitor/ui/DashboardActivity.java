@@ -41,7 +41,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private MetricCardView cardRpm, cardSpeed;
+    private MetricCardView cardSpeed;
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu;
 
@@ -82,10 +82,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initViews() {
         btnConnect = findViewById(R.id.btnConnect);
         shiftLight = findViewById(R.id.shiftLight);
-        cardRpm = findViewById(R.id.cardRpm);
-        cardRpm.setTitle("RPM");
-        cardRpm.setValue("0");
-        cardRpm.setUnit("rpm");
         cardSpeed = findViewById(R.id.cardSpeed);
         cardSpeed.setTitle("Velocidade");
         cardSpeed.setValue("0");
@@ -164,17 +160,12 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
     @Override
     public void onObdEngineRpmChanged(int rpm) {
-        runOnUiThread(() -> {
-            cardRpm.setValue(String.valueOf(rpm));
-            shiftLight.setRpm(rpm);
-        });
+        runOnUiThread(() -> shiftLight.setRpm(rpm));
     }
 
     @Override
     public void onObdVehicleSpeedChanged(int speed) {
-        runOnUiThread(() -> {
-            cardSpeed.setValue(String.valueOf(speed));
-        });
+        runOnUiThread(() -> cardSpeed.setValue(String.valueOf(speed)));
     }
 
     @Override
