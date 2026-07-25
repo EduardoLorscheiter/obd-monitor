@@ -18,6 +18,7 @@
     <!-- Cores para 'led' -->
     <color name="led_off">#2E2E2E</color>
     <color name="led_green">#00FF00</color>
+    <color name="led_lime">#AEEA00</color>
     <color name="led_yellow">#FFFF00</color>
     <color name="led_orange">#FF7A00</color>
     <color name="led_red">#FF0000</color>

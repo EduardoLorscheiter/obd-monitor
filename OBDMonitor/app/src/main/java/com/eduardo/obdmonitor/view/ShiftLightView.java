@@ -17,6 +17,7 @@
 
 package com.eduardo.obdmonitor.view;
 
+import android.animation.ArgbEvaluator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
@@ -30,6 +31,12 @@ import androidx.annotation.NonNull;
 import com.eduardo.obdmonitor.R;
 
 public class ShiftLightView extends View {
+    // Altura reservada para a escala superior
+    private static final float SCALE_HEIGHT_FACTOR = 0.18f;
+
+    // Tamanho do texto
+    private static final float SCALE_TEXT_SIZE = 34f;
+
     // Rotação máxima considerada para acendimento completo da barra
     private static final int MAX_RPM = 7000;
 
@@ -48,8 +55,15 @@ public class ShiftLightView extends View {
     // Proporção do último LED em relação a altura total
     private static final float MAX_LED_HEIGHT_FACTOR = 0.95f;
 
+    // Objeto utilizado para desenhar a barra de escala da Shift Light
+    private final Paint scalePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     // Objeto utilizado para desenhar os LEDs da Shift Light
-    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint ledsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    // Responsável por interpolar suavemente as cores entre os diferentes estágios da Shift Light,
+    // evitando transições bruscas entre os LEDs
+    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
 
     // Rotação do motor (RPM) atual
     private int rpm = 0;
@@ -76,7 +90,9 @@ public class ShiftLightView extends View {
      * ou inicialização de objetos utilizados pela Shift Light.</p>
      */
     private void init() {
-
+        scalePaint.setColor(getContext().getColor(android.R.color.white));
+        scalePaint.setTextSize(SCALE_TEXT_SIZE);
+        scalePaint.setTextAlign(Paint.Align.CENTER);
     }
 
     /**
@@ -110,19 +126,26 @@ public class ShiftLightView extends View {
         float width = getWidth();
         float height = getHeight();
 
+        // Calcula a altura proporcional para desenhar a escala e para desenhar os LEDs
+        float scaleHeight = height * SCALE_HEIGHT_FACTOR;
+        float ledsHeight = height - scaleHeight;
+
         // Calcula a largura individual de cada LED considerando os espaçamentos
         float totalSpacing = (LED_COUNT - 1) * LED_SPACING;
         float ledWidth = (width - totalSpacing) / LED_COUNT;
 
+        // Desenha a barra de escala
+        drawScale(canvas, width, scaleHeight, ledWidth);
+
         // Encontra a quantidade de LEDs que devem permanecer acesos conforme o RPM atual
         int ledsOn = rpm * LED_COUNT / MAX_RPM;
 
-        // Posição horizontal inicial
+        // Posição horizontal inicial para desenhar os LEDs
         float x = 0;
 
         // Alturas mínima e máxima dos LEDs
-        float minHeight = height * MIN_LED_HEIGHT_FACTOR;
-        float maxHeight = height * MAX_LED_HEIGHT_FACTOR;
+        float minHeight = ledsHeight * MIN_LED_HEIGHT_FACTOR;
+        float maxHeight = ledsHeight * MAX_LED_HEIGHT_FACTOR;
 
         for (int led = 0; led < LED_COUNT; led++) {
             // Calcula um fator de crescimento não linear para gerar uma curva suave
@@ -135,24 +158,17 @@ public class ShiftLightView extends View {
             float currentHeight = minHeight + (maxHeight - minHeight) * factor;
 
             // Define a posição vertical do LED (apoiados na parte superior)
-            float top = 0;
+            float top;
+            top = scaleHeight;
+            float bottom = top + currentHeight;
 
             // Define a cor do LED de acordo com sua posição na barra
             if (led < ledsOn) {
                 float percent = (float) led / LED_COUNT;
-
-                if (percent < 0.40f) {
-                    paint.setColor(getContext().getColor(R.color.led_green));
-                } else if (percent < 0.70f) {
-                    paint.setColor(getContext().getColor(R.color.led_yellow));
-                } else if (percent < 0.90f) {
-                    paint.setColor(getContext().getColor(R.color.led_orange));
-                } else {
-                    paint.setColor(getContext().getColor(R.color.led_red));
-                }
+                ledsPaint.setColor(getLedColor(percent));
             } else {
                 // LEDs ainda não atingidos pelo RPM permanecem apagados
-                paint.setColor(getContext().getColor(R.color.led_off));
+                ledsPaint.setColor(getContext().getColor(R.color.led_off));
             }
 
             // Desenha o LED com efeito de gradiente
@@ -161,11 +177,109 @@ public class ShiftLightView extends View {
                     x,
                     top,
                     x + ledWidth,
-                    currentHeight,
-                    paint.getColor()
+                    bottom,
+                    ledsPaint.getColor()
             );
 
             x += ledWidth + LED_SPACING;
+        }
+    }
+
+    /**
+     * Desenha a escala fixa de rotação do motor (RPM) acima da barra de LEDs.
+     *
+     * <p>A posição de cada marcação é calculada proporcionalmente ao valor máximo de RPM
+     * configurado ({@value #MAX_RPM}), garantindo que cada número permaneça alinhado exatamente com
+     * o LED correspondente na barra da Shift Light, independentemente da quantidade de LEDs ou do
+     * RPM máximo utilizado.</p>
+     *
+     * @param canvas      Canvas utilizado para renderização da View.
+     * @param width       Largura disponível para desenho.
+     * @param scaleHeight Altura reservada para a escala superior.
+     * @param ledWidth    Largura de um LED, utilizada para centralizar os números.
+     */
+    private void drawScale(
+            Canvas canvas,
+            float width,
+            float scaleHeight,
+            float ledWidth
+    ) {
+        int maxScale = MAX_RPM / 1000;
+
+        for (int rpm = 1; rpm <= maxScale; rpm++) {
+            // Posição proporcional do RPM
+            float percent = (float) (rpm * 1000) / MAX_RPM;
+
+            // Calcula a posição horizontal do fator da escala com base na proporção
+            float x = percent * width;
+
+            // Centraliza exatamente no LED correspondente
+            x -= ledWidth / 2f;
+
+            canvas.drawText(
+                    String.valueOf(rpm),
+                    x,
+                    scaleHeight * 0.75f,
+                    scalePaint
+            );
+        }
+    }
+
+    /**
+     * Retorna a cor correspondente à posição de um LED na barra.
+     *
+     * <p>A cor é obtida através de interpolação linear entre cores adjacentes, produzindo uma
+     * transição suave entre verde, verde-limão, amarelo, laranja e vermelho. Dessa forma, evita-se
+     * mudanças abruptas de cor, proporcionando um efeito visual semelhante às Shift Lights
+     * utilizadas em ECUs automotivas.</p>
+     *
+     * @param percent Posição do LED na barra, variando entre 0.0 e 1.0.
+     * @return Cor interpolada correspondente à posição informada.
+     */
+    private int getLedColor(float percent) {
+        final float PERCENT_GREEN_LIME = 0.30f;
+        final float PERCENT_LIME_YELLOW = 0.40f;
+        final float PERCENT_YELLOW_ORANGE = 0.65f;
+
+        if (percent < PERCENT_GREEN_LIME) {
+            // Progressão: Verde -> Verde limão
+            float t = percent / 0.30f;
+
+            return (int) argbEvaluator.evaluate(
+                    t,
+                    getContext().getColor(R.color.led_green),
+                    getContext().getColor(R.color.led_lime)
+            );
+        } else if (percent < PERCENT_LIME_YELLOW) {
+            // Progressão: Verde limão -> Amarelo
+            float t = (percent - PERCENT_GREEN_LIME)
+                    / (PERCENT_LIME_YELLOW - PERCENT_GREEN_LIME);
+
+            return (int) argbEvaluator.evaluate(
+                    t,
+                    getContext().getColor(R.color.led_lime),
+                    getContext().getColor(R.color.led_yellow)
+            );
+        } else if (percent < PERCENT_YELLOW_ORANGE) {
+            // Progressão: Amarelo -> Laranja
+            float t = (percent - PERCENT_LIME_YELLOW)
+                    / (PERCENT_YELLOW_ORANGE - PERCENT_LIME_YELLOW);
+
+            return (int) argbEvaluator.evaluate(
+                    t,
+                    getContext().getColor(R.color.led_yellow),
+                    getContext().getColor(R.color.led_orange)
+            );
+        } else {
+            // Progressão: Laranja -> Vermelho
+            float t = (percent - PERCENT_YELLOW_ORANGE)
+                    / (1f - PERCENT_YELLOW_ORANGE);
+
+            return (int) argbEvaluator.evaluate(
+                    t,
+                    getContext().getColor(R.color.led_orange),
+                    getContext().getColor(R.color.led_red)
+            );
         }
     }
 
@@ -177,7 +291,7 @@ public class ShiftLightView extends View {
      * na parte inferior, proporcionando um aspecto semelhante ao de LEDs encontrados em painéis
      * automotivos.</p>
      *
-     * @param canvas Canvas utilizado para renderização.
+     * @param canvas Canvas utilizado para renderização da View.
      * @param left   Coordenada horizontal esquerda do LED.
      * @param top    Coordenada vertical superior do LED.
      * @param right  Coordenada horizontal direita do LED.
@@ -220,7 +334,7 @@ public class ShiftLightView extends View {
         );
 
         // Aplica o gradiente ao objeto de pintura
-        paint.setShader(gradient);
+        ledsPaint.setShader(gradient);
 
         // Desenha o corpo principal do LED
         canvas.drawRoundRect(
@@ -230,7 +344,7 @@ public class ShiftLightView extends View {
                 bottom,
                 CORNER_RADIUS,
                 CORNER_RADIUS,
-                paint
+                ledsPaint
         );
     }
 }

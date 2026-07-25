@@ -34,13 +34,15 @@ import com.eduardo.obdmonitor.obd.ObdDataListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
+import com.eduardo.obdmonitor.view.MetricCardView;
 import com.eduardo.obdmonitor.view.ShiftLightView;
 
 public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private TextView txtRpm, txtProtocol;
+    private MetricCardView cardRpm, cardSpeed;
+    private TextView txtProtocol;
     private View viewBluetooth, viewEcu;
 
     // Gerenciador responsável pela comunicação OBD-II
@@ -80,7 +82,14 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initViews() {
         btnConnect = findViewById(R.id.btnConnect);
         shiftLight = findViewById(R.id.shiftLight);
-        txtRpm = findViewById(R.id.txtRpm);
+        cardRpm = findViewById(R.id.cardRpm);
+        cardRpm.setTitle("RPM");
+        cardRpm.setValue("0");
+        cardRpm.setUnit("rpm");
+        cardSpeed = findViewById(R.id.cardSpeed);
+        cardSpeed.setTitle("Velocidade");
+        cardSpeed.setValue("0");
+        cardSpeed.setUnit("km/h");
         viewBluetooth = findViewById(R.id.viewBluetooth);
         viewEcu = findViewById(R.id.viewEcu);
         txtProtocol = findViewById(R.id.txtProtocol);
@@ -156,14 +165,16 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     @Override
     public void onObdEngineRpmChanged(int rpm) {
         runOnUiThread(() -> {
-            txtRpm.setText(String.valueOf(rpm));
+            cardRpm.setValue(String.valueOf(rpm));
             shiftLight.setRpm(rpm);
         });
     }
 
     @Override
     public void onObdVehicleSpeedChanged(int speed) {
-
+        runOnUiThread(() -> {
+            cardSpeed.setValue(String.valueOf(speed));
+        });
     }
 
     @Override
