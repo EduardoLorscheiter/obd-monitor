@@ -124,7 +124,7 @@ public class BluetoothConnection {
      * @return Resposta do dispositivo ou {@code null} caso ocorra erro.
      */
     protected String sendCommand(String command) {
-        if (!isConnected() || command == null || command.isEmpty())
+        if (!isConnected() || command == null || command.trim().isEmpty())
             return null;
 
         try {

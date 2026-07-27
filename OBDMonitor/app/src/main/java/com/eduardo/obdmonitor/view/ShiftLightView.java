@@ -32,8 +32,18 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 
 public class ShiftLightView extends View {
-    // LED de referência para alinhar o RPM atual
-    private static final int RPM_REFERENCE_LED = 0;
+    // Quantidade total de LEDs exibidos na Shift Light
+    private static final int LED_COUNT = 60;
+
+    // Altura reservada para a escala de RPM em relação a altura total da View
+    private static final float RPM_SCALE_HEIGHT_FACTOR = 0.18f;
+
+    // Proporção mínima e máxima dos LEDs em relação a altura total disponível para os LEDs
+    private static final float MIN_LED_HEIGHT_FACTOR = 0.05f;
+    private static final float MAX_LED_HEIGHT_FACTOR = 0.95f;
+
+    // Espaçamento entre os LEDs, em pixels
+    private static final float LED_SPACING = 2f;
 
     // Altura reservada para o valor do RPM em relação ao maior LED
     private static final float RPM_VALUE_HEIGHT_FACTOR = 0.70f;
@@ -41,31 +51,35 @@ public class ShiftLightView extends View {
     // Altura reservada para a unidade do RPM em relação ao valor do RPM
     private static final float RPM_UNIT_HEIGHT_FACTOR = 0.45f;
 
-    // Proporção do primeiro LED em relação a altura total
-    private static final float MIN_LED_HEIGHT_FACTOR = 0.05f;
-
-    // Proporção do último LED em relação a altura total
-    private static final float MAX_LED_HEIGHT_FACTOR = 0.95f;
-
-    // Espaçamento entre os LEDs, em pixels
-    private static final float LED_SPACING = 2f;
-
     // Percentuais de transição das cores dos LEDs
-    final float LED_PERCENT_GREEN_LIME = 0.30f;
-    final float LED_PERCENT_LIME_YELLOW = 0.40f;
-    final float LED_PERCENT_YELLOW_ORANGE = 0.65f;
+    private static final float LED_PERCENT_GREEN_LIME = 0.30f;
+    private static final float LED_PERCENT_LIME_YELLOW = 0.40f;
+    private static final float LED_PERCENT_YELLOW_ORANGE = 0.65f;
 
-    // Curva dos LEDs
+    // Expoente utilizado para calcular a curva de crescimento da altura dos LEDs
     private static final float LED_CURVE = 3.84f;
 
     // Raio utilizado para arredondar os cantos dos LEDs
-    private static final float CORNER_RADIUS = 8f;
+    private static final float LED_CORNER_RADIUS = 8f;
 
-    // Altura reservada para a escala de RPM
-    private static final float RPM_SCALE_HEIGHT_FACTOR = 0.18f;
+    // Índice do LED utilizado como referência para posicionar o valor do RPM
+    private static final int RPM_REFERENCE_LED = 0;
 
     // Tamanho do texto da escala de RPM
     private static final float RPM_SCALE_TEXT_SIZE = 34f;
+
+    // Espaçamento entre o valor do RPM e a unidade, em pixels
+    private static final float RPM_UNIT_SPACING = 8f;
+
+    // Objetos utilizados para desenhar a Shift Light
+    private final Paint rpmValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint rpmUnitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint ledsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint rpmScalePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    // Interpolador suave para mudanças de cores entre os estágios da Shift Light
+    // Obs.: Evita transições bruscas entre os LEDs
+    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
 
     // Cores dos LEDs
     private int ledOff;
@@ -76,26 +90,26 @@ public class ShiftLightView extends View {
     private int ledRed;
 
     // Cores pré-calculadas de cada LED da barra
-    private int[] ledColors;
+    private final int[] ledColors = new int[LED_COUNT];
+    private final LinearGradient[] ledOnGradients = new LinearGradient[LED_COUNT];
+    private final LinearGradient[] ledOffGradients = new LinearGradient[LED_COUNT];
 
-    // Alturas pré-calculadas de cada LED da barra
-    private float[] ledHeightsFactors;
+    // Fatores de altura pré-calculados de cada LED da barra
+    private final float[] ledHeightFactors = new float[LED_COUNT];
 
-    // Objetos utilizados para desenhar os componentes da Shift Light
-    private final Paint rpmValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint rpmUnitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint ledsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint rpmScalePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    // Métricas geométricas pré-calculadas dos LEDs da barra
+    private float ledWidth;
+    private float ledBottom;
+    private final float[] ledTops = new float[LED_COUNT];
 
-    // Interpolador suave para mudanças de cores entre os estágios da Shift Light
-    // Obs.: Evita transições bruscas entre os LEDs
-    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
+    // Métricas tipográficas do valor do RPM utilizadas para alinhamento vertical do texto
+    private Paint.FontMetrics rpmFontMetrics;
+
+    // Altura ocupada pelo texto do valor do RPM
+    private float rpmTextHeight;
 
     // Rotação máxima considerada para acendimento completo da barra
     private int maxRpm = 7000;
-
-    // Quantidade total de LEDs exibidos na barra
-    private int ledCount = 60;
 
     // Rotação do motor (RPM) atual
     private int rpm = 0;
@@ -116,31 +130,22 @@ public class ShiftLightView extends View {
     }
 
     /**
-     * Inicializa os recursos gráficos utilizados pela Shift Light.
+     * Notificado pelo Android sempre que o tamanho da View é alterado.
      *
-     * <p>Configura os objetos de pintura, carrega as cores dos LEDs e do texto a partir dos
-     * recursos da aplicação e realiza os pré-cálculos necessários para as cores e alturas dos LEDs.
-     * </p>
+     * <p>Responsável por atualizar as métricas geométricas utilizadas na renderização da Shift
+     * Light, incluindo dimensões dos LEDs, posições, tamanhos dos textos e gradientes.
+     * O recálculo é necessário porque a View pode possuir diferentes dimensões conforme o
+     * dispositivo, orientação da tela ou alterações no layout.</p>
+     *
+     * @param width     Nova largura da View em pixels.
+     * @param height    Nova altura da View em pixels.
+     * @param oldWidth  Largura anterior da View em pixels.
+     * @param oldHeight Altura anterior da View em pixels.
      */
-    private void init() {
-        rpmValuePaint.setColor(getContext().getColor(R.color.automotive_green));
-        rpmValuePaint.setFakeBoldText(true);
-
-        int textColor = ViewUtils.getThemeAttrColor(getContext(), com.google.android.material.R.attr.colorOnPrimary);
-        rpmUnitPaint.setColor(textColor);
-
-        rpmScalePaint.setColor(textColor);
-        rpmScalePaint.setTextSize(RPM_SCALE_TEXT_SIZE);
-        rpmScalePaint.setTextAlign(Paint.Align.CENTER);
-
-        ledOff = getContext().getColor(R.color.led_off);
-        ledGreen = getContext().getColor(R.color.led_green);
-        ledLime = getContext().getColor(R.color.led_lime);
-        ledYellow = getContext().getColor(R.color.led_yellow);
-        ledOrange = getContext().getColor(R.color.led_orange);
-        ledRed = getContext().getColor(R.color.led_red);
-        calculateLedColors();
-        calculateLedHeightsFactors();
+    @Override
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
+        updateLayoutMetrics(width, height);
     }
 
     /**
@@ -154,25 +159,7 @@ public class ShiftLightView extends View {
             return;
 
         this.maxRpm = maxRpm;
-        invalidate();
-    }
-
-    /**
-     * Atualiza a quantidade total de LEDs exibidos na barra.
-     *
-     * <p>Como a quantidade de LEDs influencia os cálculos estáticos da renderização, as tabelas
-     * internas de cores e alturas são recalculadas após a alteração.</p>
-     *
-     * @param ledCount Quantidade total de LEDs exibidos na barra.
-     */
-    @SuppressWarnings("unused")
-    public void setLedCount(int ledCount) {
-        if (ledCount <= 0)
-            return;
-
-        this.ledCount = ledCount;
-        calculateLedColors();
-        calculateLedHeightsFactors();
+        updateLayoutMetrics(getWidth(), getHeight());
         invalidate();
     }
 
@@ -191,18 +178,57 @@ public class ShiftLightView extends View {
     }
 
     /**
-     * Calcula previamente os fatores de altura de cada LED da barra.
+     * Inicializa os objetos de pintura, carrega as cores da aplicação e executa os pré-cálculos
+     * necessários para a renderização inicial do componente.
+     */
+    private void init() {
+        initPaints();
+        loadColors();
+        updateLayoutMetrics(getWidth(), getHeight());
+    }
+
+    /**
+     * Inicializa os objetos Paint utilizados na renderização da Shift Light.
      *
-     * <p>Os fatores são obtidos por meio de uma curva exponencial, produzindo uma variação gradual
-     * de altura entre o primeiro e o último LED. Como esse cálculo depende apenas da quantidade de
-     * LEDs, ele é executado apenas quando necessário, evitando operações matemáticas durante a
-     * renderização.</p>
+     * <p>Configura cores, alinhamentos e propriedades tipográficas dos elementos desenhados pela
+     * View.</p>
+     */
+    private void initPaints() {
+        rpmValuePaint.setColor(getContext().getColor(R.color.automotive_green));
+        rpmValuePaint.setFakeBoldText(true);
+
+        int textColor = ViewUtils.getThemeAttrColor(getContext(), com.google.android.material.R.attr.colorOnPrimary);
+        rpmUnitPaint.setColor(textColor);
+
+        rpmScalePaint.setColor(textColor);
+        rpmScalePaint.setTextSize(RPM_SCALE_TEXT_SIZE);
+        rpmScalePaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    /**
+     * Carrega as cores dos recursos da aplicação e executa os pré-cálculos dependentes dessas
+     * cores.
+     */
+    private void loadColors() {
+        ledOff = getContext().getColor(R.color.led_off);
+        ledGreen = getContext().getColor(R.color.led_green);
+        ledLime = getContext().getColor(R.color.led_lime);
+        ledYellow = getContext().getColor(R.color.led_yellow);
+        ledOrange = getContext().getColor(R.color.led_orange);
+        ledRed = getContext().getColor(R.color.led_red);
+        calculateLedColors();
+        calculateLedHeightFactors();
+    }
+
+    /**
+     * Calcula previamente a cor correspondente de cada LED da barra.
+     *
+     * <p>Como a cor de cada LED depende apenas de sua posição relativa na barra, este cálculo é
+     * realizado apenas quando necessário, evitando interpolações durante a renderização.</p>
      */
     private void calculateLedColors() {
-        ledColors = new int[ledCount];
-
-        for (int led = 0; led < ledCount; led++) {
-            float percent = (float) led / ledCount;
+        for (int led = 0; led < LED_COUNT; led++) {
+            float percent = (float) led / (LED_COUNT - 1);
             ledColors[led] = getLedColor(percent);
         }
     }
@@ -221,7 +247,7 @@ public class ShiftLightView extends View {
     private int getLedColor(float percent) {
         if (percent < LED_PERCENT_GREEN_LIME) {
             // Progressão: Verde -> Verde limão
-            float t = percent / 0.30f;
+            float t = percent / LED_PERCENT_GREEN_LIME;
             return (int) argbEvaluator.evaluate(t, ledGreen, ledLime);
         } else if (percent < LED_PERCENT_LIME_YELLOW) {
             // Progressão: Verde limão -> Amarelo
@@ -244,21 +270,140 @@ public class ShiftLightView extends View {
      * <p>A curva exponencial é calculada uma única vez, evitando operações matemáticas pesadas
      * durante o processo de desenho executado pelo Android.</p>
      */
-    private void calculateLedHeightsFactors() {
-        ledHeightsFactors = new float[ledCount];
-
-        for (int led = 0; led < ledCount; led++) {
-            float position = (float) led / (ledCount - 1);
-            ledHeightsFactors[led] = (float) Math.pow(position, LED_CURVE);
+    private void calculateLedHeightFactors() {
+        for (int led = 0; led < LED_COUNT; led++) {
+            float position = (float) led / (LED_COUNT - 1);
+            ledHeightFactors[led] = (float) Math.pow(position, LED_CURVE);
         }
+    }
+
+    /**
+     * Recalcula todas as métricas utilizadas durante a renderização.
+     *
+     * <p>Executado durante a inicialização do componente e sempre que o tamanho da View é alterado.
+     * São recalculadas as dimensões dos LEDs, suas posições, o tamanho dos textos e demais métricas
+     * necessárias para evitar cálculos durante o desenho.</p>
+     *
+     * @param width  Largura disponível da View.
+     * @param height Altura disponível da View.
+     */
+    private void updateLayoutMetrics(int width, int height) {
+        if (width <= 0 || height <= 0)
+            return;
+
+        // Calcula a altura disponível para desenhar os LEDs da Shift Light
+        // Obs.: Será a altura total do componente reduzida da altura da escala do RPM
+        float rpmScaleHeight = height * RPM_SCALE_HEIGHT_FACTOR;
+        float ledsHeight = height - rpmScaleHeight;
+
+        // Calcula as alturas mínima e máxima dos LEDs com base na altura disponível
+        float minLedHeight = ledsHeight * MIN_LED_HEIGHT_FACTOR;
+        float maxLedHeight = ledsHeight * MAX_LED_HEIGHT_FACTOR;
+
+        // Calcula a largura individual de cada LED considerando os espaçamentos
+        float totalSpacing = (LED_COUNT - 1) * LED_SPACING;
+        ledWidth = (width - totalSpacing) / LED_COUNT;
+
+        // Considera como base dos LEDs a altura disponível
+        ledBottom = ledsHeight;
+
+        // Calcula o topo individual de cada LED
+        for (int led = 0; led < LED_COUNT; led++) {
+            float ledHeight = minLedHeight + (maxLedHeight - minLedHeight) * ledHeightFactors[led];
+            ledTops[led] = ledBottom - ledHeight;
+        }
+
+        // Define o tamanho visual do valor do RPM
+        rpmValuePaint.setTextSize(maxLedHeight * RPM_VALUE_HEIGHT_FACTOR);
+        // Define o tamanho visual da unidade do RPM do com base no tamanho visual do valor do RPM
+        rpmUnitPaint.setTextSize(rpmValuePaint.getTextSize() * RPM_UNIT_HEIGHT_FACTOR);
+
+        // Calcula a altura ocupada pelo texto do RPM
+        rpmFontMetrics = rpmValuePaint.getFontMetrics();
+        rpmTextHeight = rpmFontMetrics.descent - rpmFontMetrics.ascent;
+
+        // Cria os gradientes dos LEDs
+        for (int led = 0; led < LED_COUNT; led++) {
+            ledOnGradients[led] = createGradient(
+                    ledColors[led],
+                    ledTops[led],
+                    ledBottom
+            );
+
+            ledOffGradients[led] = createGradient(
+                    ledOff,
+                    ledTops[led],
+                    ledBottom
+            );
+        }
+    }
+
+    /**
+     * Cria um gradiente vertical utilizado para renderização de um LED.
+     *
+     * <p>O gradiente é composto por uma tonalidade mais clara na região superior e uma tonalidade
+     * mais escura na região inferior, produzindo um efeito visual de profundidade e iluminação
+     * semelhante ao de um LED físico.</p>
+     *
+     * @param top    Coordenada superior do LED.
+     * @param bottom Coordenada inferior do LED.
+     * @param color  Cor base utilizada para gerar o gradiente.
+     * @return Gradiente vertical correspondente à cor informada.
+     */
+    private static LinearGradient createGradient(int color, float top, float bottom) {
+        return new LinearGradient(
+                0,
+                top,
+                0,
+                bottom,
+                getLightenColor(color),
+                getDarkenColor(color),
+                Shader.TileMode.CLAMP
+        );
+    }
+
+    /**
+     * Calcula uma versão mais clara da cor informada.
+     *
+     * <p>Utilizado para compor a região superior do gradiente dos LEDs, simulando a incidência de
+     * luz sobre a superfície.</p>
+     *
+     * @param color Cor base.
+     * @return Cor com luminosidade aumentada.
+     */
+    private static int getLightenColor(int color) {
+        return android.graphics.Color.argb(
+                255,
+                Math.min(255, (int) (android.graphics.Color.red(color) * 1.35f)),
+                Math.min(255, (int) (android.graphics.Color.green(color) * 1.35f)),
+                Math.min(255, (int) (android.graphics.Color.blue(color) * 1.35f))
+        );
+    }
+
+    /**
+     * Calcula uma versão mais escura da cor informada.
+     *
+     * <p>Utilizado para compor a região inferior do gradiente dos LEDs, aumentando a percepção de
+     * profundidade durante a renderização.</p>
+     *
+     * @param color Cor base.
+     * @return Cor com luminosidade reduzida.
+     */
+    private static int getDarkenColor(int color) {
+        return android.graphics.Color.argb(
+                255,
+                (int) (android.graphics.Color.red(color) * 0.65f),
+                (int) (android.graphics.Color.green(color) * 0.65f),
+                (int) (android.graphics.Color.blue(color) * 0.65f)
+        );
     }
 
     /**
      * Executa o processo de renderização completo da Shift Light.
      *
-     * <p>Durante o desenho são calculadas as dimensões disponíveis, altura dos LEDs, quantidade de
-     * LEDs ativos conforme o RPM atual, cores progressivas e a escala superior de rotação. Também é
-     * exibido o valor numérico do RPM alinhado a barra.</p>
+     * <p>Durante o desenho são utilizados os valores previamente calculados para determinar a
+     * quantidade de LEDs ativos, suas cores, além da renderização do valor numérico do RPM e da
+     * escala superior.</p>
      *
      * @param canvas Canvas utilizado pelo Android para renderização do componente.
      */
@@ -266,87 +411,38 @@ public class ShiftLightView extends View {
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
-        // Dimensões disponíveis para desenho
-        float width = getWidth();
-        float height = getHeight();
-
-        // Calcula a altura disponível para desenhar os LEDs da Shift Light
-        // Obs.: Será a altura total do componente reduzida da altura da escala do RPM
-        float rpmScaleHeight = height * RPM_SCALE_HEIGHT_FACTOR;
-        float ledsHeight = height - rpmScaleHeight;
-
-        // Calcula a largura individual de cada LED considerando os espaçamentos
-        float totalSpacing = (ledCount - 1) * LED_SPACING;
-        float ledWidth = (width - totalSpacing) / ledCount;
-
-        // Calcula as alturas mínima e máxima dos LEDs com base na altura disponível
-        float minHeight = ledsHeight * MIN_LED_HEIGHT_FACTOR;
-        float maxHeight = ledsHeight * MAX_LED_HEIGHT_FACTOR;
-
-        // Considera como valor da base dos LEDs a altura disponível
-        @SuppressWarnings("RedundantLocalVariable")
-        float ledsBottom = ledsHeight;
-
-        // Define o tamanho visual do número do RPM
-        rpmValuePaint.setTextSize(maxHeight * RPM_VALUE_HEIGHT_FACTOR);
-
-        // Define a unidade com base no tamanho visual do número do RPM
-        rpmUnitPaint.setTextSize(rpmValuePaint.getTextSize() * RPM_UNIT_HEIGHT_FACTOR);
-
         // Encontra a quantidade de LEDs que devem permanecer acesos conforme o RPM atual
-        int ledsOn = rpm * ledCount / maxRpm;
+        int ledsOn = rpm * LED_COUNT / maxRpm;
 
         // Posição horizontal inicial para desenhar os LEDs
         float ledPositionX = 0;
 
-        for (int led = 0; led < ledCount; led++) {
-            // Altura atual do LED
-            float currentHeight = minHeight + (maxHeight - minHeight) * ledHeightsFactors[led];
-
-            // Define a posição vertical do LED (apoiados na parte inferior)
-            float ledsTop = ledsBottom - currentHeight;
+        for (int led = 0; led < LED_COUNT; led++) {
+            float ledTop = ledTops[led];
 
             // Se for o LED de referência para desenhar o valor do RPM
             if (led == RPM_REFERENCE_LED) {
-                Paint.FontMetrics metrics = rpmValuePaint.getFontMetrics();
-
-                // Altura ocupada pelo texto do RPM
-                float textHeight = metrics.descent - metrics.ascent;
-
-                // Espaço livre entre o topo da View e o topo do LED
-                @SuppressWarnings("RedundantLocalVariable")
-                float availableHeight = ledsTop;
-
                 // Centraliza o texto no espaço livre
-                float textY = (availableHeight - textHeight) / 2f - metrics.ascent;
+                float textY = (ledTop - rpmTextHeight) / 2f - rpmFontMetrics.ascent;
                 @SuppressWarnings("RedundantLocalVariable")
                 float textX = ledPositionX;
 
                 drawRpm(canvas, textX, textY);
             }
 
-            // Define a cor base do LED conforme seu estado (aceso ou apagado)
-            if (led < ledsOn) {
-                ledsPaint.setColor(ledColors[led]);
-            } else {
-                ledsPaint.setColor(ledOff);
-            }
-
-            // Desenha o LED com efeito de gradiente
             drawLed(
                     canvas,
                     ledPositionX,
-                    ledsTop,
+                    ledTop,
                     ledPositionX + ledWidth,
-                    ledsBottom,
-                    ledsPaint.getColor()
+                    ledBottom,
+                    led < ledsOn ? ledOnGradients[led] : ledOffGradients[led]
             );
 
             ledPositionX += ledWidth + LED_SPACING;
         }
 
-        // Desenha a barra de escala
-        drawScale(canvas, width, ledsBottom, ledWidth);
+        drawScale(canvas);
     }
 
     /**
@@ -382,7 +478,7 @@ public class ShiftLightView extends View {
         // Desenha a unidade do RPM
         canvas.drawText(
                 " rpm",
-                startX + reservedWidth + 8f,
+                startX + reservedWidth + RPM_UNIT_SPACING,
                 y,
                 rpmUnitPaint
         );
@@ -392,15 +488,16 @@ public class ShiftLightView extends View {
      * Desenha um LED aplicando um gradiente vertical gerado a partir da cor base.
      *
      * <p>A partir da cor informada são calculadas automaticamente versões mais clara e mais escura,
-     * utilizadas para compor um gradiente vertical que simula profundidade e iluminação. Após a
-     * criação do gradiente, o LED é desenhado.</p>
+     * utilizadas para compor um gradiente vertical que simula profundidade e iluminação. O
+     * gradiente é aplicado temporariamente ao objeto Paint e removido após o desenho do LED,
+     * evitando interferência na renderização dos demais elementos.</p>
      *
-     * @param canvas Canvas utilizado para renderização da View.
-     * @param left   Coordenada horizontal esquerda do LED.
-     * @param top    Coordenada vertical superior do LED.
-     * @param right  Coordenada horizontal direita do LED.
-     * @param bottom Coordenada vertical inferior do LED.
-     * @param color  Cor base utilizada para gerar o gradiente do LED.
+     * @param canvas   Canvas utilizado para renderização da View.
+     * @param left     Coordenada horizontal esquerda do LED.
+     * @param top      Coordenada vertical superior do LED.
+     * @param right    Coordenada horizontal direita do LED.
+     * @param bottom   Coordenada vertical inferior do LED.
+     * @param gradient Gradiente previamente calculado utilizado para renderizar o LED.
      */
     private void drawLed(
             Canvas canvas,
@@ -408,48 +505,21 @@ public class ShiftLightView extends View {
             float top,
             float right,
             float bottom,
-            int color
+            LinearGradient gradient
     ) {
-        // Calcula uma tonalidade mais clara para a parte superior do LED
-        int light = android.graphics.Color.argb(
-                255,
-                Math.min(255, (int) (android.graphics.Color.red(color) * 1.35f)),
-                Math.min(255, (int) (android.graphics.Color.green(color) * 1.35f)),
-                Math.min(255, (int) (android.graphics.Color.blue(color) * 1.35f))
-        );
-
-        // Calcula uma tonalidade mais escura para a parte inferior do LED
-        int dark = android.graphics.Color.argb(
-                255,
-                (int) (android.graphics.Color.red(color) * 0.65f),
-                (int) (android.graphics.Color.green(color) * 0.65f),
-                (int) (android.graphics.Color.blue(color) * 0.65f)
-        );
-
-        // Cria um gradiente vertical entre as duas tonalidades
-        LinearGradient gradient = new LinearGradient(
-                0,
-                top,
-                0,
-                bottom,
-                light,
-                dark,
-                Shader.TileMode.CLAMP
-        );
-
-        // Aplica o gradiente ao objeto de pintura
         ledsPaint.setShader(gradient);
 
-        // Desenha o corpo principal do LED
         canvas.drawRoundRect(
                 left,
                 top,
                 right,
                 bottom,
-                CORNER_RADIUS,
-                CORNER_RADIUS,
+                LED_CORNER_RADIUS,
+                LED_CORNER_RADIUS,
                 ledsPaint
         );
+
+        ledsPaint.setShader(null);
     }
 
     /**
@@ -457,27 +527,22 @@ public class ShiftLightView extends View {
      *
      * <p>A posição de cada marcação é calculada proporcionalmente ao valor máximo de RPM
      * configurado ({@code maxRpm}), garantindo que cada marcação permaneça proporcionalmente
-     * alinhada à posição correspondente na barra de LEDs da Shift Light,  independentemente da
+     * alinhada à posição correspondente na barra de LEDs da Shift Light, independentemente da
      * quantidade de LEDs ou do RPM máximo utilizado.</p>
      *
-     * @param canvas     Canvas utilizado para renderização da View.
-     * @param width      Largura disponível para desenho.
-     * @param ledsBottom Altura reservada para a escala superior.
-     * @param ledWidth   Largura de um LED, utilizada para centralizar os números.
+     * @param canvas Canvas utilizado para renderização da View.
      */
-    private void drawScale(
-            Canvas canvas,
-            float width,
-            float ledsBottom,
-            float ledWidth
-    ) {
+    private void drawScale(Canvas canvas) {
+        // Dimensões disponíveis para desenho
+        float width = getWidth();
+
         int maxScale = maxRpm / 1000;
 
         // Desenha o zero no início da escala
         canvas.drawText(
                 "0",
                 ledWidth / 2f,
-                ledsBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
+                ledBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
                 rpmScalePaint
         );
 
@@ -492,7 +557,7 @@ public class ShiftLightView extends View {
             canvas.drawText(
                     String.valueOf(rpm),
                     x,
-                    ledsBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
+                    ledBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
                     rpmScalePaint
             );
         }
