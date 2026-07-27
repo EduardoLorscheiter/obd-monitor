@@ -1,6 +1,6 @@
 /*
  **=================================================================================================
- **  @file    BluetoothListener.java
+ **  @file    BluetoothManagerListener.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
@@ -14,49 +14,52 @@ package com.eduardo.obdmonitor.bluetooth;
 
 import com.eduardo.obdmonitor.model.Device;
 
-public interface BluetoothListener {
+public interface BluetoothManagerListener {
     /**
      * Chamado quando o Bluetooth é habilitado.
      */
-    void onBluetoothEnabled();
+    void onBluetoothManagerEnabled();
 
     /**
      * Chamado quando o Bluetooth é desabilitado.
      */
-    void onBluetoothDisabled();
+    void onBluetoothManagerDisabled();
 
     /**
      * Chamado quando um dispositivo Bluetooth pareado é encontrado.
      *
      * @param device Dispositivo Bluetooth.
      */
-    void onBluetoothDeviceBondedFound(Device device);
+    void onBluetoothManagerDeviceBondedFound(Device device);
 
     /**
      * Chamado quando a conexão com um dispositivo Bluetooth é iniciada.
      *
      * @param device Dispositivo Bluetooth.
      */
-    void onBluetoothConnecting(Device device);
+    void onBluetoothManagerConnecting(Device device);
 
     /**
      * Chamado quando um dispositivo Bluetooth é conectado.
      *
-     * @param device Dispositivo Bluetooth.
+     * @param device  Dispositivo Bluetooth.
+     * @param message Mensagem informativa sobre a desconexão.
      */
-    void onBluetoothConnected(Device device);
+    void onBluetoothManagerConnected(Device device, String message);
 
     /**
      * Chamado quando um dispositivo Bluetooth é desconectado.
      *
-     * @param device Dispositivo Bluetooth.
+     * @param device  Dispositivo Bluetooth.
+     * @param message Mensagem informativa sobre a desconexão.
      */
-    void onBluetoothDisconnected(Device device);
+    void onBluetoothManagerDisconnected(Device device, String message);
 
     /**
      * Chamado quando ocorre um erro relacionado ao Bluetooth.
      *
+     * @param device  Dispositivo Bluetooth.
      * @param message Mensagem descritiva do erro.
      */
-    void onBluetoothError(String message);
+    void onBluetoothManagerError(Device device, String message);
 }

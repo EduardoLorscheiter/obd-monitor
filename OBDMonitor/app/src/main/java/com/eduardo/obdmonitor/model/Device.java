@@ -19,9 +19,9 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
 public class Device implements Parcelable {
-    public static final String DEVICE_STATUS_CONNECTED = "Conectado";
-    public static final String DEVICE_STATUS_NOT_CONNECTED = "Não conectado";
-    public static final String DEVICE_STATUS_CONNECTING = "Conectando...";
+    private static final String DEVICE_STATUS_DISCONNECTED = "Não conectado";
+    private static final String DEVICE_STATUS_CONNECTING = "Conectando...";
+    private static final String DEVICE_STATUS_CONNECTED = "Conectado";
 
     private String name;
     private String macAddress;
@@ -34,12 +34,12 @@ public class Device implements Parcelable {
     public Device(String name, String macAddress) {
         this.name = name;
         this.macAddress = macAddress;
-        this.status = DEVICE_STATUS_NOT_CONNECTED;
+        this.status = DEVICE_STATUS_DISCONNECTED;
     }
 
     protected Device(Parcel in) {
         name = in.readString();
-        status = DEVICE_STATUS_NOT_CONNECTED;
+        status = DEVICE_STATUS_DISCONNECTED;
     }
 
     public static final Creator<Device> CREATOR = new Creator<>() {
@@ -75,8 +75,16 @@ public class Device implements Parcelable {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setStatusDisconnected() {
+        status = DEVICE_STATUS_DISCONNECTED;
+    }
+
+    public void setStatusConnecting() {
+        status = DEVICE_STATUS_CONNECTING;
+    }
+
+    public void setStatusConnected() {
+        status = DEVICE_STATUS_CONNECTED;
     }
 
     @NonNull

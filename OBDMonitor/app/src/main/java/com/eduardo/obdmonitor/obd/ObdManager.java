@@ -39,7 +39,7 @@ public class ObdManager {
     private ObdDataListener dataListener;
 
     // Indica se o monitoramento contínuo da ECU está ativo
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre as threads
+    // Obs.: O modificador "volatile" garante a visibilidade da variável entre threads
     private volatile boolean monitoring;
 
     // Indica se o Bluetooth está conectado

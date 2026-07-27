@@ -18,6 +18,7 @@ package com.eduardo.obdmonitor.ui;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -32,7 +33,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
-import com.eduardo.obdmonitor.bluetooth.BluetoothListener;
+import com.eduardo.obdmonitor.bluetooth.BluetoothManagerListener;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.obd.ObdConnectionListener;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ConnectionActivity extends AppCompatActivity implements BluetoothListener, ObdConnectionListener {
+public class ConnectionActivity extends AppCompatActivity implements BluetoothManagerListener, ObdConnectionListener {
     // Componentes da janela da Activity
     private ImageButton btnBack;
     private TextView txtBluetoothStatus;
@@ -67,6 +68,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_connection);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -153,12 +155,10 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      */
     private void finishConnection() {
         bluetoothManager.unregisterReceivers();
-        bluetoothManager.setListener(null);
-        obdManager.setListeners(null, null);
     }
 
     @Override
-    public void onBluetoothEnabled() {
+    public void onBluetoothManagerEnabled() {
         runOnUiThread(() -> {
             updateBluetoothStatus(true);
             loadDevices();
@@ -166,7 +166,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onBluetoothDisabled() {
+    public void onBluetoothManagerDisabled() {
         runOnUiThread(() -> {
             updateBluetoothStatus(false);
             cleanDevices();
@@ -174,23 +174,20 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onBluetoothDeviceBondedFound(Device device) {
+    public void onBluetoothManagerDeviceBondedFound(Device device) {
         runOnUiThread(() -> addBluetoothDevice(device, bondedDevices, containerBondedDevices));
     }
 
     @Override
-    public void onBluetoothConnecting(Device device) {
-        runOnUiThread(() -> {
-            device.setStatus(Device.DEVICE_STATUS_CONNECTING);
-            updateStatus(device);
-        });
+    public void onBluetoothManagerConnecting(Device device) {
+        runOnUiThread(() -> updateStatus(device));
     }
 
     @Override
-    public void onBluetoothConnected(Device device) {
+    public void onBluetoothManagerConnected(Device device, String message) {
         runOnUiThread(() -> {
-            device.setStatus(Device.DEVICE_STATUS_CONNECTED);
             updateStatus(device);
+            ToastUtils.showToast(this, message);
             try {
                 obdManager.connect(device);
             } catch (InterruptedException e) {
@@ -200,24 +197,18 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
     }
 
     @Override
-    public void onBluetoothDisconnected(Device device) {
+    public void onBluetoothManagerDisconnected(Device device, String message) {
         runOnUiThread(() -> {
-            device.setStatus(Device.DEVICE_STATUS_NOT_CONNECTED);
             updateStatus(device);
+            ToastUtils.showToast(this, message);
         });
     }
 
     @Override
-    public void onBluetoothError(String message) {
+    public void onBluetoothManagerError(Device device, String message) {
         runOnUiThread(() -> {
+            updateStatus(device);
             ToastUtils.showToast(this, message);
-            for (Device device : bondedDevices) {
-                if (Device.DEVICE_STATUS_CONNECTING.equals(device.getStatus())) {
-                    device.setStatus(Device.DEVICE_STATUS_NOT_CONNECTED);
-                    updateStatus(device);
-                    break;
-                }
-            }
         });
     }
 
@@ -421,6 +412,9 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothLi
      * @param device Dispositivo cujo status será atualizado.
      */
     private void updateStatus(Device device) {
+        if (device == null)
+            return;
+
         TextView tvStatus = statusDevices.get(device.getMacAddress());
 
         if (tvStatus != null) {
