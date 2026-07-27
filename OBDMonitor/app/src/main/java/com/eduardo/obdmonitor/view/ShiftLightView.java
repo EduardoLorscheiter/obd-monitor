@@ -473,6 +473,15 @@ public class ShiftLightView extends View {
     ) {
         int maxScale = maxRpm / 1000;
 
+        // Desenha o zero no início da escala
+        canvas.drawText(
+                "0",
+                ledWidth / 2f,
+                ledsBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
+                rpmScalePaint
+        );
+
+        // Desenha as demais marcações da escala
         for (int rpm = 1; rpm <= maxScale; rpm++) {
             // Posição proporcional do RPM
             float percent = (float) (rpm * 1000) / maxRpm;
