@@ -16,6 +16,7 @@
     <color name="black_transparency">#1E000000</color>
     <color name="white_transparency">#1EFFFFFF</color>
     <color name="red_transparency">#80280000</color>
+    <color name="limiter">#55FF0000</color>
     <!-- Cores para 'led' -->
     <color name="led_off">#2E2E2E</color>
     <color name="led_green">#00FF00</color>
@@ -23,6 +24,11 @@
     <color name="led_yellow">#FFFF00</color>
     <color name="led_orange">#FF7A00</color>
     <color name="led_red">#FF0000</color>
+    <!-- Cores para status da bateria -->
+    <color name="battery_low">@color/led_red</color>
+    <color name="battery_warning">@color/led_yellow</color>
+    <color name="battery_normal">@color/automotive_green</color>
+    <color name="battery_over">@color/led_orange</color>
     <!-- Cores para o status da conexão -->
     <color name="status_off">@color/led_red</color>
     <color name="status_on">@color/led_green</color>

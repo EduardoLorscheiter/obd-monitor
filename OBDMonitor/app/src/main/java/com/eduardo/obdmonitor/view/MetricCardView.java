@@ -17,12 +17,18 @@ package com.eduardo.obdmonitor.view;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import com.eduardo.obdmonitor.R;
 
 public class MetricCardView extends LinearLayout {
+    // Ícone da métrica
+    private ImageView imgIcon;
+
     // Texto responsável por identificar a métrica exibida
     private TextView txtTitle;
 
@@ -59,9 +65,19 @@ public class MetricCardView extends LinearLayout {
      */
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.view_metric_card, this, true);
+        imgIcon = findViewById(R.id.imgIcon);
         txtTitle = findViewById(R.id.txtTitle);
         txtValue = findViewById(R.id.txtValue);
         txtUnit = findViewById(R.id.txtUnit);
+    }
+
+    /**
+     * Define o ícone exibido ao lado do título da métrica.
+     *
+     * @param icon Recurso drawable do ícone.
+     */
+    public void setIcon(int icon) {
+        imgIcon.setImageResource(icon);
     }
 
     /**
@@ -88,9 +104,18 @@ public class MetricCardView extends LinearLayout {
     }
 
     /**
+     * Define a cor do valor exibido no cartão.
+     *
+     * @param color Recurso de cor.
+     */
+    public void setValueColor(int color) {
+        txtValue.setTextColor(ContextCompat.getColor(getContext(), color));
+    }
+
+    /**
      * Define a unidade de medida apresentada ao lado do valor.
      *
-     * <p>Exemplos: km/h, RPM, °C, %, V, L/h.</p>
+     * <p>Exemplos: RPM, km/h, °C, %, V.</p>
      *
      * @param unit Unidade de medida da métrica.
      */

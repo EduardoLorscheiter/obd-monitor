@@ -11,6 +11,7 @@
 
 package com.eduardo.obdmonitor.ui;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -38,18 +39,24 @@ import com.eduardo.obdmonitor.utils.ViewUtils;
 import com.eduardo.obdmonitor.view.MetricCardView;
 import com.eduardo.obdmonitor.view.ShiftLightView;
 
+import java.util.Locale;
+
 public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private MetricCardView cardSpeed;
+    private MetricCardView cardSpeed, cardBattery;
     private TextView txtProtocol;
-    private View viewBluetooth, viewEcu;
+    private View viewBluetooth, viewEcu, viewLimiter;
 
     // Gerenciador responsável pela comunicação OBD-II
     private ObdManager obdManager;
 
+    // Launcher utilizado para iniciar a tela de conexão Bluetooth
     private ActivityResultLauncher<Intent> connectionLauncher;
+
+    // Animador responsável pelo efeito de piscar quando o motor atinge alta rotação
+    private ValueAnimator blinkAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,13 +91,34 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initViews() {
         btnConnect = findViewById(R.id.btnConnect);
         shiftLight = findViewById(R.id.shiftLight);
-        cardSpeed = findViewById(R.id.cardSpeed);
-        cardSpeed.setTitle("Velocidade");
-        cardSpeed.setValue("0");
-        cardSpeed.setUnit("km/h");
         viewBluetooth = findViewById(R.id.viewBluetooth);
         viewEcu = findViewById(R.id.viewEcu);
         txtProtocol = findViewById(R.id.txtProtocol);
+        viewLimiter = findViewById(R.id.viewLimiter);
+        initCardSpeed();
+        initCardBattery();
+    }
+
+    /**
+     * Inicializa o card da métrica de velocidade.
+     */
+    private void initCardSpeed() {
+        cardSpeed = findViewById(R.id.cardSpeed);
+        cardSpeed.setIcon(R.drawable.ic_speedmeter);
+        cardSpeed.setTitle("Velocidade");
+        cardSpeed.setValue("0");
+        cardSpeed.setUnit("km/h");
+    }
+
+    /**
+     * Inicializa o card da métrica da bateria.
+     */
+    private void initCardBattery() {
+        cardBattery = findViewById(R.id.cardBattery);
+        cardBattery.setIcon(R.drawable.ic_lightning_charge);
+        cardBattery.setTitle("Bateria");
+        cardBattery.setValue("0.0");
+        cardBattery.setUnit("V");
     }
 
     /**
@@ -120,6 +148,13 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         });
     }
 
+    /**
+     * Configura o launcher responsável por receber o resultado da tela de conexão.
+     *
+     * <p>Após o retorno da {@link ConnectionActivity}, os listeners do {@link ObdManager} são
+     * registrados novamente e uma mensagem é exibida informando o sucesso ou falha da conexão com
+     * o dispositivo OBD-II.</p>
+     */
     private void setupActivityResult() {
         connectionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -162,7 +197,14 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
     @Override
     public void onObdEngineRpmChanged(int rpm) {
-        runOnUiThread(() -> shiftLight.setRpm(rpm));
+        runOnUiThread(() -> {
+            shiftLight.setRpm(rpm);
+            if (rpm >= 3500) {
+                startRevLimiterBlink();
+            } else {
+                stopRevLimiterBlink();
+            }
+        });
     }
 
     @Override
@@ -192,6 +234,54 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
     @Override
     public void onObdControlModuleVoltageChanged(double voltage) {
+        runOnUiThread(() -> {
+            cardBattery.setValue(String.format(Locale.US, "%.1f", voltage));
+            if (voltage < 11.8) {
+                cardBattery.setValueColor(R.color.battery_low);
+            } else if (voltage < 12.6) {
+                cardBattery.setValueColor(R.color.battery_warning);
+            } else if (voltage <= 14.7) {
+                cardBattery.setValueColor(R.color.battery_normal);
+            } else {
+                cardBattery.setValueColor(R.color.battery_over);
+            }
+        });
+    }
 
+    /**
+     * Inicia o efeito visual de alerta de alta rotação.
+     *
+     * <p>Quando a rotação do motor ultrapassa o limite configurado, um overlay semitransparente é
+     * animado continuamente utilizando um {@link ValueAnimator}, produzindo um efeito de piscar
+     * para chamar a atenção do motorista.</p>
+     */
+    private void startRevLimiterBlink() {
+        if (blinkAnimator != null && blinkAnimator.isRunning())
+            return;
+
+        blinkAnimator = ValueAnimator.ofFloat(0f, 1f);
+
+        blinkAnimator.setDuration(150);
+
+        blinkAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        blinkAnimator.setRepeatCount(ValueAnimator.INFINITE);
+
+        blinkAnimator.addUpdateListener(animation ->
+                viewLimiter.setAlpha((Float) animation.getAnimatedValue()));
+
+        blinkAnimator.start();
+    }
+
+    /**
+     * Interrompe o efeito visual de alerta de alta rotação.
+     *
+     * <p>Ao cancelar a animação, a transparência do overlay é restaurada para zero, removendo
+     * completamente o efeito de piscar da interface.</p>
+     */
+    private void stopRevLimiterBlink() {
+        if (blinkAnimator != null)
+            blinkAnimator.cancel();
+
+        viewLimiter.setAlpha(0f);
     }
 }
