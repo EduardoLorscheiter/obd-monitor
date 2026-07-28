@@ -45,7 +45,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private MetricCardView cardSpeed, cardBattery;
+    private MetricCardView cardSpeed, cardBattery, cardCoolant, cardIntake;
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
 
@@ -97,6 +97,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         viewLimiter = findViewById(R.id.viewLimiter);
         initCardSpeed();
         initCardBattery();
+        initCardCoolant();
+        initCardIntake();
     }
 
     /**
@@ -106,7 +108,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         cardSpeed = findViewById(R.id.cardSpeed);
         cardSpeed.setIcon(R.drawable.ic_speedmeter);
         cardSpeed.setTitle("Velocidade");
-        cardSpeed.setValue("0");
+        cardSpeed.setValue("--");
         cardSpeed.setUnit("km/h");
     }
 
@@ -117,8 +119,30 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         cardBattery = findViewById(R.id.cardBattery);
         cardBattery.setIcon(R.drawable.ic_lightning_charge);
         cardBattery.setTitle("Bateria");
-        cardBattery.setValue("0.0");
+        cardBattery.setValue("--");
         cardBattery.setUnit("V");
+    }
+
+    /**
+     * Inicializa o card da métrica de temperatura do motor.
+     */
+    private void initCardCoolant() {
+        cardCoolant = findViewById(R.id.cardCoolant);
+        cardCoolant.setIcon(R.drawable.ic_thermometer);
+        cardCoolant.setTitle("T.Motor");
+        cardCoolant.setValue("--");
+        cardCoolant.setUnit("°C");
+    }
+
+    /**
+     * Inicializa o card da métrica de temperatura do ar de admissão.
+     */
+    private void initCardIntake() {
+        cardIntake = findViewById(R.id.cardIntake);
+        cardIntake.setIcon(R.drawable.ic_thermometer);
+        cardIntake.setTitle("T.Admissão");
+        cardIntake.setValue("--");
+        cardIntake.setUnit("°C");
     }
 
     /**
@@ -214,12 +238,34 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
     @Override
     public void onObdEngineCoolantTemperatureChanged(int temperature) {
-
+        runOnUiThread(() -> {
+            cardCoolant.setValue(String.valueOf(temperature));
+            if (temperature < 60) {
+                cardCoolant.setValueColor(R.color.coolant_cold);
+            } else if (temperature <= 95) {
+                cardCoolant.setValueColor(R.color.coolant_normal);
+            } else if (temperature <= 105) {
+                cardCoolant.setValueColor(R.color.coolant_warning);
+            } else {
+                cardCoolant.setValueColor(R.color.coolant_hot);
+            }
+        });
     }
 
     @Override
     public void onObdIntakeAirTemperatureChanged(int temperature) {
-
+        runOnUiThread(() -> {
+            cardIntake.setValue(String.valueOf(temperature));
+            if (temperature < 20) {
+                cardIntake.setValueColor(R.color.intake_cold);
+            } else if (temperature <= 40) {
+                cardIntake.setValueColor(R.color.intake_normal);
+            } else if (temperature <= 60) {
+                cardIntake.setValueColor(R.color.intake_warning);
+            } else {
+                cardIntake.setValueColor(R.color.intake_hot);
+            }
+        });
     }
 
     @Override

@@ -1,43 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Cores gerais -->
+    <!-- ======================================================================================= -->
+    <!-- PALETA BASE -->
+    <!-- ======================================================================================= -->
     <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="green">#00FF00</color>
+    <color name="lime">#AEEA00</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="orange">#FF7A00</color>
+    <color name="red">#FF0000</color>
+    <color name="off">#2E2E2E</color>
     <color name="dark_grey">#1A1A1A</color>
     <color name="grey">#5F5F5F</color>
     <color name="light_grey">#D1D1D1</color>
     <color name="ios_grey">#A1A1A6</color>
-    <color name="white">#FFFFFF</color>
-    <color name="green">#388E3C</color>
-    <color name="automotive_green">@android:color/holo_green_light</color>
-    <color name="red">#B00020</color>
     <color name="light_red">#8E343C</color>
     <color name="dark_red">#280000</color>
-    <!-- Cores com transparência -->
+    <color name="cold_blue">#42A5F5</color>
+    <color name="automotive_green">@android:color/holo_green_light</color>
+    <!-- ======================================================================================= -->
+    <!-- TRANSPARÊNCIAS -->
+    <!-- ======================================================================================= -->
     <color name="black_transparency">#1E000000</color>
     <color name="white_transparency">#1EFFFFFF</color>
     <color name="red_transparency">#80280000</color>
     <color name="limiter">#55FF0000</color>
-    <!-- Cores para 'led' -->
-    <color name="led_off">#2E2E2E</color>
-    <color name="led_green">#00FF00</color>
-    <color name="led_lime">#AEEA00</color>
-    <color name="led_yellow">#FFFF00</color>
-    <color name="led_orange">#FF7A00</color>
-    <color name="led_red">#FF0000</color>
-    <!-- Cores para status da bateria -->
-    <color name="battery_low">@color/led_red</color>
-    <color name="battery_warning">@color/led_yellow</color>
+    <!-- ======================================================================================= -->
+    <!-- LED -->
+    <!-- ======================================================================================= -->
+    <color name="led_off">@color/off</color>
+    <color name="led_green">@color/green</color>
+    <color name="led_lime">@color/lime</color>
+    <color name="led_yellow">@color/yellow</color>
+    <color name="led_orange">@color/orange</color>
+    <color name="led_red">@color/red</color>
+    <!-- ======================================================================================= -->
+    <!-- STATUS -->
+    <!-- ======================================================================================= -->
+    <!-- Conexão -->
+    <color name="status_off">@color/red</color>
+    <color name="status_on">@color/green</color>
+    <!-- Temperatura do líquido de arrefecimento -->
+    <color name="coolant_cold">@color/cold_blue</color>
+    <color name="coolant_normal">@color/automotive_green</color>
+    <color name="coolant_warning">@color/yellow</color>
+    <color name="coolant_hot">@color/red</color>
+    <!-- Temperatura do ar de admissão -->
+    <color name="intake_cold">@color/cold_blue</color>
+    <color name="intake_normal">@color/automotive_green</color>
+    <color name="intake_warning">@color/yellow</color>
+    <color name="intake_hot">@color/red</color>
+    <!-- Bateria -->
+    <color name="battery_low">@color/red</color>
+    <color name="battery_warning">@color/yellow</color>
     <color name="battery_normal">@color/automotive_green</color>
-    <color name="battery_over">@color/led_orange</color>
-    <!-- Cores para o status da conexão -->
-    <color name="status_off">@color/led_red</color>
-    <color name="status_on">@color/led_green</color>
-    <!-- Cores para o switch -->
+    <color name="battery_over">@color/orange</color>
+    <!-- ======================================================================================= -->
+    <!-- SWITCH -->
+    <!-- ======================================================================================= -->
     <color name="switch_thumb_checked">@color/light_red</color>
     <color name="switch_thumb_unchecked">@color/light_grey</color>
     <color name="switch_track_checked">@color/dark_red</color>
     <color name="switch_track_unchecked">@color/dark_grey</color>
-    <!-- Cores para o tema claro -->
+    <!-- ======================================================================================= -->
+    <!-- TEMA -->
+    <!-- ======================================================================================= -->
+    <!-- Light (claro) -->
     <color name="primary_light_mode">@color/black</color>
     <color name="primary_variant_light_mode">@color/grey</color>
     <color name="on_primary_light_mode">@color/light_grey</color>
@@ -47,7 +76,7 @@
     <color name="on_surface_light_mode">@color/light_grey</color>
     <color name="primary_container_light_mode">@color/white_transparency</color>
     <color name="secondary_container_light_mode">@color/red_transparency</color>
-    <!-- Cores para o tema escuro -->
+    <!-- Dark (escuro) -->
     <color name="primary_dark_mode">@color/black</color>
     <color name="primary_variant_dark_mode">@color/grey</color>
     <color name="on_primary_dark_mode">@color/light_grey</color>

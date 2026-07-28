@@ -9,16 +9,24 @@
 
     <style name="SettingsButtonComponent" parent="ButtonComponent">
         <item name="android:src">@drawable/ic_settings</item>
-        <item name="android:contentDescription">@string/configuracoes</item>
+        <item name="android:contentDescription">@null</item>
     </style>
 
     <style name="ConnectButtonComponent" parent="ButtonComponent">
         <item name="android:src">@drawable/ic_connect</item>
-        <item name="android:contentDescription">@string/conectar</item>
+        <item name="android:contentDescription">@null</item>
     </style>
 
     <style name="BackButtonComponent" parent="ButtonComponent">
         <item name="android:src">@drawable/ic_back</item>
-        <item name="android:contentDescription">@string/voltar</item>
+        <item name="android:contentDescription">@null</item>
+    </style>
+
+    <style name="SeparatorComponent">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:layout_marginBottom">2dp</item>
+        <item name="android:background">@drawable/separator_background</item>
     </style>
 </resources>

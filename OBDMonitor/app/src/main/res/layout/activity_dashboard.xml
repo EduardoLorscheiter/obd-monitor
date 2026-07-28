@@ -1,28 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="@drawable/application_background"
+    tools:context=".ui.DashboardActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/main"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/application_background"
-        tools:context=".ui.DashboardActivity">
+        android:id="@+id/containerDashboard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/containerHeader"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="5dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -43,8 +45,8 @@
                 android:textSize="28sp"
                 android:textStyle="bold|italic"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/btnConnect"
-                app:layout_constraintStart_toEndOf="@+id/btnSettings"
+                app:layout_constraintEnd_toStartOf="@id/btnConnect"
+                app:layout_constraintStart_toEndOf="@id/btnSettings"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.appcompat.widget.AppCompatImageButton
@@ -57,22 +59,15 @@
 
         <View
             android:id="@+id/separator"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/divider"
+            style="@style/SeparatorComponent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/containerHeader" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/containerDashboard"
+            android:id="@+id/containerMetrics"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
             app:layout_constraintBottom_toTopOf="@id/containerStatus"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -80,48 +75,52 @@
 
             <com.eduardo.obdmonitor.view.ShiftLightView
                 android:id="@+id/shiftLight"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="100dp"
-                android:layout_marginTop="3dp"
-                android:layout_marginBottom="20dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <LinearLayout
-                android:id="@+id/containerMetrics"
-                android:layout_width="match_parent"
+            <com.eduardo.obdmonitor.view.MetricCardView
+                android:id="@+id/cardSpeed"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
+            <com.eduardo.obdmonitor.view.MetricCardView
+                android:id="@+id/cardBattery"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
+            <com.eduardo.obdmonitor.view.MetricCardView
+                android:id="@+id/cardCoolant"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
+            <com.eduardo.obdmonitor.view.MetricCardView
+                android:id="@+id/cardIntake"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flowCards"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:orientation="horizontal"
+                app:constraint_referenced_ids="cardSpeed,cardBattery,cardCoolant,cardIntake"
+                app:flow_horizontalGap="2dp"
+                app:flow_horizontalStyle="spread_inside"
+                app:flow_verticalAlign="center"
+                app:flow_wrapMode="none"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/shiftLight">
+                app:layout_constraintTop_toBottomOf="@id/shiftLight" />
 
-                <com.eduardo.obdmonitor.view.MetricCardView
-                    android:id="@+id/cardSpeed"
-                    android:layout_width="160dp"
-                    android:layout_height="100dp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/cardRpm" />
-
-                <com.eduardo.obdmonitor.view.MetricCardView
-                    android:id="@+id/cardBattery"
-                    android:layout_width="145dp"
-                    android:layout_height="100dp"
-                    android:layout_marginStart="2dp"
-                    app:layout_constraintStart_toEndOf="@+id/cardSpeed"
-                    app:layout_constraintTop_toBottomOf="@+id/cardRpm" />
-            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
             android:id="@+id/containerStatus"
             android:layout_width="0dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="5dp"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -151,14 +150,11 @@
                 android:layout_marginStart="8dp"
                 android:background="@drawable/status_off" />
 
-            <Space
-                android:layout_width="32dp"
-                android:layout_height="1dp" />
-
             <ImageView
                 android:id="@+id/imgMemory"
                 android:layout_width="15dp"
                 android:layout_height="15dp"
+                android:layout_marginStart="32dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_memory" />
 
@@ -178,13 +174,10 @@
                 android:layout_marginStart="8dp"
                 android:background="@drawable/status_off" />
 
-            <Space
-                android:layout_width="32dp"
-                android:layout_height="1dp" />
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
                 android:layout_weight="1"
                 android:gravity="end|center_vertical"
                 android:orientation="horizontal"
@@ -208,18 +201,18 @@
 
             </LinearLayout>
         </LinearLayout>
-
-        <View
-            android:id="@+id/viewLimiter"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:alpha="0"
-            android:background="@color/limiter"
-            android:clickable="false"
-            android:focusable="false"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.core.widget.NestedScrollView>
+
+    <View
+        android:id="@+id/viewLimiter"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0"
+        android:background="@color/limiter"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
