@@ -81,22 +81,22 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <com.eduardo.obdmonitor.view.MetricCardView
+            <com.eduardo.obdmonitor.view.MetricView
                 android:id="@+id/cardSpeed"
                 android:layout_width="0dp"
                 android:layout_height="100dp" />
 
-            <com.eduardo.obdmonitor.view.MetricCardView
+            <com.eduardo.obdmonitor.view.MetricView
                 android:id="@+id/cardBattery"
                 android:layout_width="0dp"
                 android:layout_height="100dp" />
 
-            <com.eduardo.obdmonitor.view.MetricCardView
+            <com.eduardo.obdmonitor.view.MetricView
                 android:id="@+id/cardCoolant"
                 android:layout_width="0dp"
                 android:layout_height="100dp" />
 
-            <com.eduardo.obdmonitor.view.MetricCardView
+            <com.eduardo.obdmonitor.view.MetricView
                 android:id="@+id/cardIntake"
                 android:layout_width="0dp"
                 android:layout_height="100dp" />

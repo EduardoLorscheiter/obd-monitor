@@ -36,7 +36,7 @@ import com.eduardo.obdmonitor.obd.ObdDataListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
-import com.eduardo.obdmonitor.view.MetricCardView;
+import com.eduardo.obdmonitor.view.MetricView;
 import com.eduardo.obdmonitor.view.ShiftLightView;
 
 import java.util.Locale;
@@ -45,7 +45,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private MetricCardView cardSpeed, cardBattery, cardCoolant, cardIntake;
+    private MetricView cardSpeed, cardBattery, cardCoolant, cardIntake;
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
 

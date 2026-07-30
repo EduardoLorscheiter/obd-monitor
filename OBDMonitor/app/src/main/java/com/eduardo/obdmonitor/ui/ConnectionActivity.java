@@ -28,6 +28,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -50,7 +51,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
     private ImageButton btnBack;
     private TextView txtBluetoothStatus;
     private SwitchCompat switchBluetooth;
-    private LinearLayout containerBluetooth, containerDevices, containerBondedDevices;
+    private ConstraintLayout containerBluetooth;
+    private LinearLayout containerDevices, containerBondedDevices;
 
     // Gerenciador responsável pela comunicação Bluetooth
     private BluetoothManager bluetoothManager;

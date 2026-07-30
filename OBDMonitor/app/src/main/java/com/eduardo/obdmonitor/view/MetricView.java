@@ -1,6 +1,6 @@
 /*
  **=================================================================================================
- **  @file    MetricCardView.java
+ **  @file    MetricView.java
  **  @author  Eduardo Lorscheiter
  **  @class   Personal
  **  @date    julho/2026
@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat;
 
 import com.eduardo.obdmonitor.R;
 
-public class MetricCardView extends LinearLayout {
+public class MetricView extends LinearLayout {
     // Ícone da métrica
     private ImageView imgIcon;
 
@@ -38,17 +38,17 @@ public class MetricCardView extends LinearLayout {
     // Texto responsável por exibir a unidade de medida da métrica
     private TextView txtUnit;
 
-    public MetricCardView(Context context) {
+    public MetricView(Context context) {
         super(context);
         init(context);
     }
 
-    public MetricCardView(Context context, AttributeSet attrs) {
+    public MetricView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public MetricCardView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public MetricView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
@@ -57,14 +57,14 @@ public class MetricCardView extends LinearLayout {
      * Inicializa o componente carregando seu layout interno e obtendo as referências dos elementos
      * visuais utilizados pelo cartão.
      *
-     * <p>O layout é inflado automaticamente a partir de {@code R.layout.view_metric_card},
+     * <p>O layout é inflado automaticamente a partir de {@code R.layout.view_metric},
      * permitindo que o componente seja utilizado diretamente em arquivos XML ou criado
      * dinamicamente em tempo de execução.</p>
      *
      * @param context Contexto utilizado para inflar o layout.
      */
     private void init(Context context) {
-        LayoutInflater.from(context).inflate(R.layout.view_metric_card, this, true);
+        LayoutInflater.from(context).inflate(R.layout.view_metric, this, true);
         imgIcon = findViewById(R.id.imgIcon);
         txtTitle = findViewById(R.id.txtTitle);
         txtValue = findViewById(R.id.txtValue);
