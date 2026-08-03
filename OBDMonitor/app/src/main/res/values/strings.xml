@@ -1,13 +1,15 @@
 <resources>
     <string name="app_name">OBDMonitor</string>
+    <string name="app_version">v%1$s</string>
+    <string name="obd_monitor">OBD Monitor</string>
     <string name="ativado">Ativado</string>
     <string name="desativado">Desativado</string>
     <string name="bluetooth">Bluetooth</string>
     <string name="dispositivos_pareados">Dispositivos pareados</string>
-    <string name="obd_monitor">OBD Monitor</string>
     <string name="ecu">ECU</string>
     <string name="bluetooth_obd_ii">Bluetooth ⇄ OBD-II</string>
     <string name="__">--</string>
     <string name="unidade">Unidade</string>
     <string name="titulo">Título</string>
+    <string name="monitoramento_de_veiculos_em_tempo_real">Monitoramento de Veículos em Tempo Real</string>
 </resources>

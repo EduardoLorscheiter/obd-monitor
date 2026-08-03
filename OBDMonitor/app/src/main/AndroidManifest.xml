@@ -24,20 +24,27 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OBDMonitor">
         <activity
-            android:name=".ui.DashboardActivity"
-            android:screenOrientation="landscape"
+            android:name=".ui.SplashActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.ConnectionActivity"
-            android:screenOrientation="landscape"
+            android:name=".ui.DashboardActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="DiscouragedApi" />
+        <activity
+            android:name=".ui.ConnectionActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="DiscouragedApi" />
     </application>
 </manifest>

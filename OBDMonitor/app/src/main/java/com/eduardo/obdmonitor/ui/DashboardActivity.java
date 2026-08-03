@@ -29,7 +29,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
-import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.obd.ObdConnectionListener;
 import com.eduardo.obdmonitor.obd.ObdDataListener;
@@ -149,7 +148,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      * Inicializa os gerenciadores responsáveis pela comunicação OBD-II.
      */
     private void initConnection() {
-        BluetoothManager.getInstance(this);
         obdManager = ObdManager.getInstance();
         obdManager.setListeners(this, this);
     }
