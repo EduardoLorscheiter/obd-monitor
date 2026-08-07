@@ -19,7 +19,7 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
 public class Device implements Parcelable {
-    private static final String DEVICE_STATUS_DISCONNECTED = "Não conectado";
+    private static final String DEVICE_STATUS_DISCONNECTED = "Desconectado";
     private static final String DEVICE_STATUS_CONNECTING = "Conectando...";
     private static final String DEVICE_STATUS_CONNECTED = "Conectado";
 

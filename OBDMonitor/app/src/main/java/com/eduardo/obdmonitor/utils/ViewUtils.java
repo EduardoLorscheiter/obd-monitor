@@ -24,6 +24,12 @@ import com.eduardo.obdmonitor.R;
 
 public class ViewUtils {
     /**
+     * Classe utilitária. Não permite instanciação.
+     */
+    private ViewUtils() {
+    }
+
+    /**
      * Obtém uma cor definida por um atributo do tema atual.
      *
      * <p>Permite que componentes personalizados utilizem cores configuradas no tema da aplicação,

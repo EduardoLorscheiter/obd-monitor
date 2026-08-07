@@ -139,7 +139,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
                 bluetoothManager.requestEnableBluetooth(this);
             } else {
                 switchBluetooth.setChecked(true);
-                ToastUtils.showToast(this, "Desligue o Bluetooth pelas configurações do Android!");
+                ToastUtils.showToast(this, getString(R.string.turn_off_bluetooth_in_android_settings));
             }
         });
 
@@ -281,13 +281,13 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
         switchBluetooth.setChecked(enabled);
 
         if (enabled) {
-            txtBluetoothStatus.setText(R.string.ativado);
+            txtBluetoothStatus.setText(R.string.enabled);
             int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorSecondaryVariant);
             txtBluetoothStatus.setTextColor(color);
             containerBluetooth.setBackgroundResource(R.drawable.container_bluetooth_enabled);
             containerDevices.setVisibility(View.VISIBLE);
         } else {
-            txtBluetoothStatus.setText(R.string.desativado);
+            txtBluetoothStatus.setText(R.string.disabled);
             int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorOnPrimary);
             txtBluetoothStatus.setTextColor(color);
             containerBluetooth.setBackgroundResource(R.drawable.container_bluetooth_disabled);

@@ -1,15 +1,59 @@
 <resources>
-    <string name="app_name">OBDMonitor</string>
-    <string name="app_version">v%1$s</string>
-    <string name="obd_monitor">OBD Monitor</string>
-    <string name="ativado">Ativado</string>
-    <string name="desativado">Desativado</string>
-    <string name="bluetooth">Bluetooth</string>
-    <string name="dispositivos_pareados">Dispositivos pareados</string>
-    <string name="ecu">ECU</string>
-    <string name="bluetooth_obd_ii">Bluetooth ⇄ OBD-II</string>
-    <string name="__">--</string>
-    <string name="unidade">Unidade</string>
-    <string name="titulo">Título</string>
-    <string name="monitoramento_de_veiculos_em_tempo_real">Monitoramento de Veículos em Tempo Real</string>
+    <!-- ======================================================================================= -->
+    <!-- Aplicação -->
+    <!-- ======================================================================================= -->
+    <string name="app_name" translatable="false">OBDMonitor</string>
+    <string name="app_version" translatable="false">v%1$s</string>
+    <string name="real_time_vehicle_monitoring">Monitoramento de Veículos em Tempo Real</string>
+    <!-- ======================================================================================= -->
+    <!-- Protocolos / Constantes -->
+    <!-- ======================================================================================= -->
+    <string name="bluetooth" translatable="false">Bluetooth</string>
+    <string name="bluetooth_obd_ii" translatable="false">Bluetooth ⇄ OBD-II</string>
+    <string name="ecu" translatable="false">ECU</string>
+    <string name="elm327" translatable="false">ELM327</string>
+    <string name="ok" translatable="false">OK</string>
+    <!-- ======================================================================================= -->
+    <!-- Bluetooth -->
+    <!-- ======================================================================================= -->
+    <!-- Geral -->
+    <string name="enabled">Ativado</string>
+    <string name="disabled">Desativado</string>
+    <string name="paired_devices">Dispositivos pareados</string>
+    <string name="device_connected">Dispositivo %s conectado!</string>
+    <string name="device_disconnected">Dispositivo %s desconectado!</string>
+    <!-- Conexão -->
+    <string name="failed_to_connect_to_the_bluetooth_device">Falha ao conectar ao dispositivo Bluetooth!</string>
+    <string name="error_during_bluetooth_communication">Erro durante a comunicação Bluetooth!</string>
+    <string name="failed_to_close_the_bluetooth_connection">Erro ao encerrar a conexão Bluetooth!</string>
+    <string name="invalid_response_received_from_the_device">Resposta inválida recebida do dispositivo!</string>
+    <!-- Manager -->
+    <string name="bluetooth_device_not_found">Dispositivo Bluetooth não encontrado!</string>
+    <string name="bluetooth_is_not_available">Bluetooth não disponível!</string>
+    <string name="bluetooth_is_not_supported">Bluetooth não suportado!</string>
+    <string name="bluetooth_permission_not_granted">Permissão Bluetooth não concedida!</string>
+    <string name="no_paired_bluetooth_devices_found">Nenhum dispositivo Bluetooth pareado encontrado!</string>
+    <!-- ======================================================================================= -->
+    <!-- OBD-II -->
+    <!-- ======================================================================================= -->
+    <string name="invalid_elm327_device">O dispositivo não respondeu como um ELM327!</string>
+    <string name="obd_monitoring_interrupted">Monitoramento do OBD-II interrompido!</string>
+    <string name="turn_off_bluetooth_in_android_settings">Desligue o Bluetooth pelas configurações do Android!</string>
+    <string name="obd_connection_success">Conectado com sucesso ao dispositivo OBD-II!</string>
+    <string name="obd_connection_failed">Não foi possível conectar ao dispositivo OBD-II!</string>
+    <!-- ======================================================================================= -->
+    <!-- Dashboard -->
+    <!-- ======================================================================================= -->
+    <string name="title">Título</string>
+    <string name="unit">Unidade</string>
+    <string name="speed">Velocidade</string>
+    <string name="battery">Bateria</string>
+    <string name="engine_t">T. Motor</string>
+    <string name="intake_t">T. Admissão</string>
+    <!-- ======================================================================================= -->
+    <!-- Constantes -->
+    <!-- ======================================================================================= -->
+    <string name="__" translatable="false">--</string>
+    <string name="zero" translatable="false">0</string>
+    <string name="rpm" translatable="false">rpm</string>
 </resources>

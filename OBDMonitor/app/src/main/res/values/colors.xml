@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- ======================================================================================= -->
-    <!-- PALETA BASE -->
+    <!-- Paleta base -->
     <!-- ======================================================================================= -->
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
@@ -20,14 +20,14 @@
     <color name="cold_blue">#42A5F5</color>
     <color name="automotive_green">@android:color/holo_green_light</color>
     <!-- ======================================================================================= -->
-    <!-- TRANSPARÊNCIAS -->
+    <!-- Transparências -->
     <!-- ======================================================================================= -->
     <color name="black_transparency">#1E000000</color>
     <color name="white_transparency">#1EFFFFFF</color>
     <color name="red_transparency">#80280000</color>
     <color name="limiter">#55FF0000</color>
     <!-- ======================================================================================= -->
-    <!-- LED -->
+    <!-- Led -->
     <!-- ======================================================================================= -->
     <color name="led_off">@color/off</color>
     <color name="led_green">@color/green</color>
@@ -36,7 +36,7 @@
     <color name="led_orange">@color/orange</color>
     <color name="led_red">@color/red</color>
     <!-- ======================================================================================= -->
-    <!-- STATUS -->
+    <!-- Status -->
     <!-- ======================================================================================= -->
     <!-- Conexão -->
     <color name="status_off">@color/red</color>
@@ -57,14 +57,14 @@
     <color name="battery_normal">@color/automotive_green</color>
     <color name="battery_over">@color/orange</color>
     <!-- ======================================================================================= -->
-    <!-- SWITCH -->
+    <!-- Switch -->
     <!-- ======================================================================================= -->
     <color name="switch_thumb_checked">@color/light_red</color>
     <color name="switch_thumb_unchecked">@color/light_grey</color>
     <color name="switch_track_checked">@color/dark_red</color>
     <color name="switch_track_unchecked">@color/dark_grey</color>
     <!-- ======================================================================================= -->
-    <!-- TEMA -->
+    <!-- Tema -->
     <!-- ======================================================================================= -->
     <!-- Light (claro) -->
     <color name="primary_light_mode">@color/black</color>

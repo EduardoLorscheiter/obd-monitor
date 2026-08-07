@@ -477,7 +477,7 @@ public class ShiftLightView extends View {
 
         // Desenha a unidade do RPM
         canvas.drawText(
-                " rpm",
+                " " + getContext().getString(R.string.rpm),
                 startX + reservedWidth + RPM_UNIT_SPACING,
                 y,
                 rpmUnitPaint
@@ -540,7 +540,7 @@ public class ShiftLightView extends View {
 
         // Desenha o zero no início da escala
         canvas.drawText(
-                "0",
+                getContext().getString(R.string.zero),
                 ledWidth / 2f,
                 ledBottom + (RPM_SCALE_TEXT_SIZE * 0.9f),
                 rpmScalePaint

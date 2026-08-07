@@ -27,6 +27,24 @@ public class ToastUtils {
     // Referência para o Toast atual
     private static Toast currentToast;
 
+    /**
+     * Classe utilitária. Não permite instanciação.
+     */
+    private ToastUtils() {
+    }
+
+    /**
+     * Exibe uma mensagem Toast personalizada utilizando as cores definidas pelo tema atual.
+     *
+     * <p>Caso exista um Toast previamente exibido, ele é cancelado antes da criação do novo,
+     * evitando a sobreposição de múltiplas mensagens na interface.</p>
+     *
+     * <p>A aparência do Toast é ajustada para utilizar a cor de fundo e a cor do texto configuradas
+     * no tema da aplicação.</p>
+     *
+     * @param activity Activity utilizada como contexto para criação e exibição do Toast.
+     * @param text     Texto que será exibido na mensagem.
+     */
     public static void showToast(Activity activity, String text) {
         // Cancela o Toast anterior caso esteja sendo exibido
         if (currentToast != null) {

@@ -15,6 +15,7 @@ package com.eduardo.obdmonitor.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 
 import com.eduardo.obdmonitor.model.Device;
 
@@ -30,6 +31,9 @@ public class BluetoothConnection {
 
     // Tempo máximo de espera pela resposta do dispositivo (ms)
     private static final long RESPONSE_TIMEOUT_MS = 5000;
+
+    // Contexto global da aplicação utilizado para acessar serviços Android
+    private final Context applicationContext;
 
     // Listener utilizado para reportar eventos da conexão Bluetooth
     private final BluetoothConnectionListener bluetoothConnectionListener;
@@ -47,20 +51,24 @@ public class BluetoothConnection {
     private Device connectedDevice;
 
     // Indica se existe uma conexão Bluetooth ativa
-    // Obs.: O modificador "volatile" garante a visibilidade da variável entre threads
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
     private volatile boolean connected;
 
     // Indica se está ocorrendo uma tentativa de conexão Bluetooth
-    // Obs.: O modificador "volatile" garante a visibilidade da variável entre threads
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
     private volatile boolean connecting;
 
     /**
      * Cria uma conexão Bluetooth.
      *
+     * @param applicationContext          Contexto global da aplicação utilizado para acessar
+     *                                    serviços Android.
      * @param bluetoothConnectionListener Listener utilizado para reportar eventos da conexão
      *                                    Bluetooth.
      */
-    protected BluetoothConnection(BluetoothConnectionListener bluetoothConnectionListener) {
+    protected BluetoothConnection(Context applicationContext,
+                                  BluetoothConnectionListener bluetoothConnectionListener) {
+        this.applicationContext = applicationContext;
         this.bluetoothConnectionListener = bluetoothConnectionListener;
     }
 
@@ -87,7 +95,7 @@ public class BluetoothConnection {
                 closeResources();
                 bluetoothConnectionListener.onBluetoothConnectionError(
                         device,
-                        BluetoothConnectionError.CONNECTION_FAILED.getMessage());
+                        BluetoothConnectionError.CONNECTION_FAILED.getMessage(applicationContext));
             } finally {
                 connecting = false;
             }
@@ -133,14 +141,14 @@ public class BluetoothConnection {
             if (response.isEmpty()) {
                 bluetoothConnectionListener.onBluetoothConnectionError(
                         connectedDevice,
-                        BluetoothConnectionError.INVALID_RESPONSE.getMessage());
+                        BluetoothConnectionError.INVALID_RESPONSE.getMessage(applicationContext));
                 return null;
             }
             return response;
         } catch (IOException e) {
             bluetoothConnectionListener.onBluetoothConnectionError(
                     connectedDevice,
-                    BluetoothConnectionError.COMMUNICATION_ERROR.getMessage());
+                    BluetoothConnectionError.COMMUNICATION_ERROR.getMessage(applicationContext));
             disconnect();
             return null;
         }
@@ -196,7 +204,7 @@ public class BluetoothConnection {
         } catch (IOException e) {
             bluetoothConnectionListener.onBluetoothConnectionError(
                     connectedDevice,
-                    BluetoothConnectionError.RESOURCE_CLOSE_FAILED.getMessage());
+                    BluetoothConnectionError.RESOURCE_CLOSE_FAILED.getMessage(applicationContext));
         }
     }
 
@@ -214,7 +222,7 @@ public class BluetoothConnection {
     /**
      * Lê a resposta enviada pelo dispositivo Bluetooth.
      *
-     * <p>A leitura é encerrada quando o adaptador ELM327 envia o caractere {@code ">"}, indicando
+     * <p>A leitura é encerrada quando o adaptador ELM327 envia o caractere {@code '>'}, indicando
      * que terminou o processamento do comando, ou quando o tempo limite de espera é atingido.</p>
      *
      * @return Resposta recebida do dispositivo.
@@ -226,7 +234,7 @@ public class BluetoothConnection {
         // Define o instante máximo para aguardar a resposta
         long timeout = System.currentTimeMillis() + RESPONSE_TIMEOUT_MS;
 
-        // Lê os dados recebidos até encontrar o caractere de término (">") ou até que o tempo
+        // Lê os dados recebidos até encontrar o caractere de término ('>') ou até que o tempo
         // limite seja atingido
         while (System.currentTimeMillis() < timeout) {
             // Lê um byte do fluxo de entrada
@@ -238,7 +246,7 @@ public class BluetoothConnection {
 
             char character = (char) data;
 
-            // O ELM327 utiliza o caractere ">" para indicar que finalizou o processamento do
+            // O ELM327 utiliza o caractere '>' para indicar que finalizou o processamento do
             // comando
             if (character == '>')
                 break;

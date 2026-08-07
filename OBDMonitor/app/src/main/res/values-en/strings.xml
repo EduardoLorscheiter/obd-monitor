@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ======================================================================================= -->
+    <!-- Aplicação -->
+    <!-- ======================================================================================= -->
+    <string name="real_time_vehicle_monitoring">Real-Time Vehicle Monitoring</string>
+    <!-- ======================================================================================= -->
+    <!-- Bluetooth -->
+    <!-- ======================================================================================= -->
+    <!-- Geral -->
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="paired_devices">Paired devices</string>
+    <string name="device_connected">Device %s connected!</string>
+    <string name="device_disconnected">Dispositivo %s disconnected!</string>
+    <!-- Conexão -->
+    <string name="failed_to_connect_to_the_bluetooth_device">Failed to connect to the Bluetooth device!</string>
+    <string name="error_during_bluetooth_communication">Error during Bluetooth communication!</string>
+    <string name="failed_to_close_the_bluetooth_connection">Failed to close the Bluetooth connection!</string>
+    <string name="invalid_response_received_from_the_device">Invalid response received from the device!</string>
+    <!-- Manager -->
+    <string name="bluetooth_device_not_found">Bluetooth device not found!</string>
+    <string name="bluetooth_is_not_available">Bluetooth is not available!</string>
+    <string name="bluetooth_is_not_supported">Bluetooth is not supported!</string>
+    <string name="bluetooth_permission_not_granted">Bluetooth permission not granted!</string>
+    <string name="no_paired_bluetooth_devices_found">No paired Bluetooth devices found!</string>
+    <!-- ======================================================================================= -->
+    <!-- OBD-II -->
+    <!-- ======================================================================================= -->
+    <string name="invalid_elm327_device">The device did not respond as an ELM327!</string>
+    <string name="obd_monitoring_interrupted">OBD-II monitoring interrupted!</string>
+    <string name="turn_off_bluetooth_in_android_settings">Turn off Bluetooth in the Android settings!</string>
+    <string name="obd_connection_success">Successfully connected to the OBD-II device!</string>
+    <string name="obd_connection_failed">Could not connect to the OBD-II device!</string>
+    <!-- ======================================================================================= -->
+    <!-- Dashboard -->
+    <!-- ======================================================================================= -->
+    <string name="title">Title</string>
+    <string name="unit">Unit</string>
+    <string name="speed">Speed</string>
+    <string name="battery">Battery</string>
+    <string name="engine_t">Engine T.</string>
+    <string name="intake_t">Intake T.</string>
+</resources>

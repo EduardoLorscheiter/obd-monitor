@@ -12,20 +12,27 @@
 
 package com.eduardo.obdmonitor.bluetooth;
 
+import android.content.Context;
+
+import androidx.annotation.StringRes;
+
+import com.eduardo.obdmonitor.R;
+
 public enum BluetoothManagerError {
-    DEVICE_NOT_FOUND("Dispositivo Bluetooth não encontrado!"),
-    BLUETOOTH_NOT_AVAILABLE("Bluetooth não disponível!"),
-    BLUETOOTH_NOT_SUPPORTED("Bluetooth não suportado!"),
-    BLUETOOTH_PERMISSION_NOT_GRANTED("Permissão Bluetooth não concedida!"),
-    NO_BONDED_DEVICES("Nenhum dispositivo Bluetooth pareado encontrado!");
+    DEVICE_NOT_FOUND(R.string.bluetooth_device_not_found),
+    BLUETOOTH_NOT_AVAILABLE(R.string.bluetooth_is_not_available),
+    BLUETOOTH_NOT_SUPPORTED(R.string.bluetooth_is_not_supported),
+    BLUETOOTH_PERMISSION_NOT_GRANTED(R.string.bluetooth_permission_not_granted),
+    NO_BONDED_DEVICES(R.string.no_paired_bluetooth_devices_found);
 
-    private final String message;
+    @StringRes
+    private final int messageResId;
 
-    BluetoothManagerError(String message) {
-        this.message = message;
+    BluetoothManagerError(@StringRes int messageResId) {
+        this.messageResId = messageResId;
     }
 
-    public String getMessage() {
-        return message;
+    public String getMessage(Context context) {
+        return context.getString(messageResId);
     }
 }

@@ -12,19 +12,26 @@
 
 package com.eduardo.obdmonitor.bluetooth;
 
+import android.content.Context;
+
+import androidx.annotation.StringRes;
+
+import com.eduardo.obdmonitor.R;
+
 public enum BluetoothConnectionError {
-    CONNECTION_FAILED("Falha ao conectar ao dispositivo Bluetooth!"),
-    COMMUNICATION_ERROR("Erro durante a comunicação Bluetooth!"),
-    RESOURCE_CLOSE_FAILED("Erro ao encerrar a conexão Bluetooth!"),
-    INVALID_RESPONSE("Resposta inválida recebida do dispositivo!");
+    CONNECTION_FAILED(R.string.failed_to_connect_to_the_bluetooth_device),
+    COMMUNICATION_ERROR(R.string.error_during_bluetooth_communication),
+    RESOURCE_CLOSE_FAILED(R.string.failed_to_close_the_bluetooth_connection),
+    INVALID_RESPONSE(R.string.invalid_response_received_from_the_device);
 
-    private final String message;
+    @StringRes
+    private final int messageResId;
 
-    BluetoothConnectionError(String message) {
-        this.message = message;
+    BluetoothConnectionError(@StringRes int messageResId) {
+        this.messageResId = messageResId;
     }
 
-    public String getMessage() {
-        return message;
+    public String getMessage(Context context) {
+        return context.getString(messageResId);
     }
 }

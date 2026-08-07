@@ -12,6 +12,9 @@
 
 package com.eduardo.obdmonitor.obd;
 
+import android.content.Context;
+
+import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
@@ -29,6 +32,9 @@ public class ObdManager {
     // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
 
+    // Contexto global da aplicação utilizado para acessar serviços Android
+    private final Context applicationContext;
+
     // Gerenciador responsável pela comunicação Bluetooth
     private final BluetoothManager bluetoothManager;
 
@@ -39,7 +45,7 @@ public class ObdManager {
     private ObdDataListener dataListener;
 
     // Indica se o monitoramento contínuo da ECU está ativo
-    // Obs.: O modificador "volatile" garante a visibilidade da variável entre threads
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
     private volatile boolean monitoring;
 
     // Indica se o Bluetooth está conectado
@@ -57,22 +63,47 @@ public class ObdManager {
     /**
      * Retorna a instância única do gerenciador OBD-II.
      *
+     * <p>O contexto recebido é convertido internamente para o contexto da aplicação, evitando
+     * retenção de referências de Activity.</p>
+     *
+     * @param context Contexto utilizado para obter o contexto da aplicação.
      * @return Instância única de {@code ObdManager}.
+     */
+    public static synchronized ObdManager getInstance(Context context) {
+        if (instance == null)
+            instance = new ObdManager(context);
+
+        return instance;
+    }
+
+    /**
+     * Retorna a instância única do gerenciador OBD-II previamente inicializada.
+     *
+     * <p>Deve ser utilizado após a criação da instância através de {@link #getInstance(Context)}.
+     * Caso o gerenciador ainda não tenha sido inicializado, uma {@link IllegalStateException} será
+     * lançada.</p>
+     *
+     * @return Instância única de {@code ObdManager}.
+     * @throws IllegalStateException Caso o gerenciador ainda não tenha sido inicializado.
      */
     public static synchronized ObdManager getInstance() {
         if (instance == null)
-            instance = new ObdManager();
+            throw new IllegalStateException("ObdManager has not been initialized!");
 
         return instance;
     }
 
     /**
      * Cria uma nova instância do gerenciador OBD-II.
+     *
+     * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
+     * mantenha referência a componentes com ciclo de vida curto, como Activities.</p>
+     *
+     * @param context Contexto utilizado para obter o contexto da aplicação.
      */
-    private ObdManager() {
+    private ObdManager(Context context) {
+        this.applicationContext = context.getApplicationContext();
         bluetoothManager = BluetoothManager.getInstance();
-        connectionListener = null;
-        dataListener = null;
         resetConnectionState();
     }
 
@@ -143,7 +174,8 @@ public class ObdManager {
         notifyConnectionState();
 
         if (connectionListener != null)
-            connectionListener.onObdError("O dispositivo não respondeu como um ELM327!");
+            connectionListener.onObdError(
+                    ObdManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext));
     }
 
     /**
@@ -193,7 +225,7 @@ public class ObdManager {
      * Envia um comando ao ELM327 e verifica se a resposta indica sucesso.
      *
      * @param command Comando a ser enviado.
-     * @return {@code true} caso a resposta contenha "OK" ou a identificação do ELM327 durante o
+     * @return {@code true} caso a resposta contenha 'OK' ou a identificação do ELM327 durante o
      * processo de inicialização, {@code false} caso contrário.
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -203,7 +235,8 @@ public class ObdManager {
         if (response == null)
             return false;
 
-        return response.contains("ELM327") || response.contains("OK");
+        return response.contains(applicationContext.getString(R.string.elm327)) ||
+                response.contains(applicationContext.getString(R.string.ok));
     }
 
     /**
@@ -229,7 +262,8 @@ public class ObdManager {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 if (monitoring && connectionListener != null)
-                    connectionListener.onObdError("Monitoramento do OBD-II interrompido!");
+                    connectionListener.onObdError(
+                            ObdManagerError.MONITORING_INTERRUPTED.getMessage(applicationContext));
             } finally {
                 monitoringThread = null;
             }

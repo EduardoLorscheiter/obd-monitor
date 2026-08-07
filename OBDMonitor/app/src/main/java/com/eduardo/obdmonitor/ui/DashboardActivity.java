@@ -106,8 +106,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initCardSpeed() {
         cardSpeed = findViewById(R.id.cardSpeed);
         cardSpeed.setIcon(R.drawable.ic_speedmeter);
-        cardSpeed.setTitle("Velocidade");
-        cardSpeed.setValue("--");
+        cardSpeed.setTitle(getString(R.string.speed));
+        cardSpeed.setValue(getString(R.string.__));
         cardSpeed.setUnit("km/h");
     }
 
@@ -117,8 +117,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initCardBattery() {
         cardBattery = findViewById(R.id.cardBattery);
         cardBattery.setIcon(R.drawable.ic_lightning_charge);
-        cardBattery.setTitle("Bateria");
-        cardBattery.setValue("--");
+        cardBattery.setTitle(getString(R.string.battery));
+        cardBattery.setValue(getString(R.string.__));
         cardBattery.setUnit("V");
     }
 
@@ -128,8 +128,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initCardCoolant() {
         cardCoolant = findViewById(R.id.cardCoolant);
         cardCoolant.setIcon(R.drawable.ic_thermometer);
-        cardCoolant.setTitle("T.Motor");
-        cardCoolant.setValue("--");
+        cardCoolant.setTitle(getString(R.string.engine_t));
+        cardCoolant.setValue(getString(R.string.__));
         cardCoolant.setUnit("°C");
     }
 
@@ -139,8 +139,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     private void initCardIntake() {
         cardIntake = findViewById(R.id.cardIntake);
         cardIntake.setIcon(R.drawable.ic_thermometer);
-        cardIntake.setTitle("T.Admissão");
-        cardIntake.setValue("--");
+        cardIntake.setTitle(getString(R.string.intake_t));
+        cardIntake.setValue(getString(R.string.__));
         cardIntake.setUnit("°C");
     }
 
@@ -184,9 +184,9 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
                     obdManager.setListeners(this, this);
 
                     if (result.getResultCode() == RESULT_OK) {
-                        ToastUtils.showToast(this, "Conectado com sucesso ao dispositivo OBD-II!");
+                        ToastUtils.showToast(this, getString(R.string.obd_connection_success));
                     } else {
-                        ToastUtils.showToast(this, "Não foi possível conectar ao dispositivo OBD-II.");
+                        ToastUtils.showToast(this, getString(R.string.obd_connection_failed));
                     }
                 }
         );

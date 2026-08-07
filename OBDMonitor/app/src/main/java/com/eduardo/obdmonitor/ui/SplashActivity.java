@@ -97,7 +97,7 @@ public class SplashActivity extends AppCompatActivity {
      */
     private void initApplication() {
         BluetoothManager.getInstance(this);
-        ObdManager.getInstance();
+        ObdManager.getInstance(this);
     }
 
     /**
