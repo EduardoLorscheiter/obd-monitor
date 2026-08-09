@@ -20,13 +20,13 @@ import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
 
 public class ObdManager {
-    // Tempo de espera após o envio do comando de reset ao ELM327 (em milissegundos)
+    // Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos
     private static final int ELM327_RESET_DELAY_MS = 1000;
 
-    // Tempo de espera para identificação automática do protocolo OBD-II (em milissegundos)
+    // Tempo de espera para identificação automática do protocolo OBD-II, em milissegundos
     private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
 
-    // Intervalo entre leituras consecutivas da ECU durante o monitoramento (em milissegundos)
+    // Intervalo entre leituras consecutivas da ECU durante o monitoramento,em milissegundos
     private static final int MONITORING_INTERVAL_MS = 100;
 
     // Instância única do gerenciador OBD-II (Singleton)

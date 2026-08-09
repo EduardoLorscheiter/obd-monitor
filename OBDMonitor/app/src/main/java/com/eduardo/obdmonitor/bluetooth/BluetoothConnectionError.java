@@ -21,8 +21,8 @@ import com.eduardo.obdmonitor.R;
 public enum BluetoothConnectionError {
     CONNECTION_FAILED(R.string.failed_to_connect_to_the_bluetooth_device),
     COMMUNICATION_ERROR(R.string.error_during_bluetooth_communication),
-    RESOURCE_CLOSE_FAILED(R.string.failed_to_close_the_bluetooth_connection),
-    INVALID_RESPONSE(R.string.invalid_response_received_from_the_device);
+    INVALID_RESPONSE(R.string.invalid_response_received_from_the_device),
+    RESOURCE_CLOSE_FAILED(R.string.failed_to_close_the_bluetooth_connection);
 
     @StringRes
     private final int messageResId;

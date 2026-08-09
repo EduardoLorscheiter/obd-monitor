@@ -305,7 +305,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
 
         blinkAnimator = ValueAnimator.ofFloat(0f, 1f);
 
-        blinkAnimator.setDuration(150);
+        blinkAnimator.setDuration(100);
 
         blinkAnimator.setRepeatMode(ValueAnimator.REVERSE);
         blinkAnimator.setRepeatCount(ValueAnimator.INFINITE);

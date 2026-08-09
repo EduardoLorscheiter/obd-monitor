@@ -13,29 +13,21 @@
 
 package com.eduardo.obdmonitor.bluetooth;
 
-import com.eduardo.obdmonitor.model.Device;
-
 public interface BluetoothConnectionListener {
     /**
      * Chamado quando um dispositivo Bluetooth é conectado.
-     *
-     * @param device Dispositivo Bluetooth.
      */
-    void onBluetoothConnectionConnected(Device device);
+    void onBluetoothConnectionConnected();
 
     /**
      * Chamado quando um dispositivo Bluetooth é desconectado.
-     *
-     * @param device Dispositivo Bluetooth.
      */
-    void onBluetoothConnectionDisconnected(Device device);
+    void onBluetoothConnectionDisconnected();
 
     /**
      * Chamado quando ocorre um erro relacionado ao Bluetooth.
      *
-     * @param device  Dispositivo Bluetooth. Pode ser {@code null} quando o erro não estiver
-     *                relacionado a um dispositivo específico.
      * @param message Mensagem descritiva do erro.
      */
-    void onBluetoothConnectionError(Device device, String message);
+    void onBluetoothConnectionError(String message);
 }

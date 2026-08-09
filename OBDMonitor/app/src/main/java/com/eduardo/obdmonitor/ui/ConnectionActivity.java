@@ -329,16 +329,7 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
         // Adiciona cardView ao container dos dispositivos Bluetooth visíveis
         container.addView(cardView);
 
-        cardView.setOnClickListener(v -> {
-            // Se o dispositivo Bluetooth já estiver conectado
-            if (bluetoothManager.isConnected()) {
-                // Tenta realizar a desconexão com o dispositivo Bluetooth
-                bluetoothManager.disconnect();
-            } else {
-                // Tenta realizar a conexão com o dispositivo Bluetooth
-                bluetoothManager.connect(device);
-            }
-        });
+        cardView.setOnClickListener(v -> bluetoothManager.connect(device));
     }
 
     /**
@@ -419,9 +410,8 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
 
         TextView tvStatus = statusDevices.get(device.getMacAddress());
 
-        if (tvStatus != null) {
+        if (tvStatus != null)
             configureStatusTextView(tvStatus, device.getStatus());
-        }
     }
 
     /**
