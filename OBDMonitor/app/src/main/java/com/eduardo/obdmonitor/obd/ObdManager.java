@@ -18,6 +18,11 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
+import com.eduardo.obdmonitor.obd.scheduler.ObdScheduler;
+import com.eduardo.obdmonitor.obd.scheduler.PidPriority;
+import com.eduardo.obdmonitor.obd.scheduler.PidTask;
+
+import java.util.List;
 
 public class ObdManager {
     // Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos
@@ -26,8 +31,11 @@ public class ObdManager {
     // Tempo de espera para identificação automática do protocolo OBD-II, em milissegundos
     private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
 
-    // Intervalo entre leituras consecutivas da ECU durante o monitoramento,em milissegundos
-    private static final int MONITORING_INTERVAL_MS = 100;
+    // Intervalos de tempo entre leituras da ECU durante o monitoramento, em milissegundos
+    private static final int HIGH_PRIORITY_INTERVAL_MS = 100;
+    private static final int MEDIUM_PRIORITY_INTERVAL_MS = 300;
+    private static final int LOW_PRIORITY_INTERVAL_MS = 1000;
+    private static final int VERY_LOW_PRIORITY_INTERVAL_MS = 2000;
 
     // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
@@ -57,14 +65,26 @@ public class ObdManager {
     // Protocolo OBD-II identificado durante a conexão
     private String obdProtocol;
 
-    // Thread responsável pelo monitoramento contínuo dos dados da ECU
+    // Thread responsável pela execução contínua do ciclo de monitoramento
     private Thread monitoringThread;
+
+    // Scheduler responsável por controlar a periodicidade e a prioridade das leituras dos PIDs
+    private final ObdScheduler obdScheduler = new ObdScheduler();
+
+    // Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II
+    private final PidTask rpmTask = new PidTask(HIGH_PRIORITY_INTERVAL_MS, PidPriority.HIGH);
+    private final PidTask speedTask = new PidTask(HIGH_PRIORITY_INTERVAL_MS, PidPriority.HIGH);
+    private final PidTask throttleTask = new PidTask(MEDIUM_PRIORITY_INTERVAL_MS, PidPriority.MEDIUM);
+    private final PidTask mapTask = new PidTask(MEDIUM_PRIORITY_INTERVAL_MS, PidPriority.MEDIUM);
+    private final PidTask coolantTask = new PidTask(LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask intakeAirTask = new PidTask(LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask voltageTask = new PidTask(VERY_LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
 
     /**
      * Retorna a instância única do gerenciador OBD-II.
      *
      * <p>O contexto recebido é convertido internamente para o contexto da aplicação, evitando
-     * retenção de referências de Activity.</p>
+     * a retenção de referências de componentes com ciclo de vida curto, como Activities.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      * @return Instância única de {@code ObdManager}.
@@ -97,13 +117,24 @@ public class ObdManager {
      * Cria uma nova instância do gerenciador OBD-II.
      *
      * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
-     * mantenha referência a componentes com ciclo de vida curto, como Activities.</p>
+     * mantenha referências a componentes com ciclo de vida curto, como Activities.</p>
+     *
+     * <p>Durante a inicialização, as tarefas responsáveis pela leitura dos PIDs são cadastradas
+     * no {@link ObdScheduler}, que posteriormente controla sua execução de acordo com os
+     * respectivos intervalos e prioridades.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      */
     private ObdManager(Context context) {
         this.applicationContext = context.getApplicationContext();
         bluetoothManager = BluetoothManager.getInstance();
+        obdScheduler.addTask(rpmTask);
+        obdScheduler.addTask(speedTask);
+        obdScheduler.addTask(throttleTask);
+        obdScheduler.addTask(mapTask);
+        obdScheduler.addTask(coolantTask);
+        obdScheduler.addTask(intakeAirTask);
+        obdScheduler.addTask(voltageTask);
         resetConnectionState();
     }
 
@@ -279,22 +310,42 @@ public class ObdManager {
      * {@link ObdDataListener}, quando definido.</p>
      */
     private void readVehicleData() {
-        int engineRpm = readEngineRpm();
-        int vehicleSpeed = readVehicleSpeed();
-        int engineCoolantTemperature = readEngineCoolantTemperature();
-        int intakeAirTemperature = readIntakeAirTemperature();
-        int intakeManifoldPressure = readIntakeManifoldPressure();
-        int throttlePosition = readThrottlePosition();
-        double controlModuleVoltage = readControlModuleVoltage();
+        long currentTime = System.currentTimeMillis();
 
-        if (dataListener != null) {
-            dataListener.onObdEngineRpmChanged(engineRpm);
-            dataListener.onObdVehicleSpeedChanged(vehicleSpeed);
-            dataListener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
-            dataListener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
-            dataListener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
-            dataListener.onObdThrottlePositionChanged(throttlePosition);
-            dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+        List<PidTask> readyTasks = obdScheduler.getReadyTasks(currentTime);
+
+        for (PidTask task : readyTasks) {
+            if (task == rpmTask) {
+                int engineRpm = readEngineRpm();
+                if (dataListener != null)
+                    dataListener.onObdEngineRpmChanged(engineRpm);
+            } else if (task == speedTask) {
+                int vehicleSpeed = readVehicleSpeed();
+                if (dataListener != null)
+                    dataListener.onObdVehicleSpeedChanged(vehicleSpeed);
+            } else if (task == throttleTask) {
+                int throttlePosition = readThrottlePosition();
+                if (dataListener != null)
+                    dataListener.onObdThrottlePositionChanged(throttlePosition);
+            } else if (task == mapTask) {
+                int intakeManifoldPressure = readIntakeManifoldPressure();
+                if (dataListener != null)
+                    dataListener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
+            } else if (task == coolantTask) {
+                int engineCoolantTemperature = readEngineCoolantTemperature();
+                if (dataListener != null)
+                    dataListener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
+            } else if (task == intakeAirTask) {
+                int intakeAirTemperature = readIntakeAirTemperature();
+                if (dataListener != null)
+                    dataListener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
+            } else if (task == voltageTask) {
+                double controlModuleVoltage = readControlModuleVoltage();
+                if (dataListener != null)
+                    dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+            }
+
+            obdScheduler.updateTaskExecution(task, currentTime);
         }
     }
 
@@ -305,7 +356,7 @@ public class ObdManager {
      *                              espera.
      */
     private void sleepMonitoring() throws InterruptedException {
-        Thread.sleep(MONITORING_INTERVAL_MS);
+        Thread.sleep(10);
     }
 
     /**

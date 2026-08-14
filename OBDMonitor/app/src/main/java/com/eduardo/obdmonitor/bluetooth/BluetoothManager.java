@@ -58,7 +58,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * Retorna a instância única do gerenciador Bluetooth.
      *
      * <p>O contexto recebido é convertido internamente para o contexto da aplicação, evitando
-     * retenção de referências de Activity.</p>
+     * a retenção de referências de componentes com ciclo de vida curto, como Activities.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      * @return Instância única de {@code BluetoothManager}.
