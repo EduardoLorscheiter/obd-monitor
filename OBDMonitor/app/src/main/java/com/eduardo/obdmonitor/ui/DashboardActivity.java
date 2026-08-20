@@ -44,7 +44,8 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     // Componentes da janela da Activity
     private ImageButton btnConnect;
     private ShiftLightView shiftLight;
-    private MetricView cardSpeed, cardBattery, cardCoolant, cardIntake;
+    private MetricView cardSpeed, cardThrottle, cardMap, cardCoolant, cardIntake, cardBattery;
+
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
 
@@ -95,9 +96,11 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         txtProtocol = findViewById(R.id.txtProtocol);
         viewLimiter = findViewById(R.id.viewLimiter);
         initCardSpeed();
-        initCardBattery();
+        initCardThrottle();
+        initCardMap();
         initCardCoolant();
         initCardIntake();
+        initCardBattery();
     }
 
     /**
@@ -105,21 +108,32 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      */
     private void initCardSpeed() {
         cardSpeed = findViewById(R.id.cardSpeed);
-        cardSpeed.setIcon(R.drawable.ic_speedmeter);
+        cardSpeed.setIcon(R.drawable.ic_dashboard_speedmeter);
         cardSpeed.setTitle(getString(R.string.speed));
         cardSpeed.setValue(getString(R.string.__));
         cardSpeed.setUnit("km/h");
     }
 
     /**
-     * Inicializa o card da métrica da bateria.
+     * Inicializa o card da métrica de posição absoluta da borboleta de aceleração
      */
-    private void initCardBattery() {
-        cardBattery = findViewById(R.id.cardBattery);
-        cardBattery.setIcon(R.drawable.ic_lightning_charge);
-        cardBattery.setTitle(getString(R.string.battery));
-        cardBattery.setValue(getString(R.string.__));
-        cardBattery.setUnit("V");
+    private void initCardThrottle() {
+        cardThrottle = findViewById(R.id.cardThrottle);
+        cardThrottle.setIcon(R.drawable.ic_dashboard_throttle);
+        cardThrottle.setTitle(getString(R.string.throttle));
+        cardThrottle.setValue(getString(R.string.__));
+        cardThrottle.setUnit("%");
+    }
+
+    /**
+     * Inicializa o card da métrica de pressão absoluta do coletor de admissão (MAP).
+     */
+    private void initCardMap() {
+        cardMap = findViewById(R.id.cardMap);
+        cardMap.setIcon(R.drawable.ic_dashboard_pressure_gauge);
+        cardMap.setTitle(getString(R.string.map));
+        cardMap.setValue(getString(R.string.__));
+        cardMap.setUnit("kPa");
     }
 
     /**
@@ -127,7 +141,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      */
     private void initCardCoolant() {
         cardCoolant = findViewById(R.id.cardCoolant);
-        cardCoolant.setIcon(R.drawable.ic_thermometer);
+        cardCoolant.setIcon(R.drawable.ic_dashboard_thermometer);
         cardCoolant.setTitle(getString(R.string.engine_t));
         cardCoolant.setValue(getString(R.string.__));
         cardCoolant.setUnit("°C");
@@ -138,10 +152,21 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      */
     private void initCardIntake() {
         cardIntake = findViewById(R.id.cardIntake);
-        cardIntake.setIcon(R.drawable.ic_thermometer);
+        cardIntake.setIcon(R.drawable.ic_dashboard_thermometer);
         cardIntake.setTitle(getString(R.string.intake_t));
         cardIntake.setValue(getString(R.string.__));
         cardIntake.setUnit("°C");
+    }
+
+    /**
+     * Inicializa o card da métrica da bateria.
+     */
+    private void initCardBattery() {
+        cardBattery = findViewById(R.id.cardBattery);
+        cardBattery.setIcon(R.drawable.ic_dashboard_lightning_charge);
+        cardBattery.setTitle(getString(R.string.battery));
+        cardBattery.setValue(getString(R.string.__));
+        cardBattery.setUnit("V");
     }
 
     /**
@@ -235,6 +260,16 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     }
 
     @Override
+    public void onObdThrottlePositionChanged(int position) {
+        runOnUiThread(() -> cardThrottle.setValue(String.valueOf(position)));
+    }
+
+    @Override
+    public void onObdIntakeManifoldPressureChanged(int pressure) {
+        runOnUiThread(() -> cardMap.setValue(String.valueOf(pressure)));
+    }
+
+    @Override
     public void onObdEngineCoolantTemperatureChanged(int temperature) {
         runOnUiThread(() -> {
             cardCoolant.setValue(String.valueOf(temperature));
@@ -264,16 +299,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
                 cardIntake.setValueColor(R.color.intake_hot);
             }
         });
-    }
-
-    @Override
-    public void onObdIntakeManifoldPressureChanged(int pressure) {
-
-    }
-
-    @Override
-    public void onObdThrottlePositionChanged(int position) {
-
     }
 
     @Override

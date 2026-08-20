@@ -50,6 +50,8 @@
     <string name="battery">Bateria</string>
     <string name="engine_t">T. Motor</string>
     <string name="intake_t">T. Admissão</string>
+    <string name="throttle">Borboleta</string>
+    <string name="map">MAP</string>
     <!-- ======================================================================================= -->
     <!-- Constantes -->
     <!-- ======================================================================================= -->

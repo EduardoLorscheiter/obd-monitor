@@ -8,17 +8,17 @@
     </style>
 
     <style name="SettingsButtonComponent" parent="ButtonComponent">
-        <item name="android:src">@drawable/ic_settings</item>
+        <item name="android:src">@drawable/ic_button_settings</item>
         <item name="android:contentDescription">@null</item>
     </style>
 
     <style name="ConnectButtonComponent" parent="ButtonComponent">
-        <item name="android:src">@drawable/ic_connect</item>
+        <item name="android:src">@drawable/ic_button_connect</item>
         <item name="android:contentDescription">@null</item>
     </style>
 
     <style name="BackButtonComponent" parent="ButtonComponent">
-        <item name="android:src">@drawable/ic_back</item>
+        <item name="android:src">@drawable/ic_button_back</item>
         <item name="android:contentDescription">@null</item>
     </style>
 

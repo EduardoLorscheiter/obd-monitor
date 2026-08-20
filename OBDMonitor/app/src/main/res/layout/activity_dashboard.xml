@@ -87,7 +87,12 @@
                 android:layout_height="100dp" />
 
             <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardBattery"
+                android:id="@+id/cardThrottle"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
+            <com.eduardo.obdmonitor.view.MetricView
+                android:id="@+id/cardMap"
                 android:layout_width="0dp"
                 android:layout_height="100dp" />
 
@@ -101,16 +106,22 @@
                 android:layout_width="0dp"
                 android:layout_height="100dp" />
 
+            <com.eduardo.obdmonitor.view.MetricView
+                android:id="@+id/cardBattery"
+                android:layout_width="0dp"
+                android:layout_height="100dp" />
+
             <androidx.constraintlayout.helper.widget.Flow
                 android:id="@+id/flowCards"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                app:constraint_referenced_ids="cardSpeed,cardBattery,cardCoolant,cardIntake"
+                app:constraint_referenced_ids="cardSpeed,cardThrottle,cardMap,cardCoolant,cardIntake,cardBattery"
                 app:flow_horizontalGap="2dp"
                 app:flow_horizontalStyle="spread_inside"
+                app:flow_maxElementsWrap="3"
                 app:flow_verticalAlign="center"
-                app:flow_wrapMode="none"
+                app:flow_wrapMode="chain"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/shiftLight" />
@@ -132,7 +143,7 @@
                 android:layout_width="15dp"
                 android:layout_height="15dp"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_bluetooth" />
+                android:src="@drawable/ic_status_bluetooth" />
 
             <TextView
                 android:id="@+id/txtBluetooth"
@@ -156,7 +167,7 @@
                 android:layout_height="15dp"
                 android:layout_marginStart="32dp"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_memory" />
+                android:src="@drawable/ic_status_ecu" />
 
             <TextView
                 android:id="@+id/txtEcu"
@@ -188,7 +199,7 @@
                     android:layout_width="15dp"
                     android:layout_height="15dp"
                     android:contentDescription="@null"
-                    android:src="@drawable/ic_lan" />
+                    android:src="@drawable/ic_status_lan" />
 
                 <TextView
                     android:id="@+id/txtProtocol"

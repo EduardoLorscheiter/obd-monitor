@@ -18,6 +18,14 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
+import com.eduardo.obdmonitor.obd.commands.CoolantCommand;
+import com.eduardo.obdmonitor.obd.commands.IntakeCommand;
+import com.eduardo.obdmonitor.obd.commands.MapCommand;
+import com.eduardo.obdmonitor.obd.commands.RpmCommand;
+import com.eduardo.obdmonitor.obd.commands.SpeedCommand;
+import com.eduardo.obdmonitor.obd.commands.SupportedPidsCommand;
+import com.eduardo.obdmonitor.obd.commands.ThrottleCommand;
+import com.eduardo.obdmonitor.obd.commands.VoltageCommand;
 import com.eduardo.obdmonitor.obd.scheduler.ObdScheduler;
 import com.eduardo.obdmonitor.obd.scheduler.PidPriority;
 import com.eduardo.obdmonitor.obd.scheduler.PidTask;
@@ -32,10 +40,10 @@ public class ObdManager {
     private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
 
     // Intervalos de tempo entre leituras da ECU durante o monitoramento, em milissegundos
-    private static final int HIGH_PRIORITY_INTERVAL_MS = 100;
-    private static final int MEDIUM_PRIORITY_INTERVAL_MS = 300;
-    private static final int LOW_PRIORITY_INTERVAL_MS = 1000;
-    private static final int VERY_LOW_PRIORITY_INTERVAL_MS = 2000;
+    private static final int HIGH_INTERVAL_MS = 100;
+    private static final int MEDIUM_INTERVAL_MS = 300;
+    private static final int LOW_INTERVAL_MS = 1000;
+    private static final int VERY_LOW_INTERVAL_MS = 2000;
 
     // Instância única do gerenciador OBD-II (Singleton)
     private static ObdManager instance;
@@ -71,14 +79,24 @@ public class ObdManager {
     // Scheduler responsável por controlar a periodicidade e a prioridade das leituras dos PIDs
     private final ObdScheduler obdScheduler = new ObdScheduler();
 
+    // Comando utilizado durante a inicialização para validar a comunicação com a ECU
+    private final SupportedPidsCommand supportedPidsCommand = new SupportedPidsCommand();
+
     // Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II
-    private final PidTask rpmTask = new PidTask(HIGH_PRIORITY_INTERVAL_MS, PidPriority.HIGH);
-    private final PidTask speedTask = new PidTask(HIGH_PRIORITY_INTERVAL_MS, PidPriority.HIGH);
-    private final PidTask throttleTask = new PidTask(MEDIUM_PRIORITY_INTERVAL_MS, PidPriority.MEDIUM);
-    private final PidTask mapTask = new PidTask(MEDIUM_PRIORITY_INTERVAL_MS, PidPriority.MEDIUM);
-    private final PidTask coolantTask = new PidTask(LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
-    private final PidTask intakeAirTask = new PidTask(LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
-    private final PidTask voltageTask = new PidTask(VERY_LOW_PRIORITY_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask rpmTask =
+            new PidTask(new RpmCommand(), HIGH_INTERVAL_MS, PidPriority.HIGH);
+    private final PidTask speedTask =
+            new PidTask(new SpeedCommand(), HIGH_INTERVAL_MS, PidPriority.HIGH);
+    private final PidTask throttleTask =
+            new PidTask(new ThrottleCommand(), MEDIUM_INTERVAL_MS, PidPriority.MEDIUM);
+    private final PidTask mapTask =
+            new PidTask(new MapCommand(), MEDIUM_INTERVAL_MS, PidPriority.MEDIUM);
+    private final PidTask coolantTask =
+            new PidTask(new CoolantCommand(), LOW_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask intakeAirTask =
+            new PidTask(new IntakeCommand(), LOW_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask voltageTask =
+            new PidTask(new VoltageCommand(), VERY_LOW_INTERVAL_MS, PidPriority.LOW);
 
     /**
      * Retorna a instância única do gerenciador OBD-II.
@@ -248,8 +266,8 @@ public class ObdManager {
         if (!sendCommandOk(Elm327Commands.AUTO_PROTOCOL)) return false;
         Thread.sleep(ELM327_PROTOCOL_DELAY_MS);
 
-        String supportedPids = executeElm327Command(ObdCommands.SUPPORTED_PIDS_01_20);
-        return supportedPids != null && supportedPids.contains("4100");
+        String response = executeElm327Command(supportedPidsCommand.getRequest());
+        return supportedPidsCommand.isValid(response);
     }
 
     /**
@@ -375,8 +393,8 @@ public class ObdManager {
      * válida.
      */
     private int readEngineRpm() {
-        String response = executeElm327Command(ObdCommands.ENGINE_RPM);
-        return ObdParser.parseEngineRpm(response);
+        String response = executeElm327Command(rpmTask.getCommand().getRequest());
+        return (Integer) rpmTask.getCommand().parse(response);
     }
 
     /**
@@ -386,41 +404,8 @@ public class ObdManager {
      * válida.
      */
     private int readVehicleSpeed() {
-        String response = executeElm327Command(ObdCommands.VEHICLE_SPEED);
-        return ObdParser.parseVehicleSpeed(response);
-    }
-
-    /**
-     * Realiza a leitura da temperatura do líquido de arrefecimento do motor.
-     *
-     * @return Temperatura do líquido de arrefecimento em °C ou {@code 0} caso não seja possível
-     * obter uma resposta válida.
-     */
-    private int readEngineCoolantTemperature() {
-        String response = executeElm327Command(ObdCommands.ENGINE_COOLANT_TEMPERATURE);
-        return ObdParser.parseEngineCoolantTemperature(response);
-    }
-
-    /**
-     * Realiza a leitura da temperatura do ar admitido pelo motor.
-     *
-     * @return Temperatura do ar admitido em °C ou {@code 0} caso não seja possível obter uma
-     * resposta válida.
-     */
-    private int readIntakeAirTemperature() {
-        String response = executeElm327Command(ObdCommands.INTAKE_AIR_TEMPERATURE);
-        return ObdParser.parseIntakeAirTemperature(response);
-    }
-
-    /**
-     * Realiza a leitura da pressão absoluta do coletor de admissão (MAP).
-     *
-     * @return Pressão absoluta do coletor de admissão em kPa ou {@code 0} caso não seja possível
-     * obter uma resposta válida.
-     */
-    private int readIntakeManifoldPressure() {
-        String response = executeElm327Command(ObdCommands.INTAKE_MANIFOLD_PRESSURE);
-        return ObdParser.parseIntakeManifoldPressure(response);
+        String response = executeElm327Command(speedTask.getCommand().getRequest());
+        return (Integer) speedTask.getCommand().parse(response);
     }
 
     /**
@@ -430,8 +415,41 @@ public class ObdManager {
      * resposta válida.
      */
     private int readThrottlePosition() {
-        String response = executeElm327Command(ObdCommands.THROTTLE_POSITION);
-        return ObdParser.parseThrottlePosition(response);
+        String response = executeElm327Command(throttleTask.getCommand().getRequest());
+        return (Integer) throttleTask.getCommand().parse(response);
+    }
+
+    /**
+     * Realiza a leitura da pressão absoluta do coletor de admissão (MAP).
+     *
+     * @return Pressão absoluta do coletor de admissão em kPa ou {@code 0} caso não seja possível
+     * obter uma resposta válida.
+     */
+    private int readIntakeManifoldPressure() {
+        String response = executeElm327Command(mapTask.getCommand().getRequest());
+        return (Integer) mapTask.getCommand().parse(response);
+    }
+
+    /**
+     * Realiza a leitura da temperatura do líquido de arrefecimento do motor.
+     *
+     * @return Temperatura do líquido de arrefecimento em °C ou {@code 0} caso não seja possível
+     * obter uma resposta válida.
+     */
+    private int readEngineCoolantTemperature() {
+        String response = executeElm327Command(coolantTask.getCommand().getRequest());
+        return (Integer) coolantTask.getCommand().parse(response);
+    }
+
+    /**
+     * Realiza a leitura da temperatura do ar admitido pelo motor.
+     *
+     * @return Temperatura do ar admitido em °C ou {@code 0} caso não seja possível obter uma
+     * resposta válida.
+     */
+    private int readIntakeAirTemperature() {
+        String response = executeElm327Command(intakeAirTask.getCommand().getRequest());
+        return (Integer) intakeAirTask.getCommand().parse(response);
     }
 
     /**
@@ -441,8 +459,8 @@ public class ObdManager {
      * uma resposta válida.
      */
     private double readControlModuleVoltage() {
-        String response = executeElm327Command(ObdCommands.CONTROL_MODULE_VOLTAGE);
-        return ObdParser.parseControlModuleVoltage(response);
+        String response = executeElm327Command(voltageTask.getCommand().getRequest());
+        return (Double) voltageTask.getCommand().parse(response);
     }
 
     /**

@@ -16,11 +16,11 @@
   ~ Adapted for Android VectorDrawable by Eduardo Lorscheiter, 2026.
   -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="30dp"
-    android:height="30dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
     <path
         android:fillColor="?attr/colorOnSurface"
-        android:pathData="M17.71,7.71L12,2h-1v7.59L6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 11,14.41L11,22h1l5.71,-5.71 -4.3,-4.29 4.3,-4.29zM13,5.83l1.88,1.88L13,9.59L13,5.83zM14.88,16.29L13,18.17v-3.76l1.88,1.88z" />
+        android:pathData="M120,880L120,600L240,600L240,440L440,440L440,360L320,360L320,80L640,80L640,360L520,360L520,440L720,440L720,600L840,600L840,880L520,880L520,600L640,600L640,520L320,520L320,600L440,600L440,880L120,880ZM400,280L560,280L560,160L400,160L400,280ZM200,800L360,800L360,680L200,680L200,800ZM600,800L760,800L760,680L600,680L600,800ZM480,280L480,280L480,280L480,280ZM360,680L360,680L360,680L360,680ZM600,680L600,680L600,680L600,680Z" />
 </vector>

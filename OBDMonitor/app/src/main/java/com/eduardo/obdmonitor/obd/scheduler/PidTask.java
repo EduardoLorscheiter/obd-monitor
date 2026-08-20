@@ -12,7 +12,12 @@
 
 package com.eduardo.obdmonitor.obd.scheduler;
 
+import com.eduardo.obdmonitor.obd.commands.ObdCommand;
+
 public class PidTask {
+    // Comando OBD-II associado à tarefa
+    private final ObdCommand<?> command;
+
     // Intervalo mínimo entre duas execuções da tarefa, em milissegundos
     private final int interval;
 
@@ -25,10 +30,12 @@ public class PidTask {
     /**
      * Cria uma tarefa de leitura de um PID OBD-II.
      *
+     * @param command  Comando OBD-II a ser executado.
      * @param interval Intervalo mínimo entre duas execuções da tarefa, em milissegundos.
      * @param priority Prioridade da tarefa.
      */
-    public PidTask(int interval, PidPriority priority) {
+    public PidTask(ObdCommand<?> command, int interval, PidPriority priority) {
+        this.command = command;
         this.interval = interval;
         this.priority = priority;
     }
@@ -53,6 +60,15 @@ public class PidTask {
      */
     public void updateExecutionTime(long executionTime) {
         lastExecutionTime = executionTime;
+    }
+
+    /**
+     * Retorna o comando OBD-II associado à tarefa.
+     *
+     * @return Comando OBD-II.
+     */
+    public ObdCommand<?> getCommand() {
+        return command;
     }
 
     /**

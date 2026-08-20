@@ -17,7 +17,7 @@
         android:alpha="0.08"
         android:contentDescription="@null"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_bluetooth"
+        android:src="@drawable/ic_status_bluetooth"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

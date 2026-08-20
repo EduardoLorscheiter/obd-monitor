@@ -41,4 +41,6 @@
     <string name="battery">Battery</string>
     <string name="engine_t">Engine T.</string>
     <string name="intake_t">Intake T.</string>
+    <string name="throttle">Throttle</string>
+    <string name="map">MAP</string>
 </resources>
