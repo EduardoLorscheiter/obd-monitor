@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    Elm327Commands.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   Elm327Commands
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Comandos AT (Attention Commands) utilizados para configuração e controle do adaptador
  **           ELM327.

@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    BluetoothConnectionListener.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   BluetoothConnectionListener
+ **  @date    27/07/2026
  **  @version 1.0
  **  @brief   Interface de callbacks utilizados para notificar eventos relacionados à conexão
  **           Bluetooth, como estabelecimento e encerramento da conexão, além da ocorrência de erros

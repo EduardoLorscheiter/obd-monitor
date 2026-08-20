@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    Device.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   Device
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Representa um dispositivo Bluetooth da aplicação, armazenando informações como nome,
  **           endereço MAC e estado da conexão, além de permitir sua transferência entre componentes

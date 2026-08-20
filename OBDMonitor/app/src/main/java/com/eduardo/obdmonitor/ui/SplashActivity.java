@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    SplashActivity.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   SplashActivity
+ **  @date    30/07/2026
  **  @version 1.0
  **  @brief   Interface inicial do aplicativo OBD Monitor.
  **  @details Exibe a Splash Screen do aplicativo, apresenta sua identidade visual, inicializa os

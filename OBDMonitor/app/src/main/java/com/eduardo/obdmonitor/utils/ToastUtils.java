@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ToastUtils.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ToastUtils
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Classe utilitária responsável por exibir mensagens Toast personalizadas, aplicando
  **           automaticamente as cores do tema atual e evitando a sobreposição de múltiplas

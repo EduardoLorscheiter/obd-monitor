@@ -5,7 +5,7 @@
  **  @class   IntakeCommand
  **  @date    14/08/2026
  **  @version 1.0
- **  @brief   Implementa a leitura da temperatura do ar admitido em ºC.
+ **  @brief   Implementa a leitura da temperatura do ar admitido em °C.
  **=================================================================================================
  */
 

@@ -5,7 +5,7 @@
  **  @class   VoltageCommand
  **  @date    14/08/2026
  **  @version 1.0
- **  @brief   Implementa a leitura da tensão de alimentação do módulo de controle (ECU) em V.
+ **  @brief   Implementa a leitura da tensão de alimentação do módulo de controle (ECU) em Volts (V).
  **=================================================================================================
  */
 
@@ -37,8 +37,8 @@ public class VoltageCommand extends ObdCommand<Double> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Tensão de alimentação do módulo de controle em V ou o valor anterior válido caso a
-     * resposta seja inválida.
+     * @return Tensão de alimentação do módulo de controle em Volts (V) ou o valor anterior válido
+     * caso a resposta seja inválida.
      */
     @Override
     public Double parse(String response) {

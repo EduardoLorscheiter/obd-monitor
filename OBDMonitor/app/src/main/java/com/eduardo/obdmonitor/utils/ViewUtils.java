@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ViewUtils.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ViewUtils
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Classe utilitária que reúne métodos auxiliares para manipulação, configuração e
  **           personalização de componentes da interface gráfica.

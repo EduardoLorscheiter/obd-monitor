@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ShiftLightView.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ShiftLightView
+ **  @date    24/07/2026
  **  @version 1.0
  **  @brief   Componente gráfico responsável por exibir uma Shift Light dinâmica baseada na rotação
  **           do motor (RPM).

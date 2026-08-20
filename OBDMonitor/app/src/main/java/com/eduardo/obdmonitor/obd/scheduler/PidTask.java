@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    PidTask.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    agosto/2026
+ **  @class   PidTask
+ **  @date    09/08/2026
  **  @version 1.0
  **  @brief   Representa uma tarefa de leitura de um PID OBD-II, armazenando seu intervalo de
  **           execução e sua prioridade para as leituras.

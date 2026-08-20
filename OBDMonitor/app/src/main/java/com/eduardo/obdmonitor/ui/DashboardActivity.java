@@ -2,10 +2,13 @@
  **=================================================================================================
  **  @file    DashboardActivity.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   DashboardActivity
+ **  @date    21/07/2026
  **  @version 1.0
- **  @brief   OBDMonitor
+ **  @brief   Interface principal de monitoramento do veículo (Dashboard).
+ **  @details Exibe em tempo real as métricas obtidas da ECU, como rotação (RPM), velocidade,
+ **           temperatura, pressão e tensão. Gerencia as animações dos componentes visuais e a
+ **           integração com o gerenciador OBD-II.
  **=================================================================================================
  */
 

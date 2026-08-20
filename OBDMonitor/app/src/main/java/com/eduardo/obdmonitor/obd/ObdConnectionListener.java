@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ObdConnectionListener.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ObdConnectionListener
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Interface de callbacks responsável por notificar alterações no estado da conexão
  **           Bluetooth, da comunicação com a ECU e dos eventos de inicialização do OBD-II.

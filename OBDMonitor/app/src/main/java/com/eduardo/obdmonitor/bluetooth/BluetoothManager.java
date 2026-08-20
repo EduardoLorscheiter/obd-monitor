@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    BluetoothManager.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   BluetoothManager
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Gerencia as operações Bluetooth da aplicação, incluindo o monitoramento do estado do
  **           adaptador, carregamento de dispositivos pareados, estabelecimento e encerramento de

@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ObdManagerError.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    agosto/2026
+ **  @class   ObdManagerError
+ **  @date    03/08/2026
  **  @version 1.0
  **  @brief   Enumeração que define os erros relacionados ao gerenciamento das operações OBD-II
  **           da aplicação, como validação do dispositivo e interrupções.

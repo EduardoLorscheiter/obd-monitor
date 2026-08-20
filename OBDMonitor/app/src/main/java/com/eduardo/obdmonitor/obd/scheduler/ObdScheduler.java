@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ObdScheduler.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    agosto/2026
+ **  @class   ObdScheduler
+ **  @date    09/08/2026
  **  @version 1.0
  **  @brief   Gerencia o agendamento das leituras dos PIDs OBD-II de acordo com suas prioridades
  **           e respectivos intervalos de atualização.

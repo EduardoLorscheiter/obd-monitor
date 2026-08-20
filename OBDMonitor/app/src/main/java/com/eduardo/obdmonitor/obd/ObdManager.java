@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ObdManager.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ObdManager
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Gerencia a comunicação entre a aplicação, o adaptador ELM327 e a ECU do veículo,
  **           realizando a inicialização, monitoramento e leitura dos dados OBD-II.

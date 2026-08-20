@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    ConnectionActivity.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   ConnectionActivity
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador OBD-II ELM327.
  **  @details Esta Activity permite ao usuário verificar o estado do Bluetooth, visualizar

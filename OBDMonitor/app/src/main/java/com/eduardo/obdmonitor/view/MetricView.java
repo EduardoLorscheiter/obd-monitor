@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    MetricView.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   MetricView
+ **  @date    25/07/2026
  **  @version 1.0
  **  @brief   Componente gráfico responsável por exibir uma métrica do veículo em formato de cartão.
  **  @details O componente encapsula um layout contendo título, valor e unidade de medida,

@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    BluetoothManagerError.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   BluetoothManagerError
+ **  @date    27/07/2026
  **  @version 1.0
  **  @brief   Enumeração que define os erros relacionados ao gerenciamento das operações Bluetooth
  **           da aplicação, como validação do adaptador, permissões e localização de dispositivos.

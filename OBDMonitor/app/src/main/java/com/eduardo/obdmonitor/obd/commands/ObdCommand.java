@@ -5,7 +5,7 @@
  **  @class   ObdCommand
  **  @date    14/08/2026
  **  @version 1.0
- **  @brief   Classe abstrata base para todos os comandos OBD-II, fornecendo métodos utilitários
+ **  @brief   Classe base abstrata para todos os comandos OBD-II, fornecendo métodos utilitários
  **           para montagem de requisições e processamento de respostas.
  **=================================================================================================
  */

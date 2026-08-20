@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    BluetoothConnectionError.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   BluetoothConnectionError
+ **  @date    27/07/2026
  **  @version 1.0
  **  @brief   Enumeração que define os tipos de erros que podem ocorrer durante o estabelecimento,
  **           manutenção e encerramento de uma conexão Bluetooth.

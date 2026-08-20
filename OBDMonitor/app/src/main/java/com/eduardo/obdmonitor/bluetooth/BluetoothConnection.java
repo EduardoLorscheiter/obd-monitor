@@ -2,8 +2,8 @@
  **=================================================================================================
  **  @file    BluetoothConnection.java
  **  @author  Eduardo Lorscheiter
- **  @class   Personal
- **  @date    julho/2026
+ **  @class   BluetoothConnection
+ **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Gerencia a conexão Bluetooth com um dispositivo remoto, realizando o estabelecimento e
  **           encerramento da conexão, além do envio de comandos e gerenciamento do socket e dos
