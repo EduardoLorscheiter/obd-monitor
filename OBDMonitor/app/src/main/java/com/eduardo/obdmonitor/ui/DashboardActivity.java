@@ -38,6 +38,7 @@ import com.eduardo.obdmonitor.obd.ObdDataListener;
 import com.eduardo.obdmonitor.obd.ObdManager;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
+import com.eduardo.obdmonitor.view.FuelLevelView;
 import com.eduardo.obdmonitor.view.MetricView;
 import com.eduardo.obdmonitor.view.ShiftLightView;
 
@@ -45,9 +46,10 @@ import java.util.Locale;
 
 public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
     // Componentes da janela da Activity
-    private ImageButton btnConnect;
+    private ImageButton btnConnection;
     private ShiftLightView shiftLight;
     private MetricView cardSpeed, cardThrottle, cardMap, cardCoolant, cardIntake, cardBattery;
+    private FuelLevelView fuelLevel;
 
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
@@ -92,84 +94,19 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      * declarados no layout.</p>
      */
     private void initViews() {
-        btnConnect = findViewById(R.id.btnConnect);
+        btnConnection = findViewById(R.id.btnConnection);
         shiftLight = findViewById(R.id.shiftLight);
         viewBluetooth = findViewById(R.id.viewBluetooth);
         viewEcu = findViewById(R.id.viewEcu);
         txtProtocol = findViewById(R.id.txtProtocol);
         viewLimiter = findViewById(R.id.viewLimiter);
-        initCardSpeed();
-        initCardThrottle();
-        initCardMap();
-        initCardCoolant();
-        initCardIntake();
-        initCardBattery();
-    }
-
-    /**
-     * Inicializa o card da métrica de velocidade.
-     */
-    private void initCardSpeed() {
         cardSpeed = findViewById(R.id.cardSpeed);
-        cardSpeed.setIcon(R.drawable.ic_dashboard_speedmeter);
-        cardSpeed.setTitle(getString(R.string.speed));
-        cardSpeed.setValue(getString(R.string.__));
-        cardSpeed.setUnit("km/h");
-    }
-
-    /**
-     * Inicializa o card da métrica de posição absoluta da borboleta de aceleração
-     */
-    private void initCardThrottle() {
         cardThrottle = findViewById(R.id.cardThrottle);
-        cardThrottle.setIcon(R.drawable.ic_dashboard_throttle);
-        cardThrottle.setTitle(getString(R.string.throttle));
-        cardThrottle.setValue(getString(R.string.__));
-        cardThrottle.setUnit("%");
-    }
-
-    /**
-     * Inicializa o card da métrica de pressão absoluta do coletor de admissão (MAP).
-     */
-    private void initCardMap() {
         cardMap = findViewById(R.id.cardMap);
-        cardMap.setIcon(R.drawable.ic_dashboard_pressure_gauge);
-        cardMap.setTitle(getString(R.string.map));
-        cardMap.setValue(getString(R.string.__));
-        cardMap.setUnit("kPa");
-    }
-
-    /**
-     * Inicializa o card da métrica de temperatura do motor.
-     */
-    private void initCardCoolant() {
         cardCoolant = findViewById(R.id.cardCoolant);
-        cardCoolant.setIcon(R.drawable.ic_dashboard_thermometer);
-        cardCoolant.setTitle(getString(R.string.engine_t));
-        cardCoolant.setValue(getString(R.string.__));
-        cardCoolant.setUnit("°C");
-    }
-
-    /**
-     * Inicializa o card da métrica de temperatura do ar de admissão.
-     */
-    private void initCardIntake() {
         cardIntake = findViewById(R.id.cardIntake);
-        cardIntake.setIcon(R.drawable.ic_dashboard_thermometer);
-        cardIntake.setTitle(getString(R.string.intake_t));
-        cardIntake.setValue(getString(R.string.__));
-        cardIntake.setUnit("°C");
-    }
-
-    /**
-     * Inicializa o card da métrica da bateria.
-     */
-    private void initCardBattery() {
         cardBattery = findViewById(R.id.cardBattery);
-        cardBattery.setIcon(R.drawable.ic_dashboard_lightning_charge);
-        cardBattery.setTitle(getString(R.string.battery));
-        cardBattery.setValue(getString(R.string.__));
-        cardBattery.setUnit("V");
+        fuelLevel = findViewById(R.id.fuelLevel);
     }
 
     /**
@@ -184,7 +121,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        btnConnect.setOnClickListener(v -> {
+        btnConnection.setOnClickListener(v -> {
             Intent intent = new Intent(DashboardActivity.this, ConnectionActivity.class);
             connectionLauncher.launch(intent);
         });
@@ -318,6 +255,11 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
                 cardBattery.setValueColor(R.color.battery_over);
             }
         });
+    }
+
+    @Override
+    public void onObdFuelLevelChanged(int fuel) {
+        runOnUiThread(() -> fuelLevel.setFuelLevel(fuel));
     }
 
     /**

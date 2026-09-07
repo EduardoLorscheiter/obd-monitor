@@ -53,6 +53,12 @@
     <string name="throttle">Borboleta</string>
     <string name="map">MAP</string>
     <!-- ======================================================================================= -->
+    <!-- Acessibilidade -->
+    <!-- ======================================================================================= -->
+    <string name="settings">Configurações</string>
+    <string name="connection">Conexão</string>
+    <string name="back">Voltar</string>
+    <!-- ======================================================================================= -->
     <!-- Constantes -->
     <!-- ======================================================================================= -->
     <string name="__" translatable="false">--</string>

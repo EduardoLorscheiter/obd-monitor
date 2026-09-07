@@ -53,4 +53,11 @@ public final class Elm327Commands {
      * Solicita ao ELM327 o protocolo atualmente utilizado para comunicação com a ECU.
      */
     public static final String GET_PROTOCOL = "ATDP";
+
+    /**
+     * Solicita ao ELM327 a tensão de alimentação do adaptador.
+     *
+     * <p>O valor retornado corresponde à tensão medida na alimentação do próprio ELM327.</p>
+     */
+    public static final String READ_VOLTAGE = "ATRV";
 }

@@ -19,6 +19,7 @@ import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.obd.commands.CoolantCommand;
+import com.eduardo.obdmonitor.obd.commands.FuelCommand;
 import com.eduardo.obdmonitor.obd.commands.IntakeCommand;
 import com.eduardo.obdmonitor.obd.commands.MapCommand;
 import com.eduardo.obdmonitor.obd.commands.RpmCommand;
@@ -97,6 +98,8 @@ public class ObdManager {
             new PidTask(new IntakeCommand(), LOW_INTERVAL_MS, PidPriority.LOW);
     private final PidTask voltageTask =
             new PidTask(new VoltageCommand(), VERY_LOW_INTERVAL_MS, PidPriority.LOW);
+    private final PidTask fuelTask =
+            new PidTask(new FuelCommand(), VERY_LOW_INTERVAL_MS, PidPriority.LOW);
 
     /**
      * Retorna a instância única do gerenciador OBD-II.
@@ -153,6 +156,7 @@ public class ObdManager {
         obdScheduler.addTask(coolantTask);
         obdScheduler.addTask(intakeAirTask);
         obdScheduler.addTask(voltageTask);
+        obdScheduler.addTask(fuelTask);
         resetConnectionState();
     }
 
@@ -280,9 +284,7 @@ public class ObdManager {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean sendCommandOk(String command) {
         String response = executeElm327Command(command);
-
-        if (response == null)
-            return false;
+        if (response == null) return false;
 
         return response.contains(applicationContext.getString(R.string.elm327)) ||
                 response.contains(applicationContext.getString(R.string.ok));
@@ -361,6 +363,10 @@ public class ObdManager {
                 double controlModuleVoltage = readControlModuleVoltage();
                 if (dataListener != null)
                     dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+            } else if (task == fuelTask) {
+                int fuelLevel = readFuelLevel();
+                if (dataListener != null)
+                    dataListener.onObdFuelLevelChanged(fuelLevel);
             }
 
             obdScheduler.updateTaskExecution(task, currentTime);
@@ -459,8 +465,50 @@ public class ObdManager {
      * uma resposta válida.
      */
     private double readControlModuleVoltage() {
+        // Primeira tentativa: leitura pelo PID OBD-II
         String response = executeElm327Command(voltageTask.getCommand().getRequest());
-        return (Double) voltageTask.getCommand().parse(response);
+
+        if (response != null) {
+            try {
+                double voltage = (Double) voltageTask.getCommand().parse(response);
+                if (voltage > 0.0) return voltage;
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Segunda tentativa: leitura direta pelo ELM327
+        return readElm327Voltage();
+    }
+
+    /**
+     * Realiza a leitura da tensão de alimentação fornecida diretamente pelo ELM327.
+     *
+     * <p>O comando {@code AT RV} é enviado ao adaptador ELM327, que retorna o valor da tensão em
+     * volts. A resposta é convertida para {@code double} após a remoção da unidade de medida.</p>
+     *
+     * @return Tensão de alimentação do ELM327 em volts (V) ou {@code 0.0} caso não seja possível
+     * obter ou converter uma resposta válida.
+     */
+    private double readElm327Voltage() {
+        String response = executeElm327Command(Elm327Commands.READ_VOLTAGE);
+        if (response == null) return 0.0;
+
+        try {
+            return Double.parseDouble(response.replace("V", "").trim());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Realiza a leitura da tensão de alimentação do módulo de controle (ECU).
+     *
+     * @return Tensão de alimentação da ECU em volts (V) ou {@code 0} caso não seja possível obter
+     * uma resposta válida.
+     */
+    private int readFuelLevel() {
+        String response = executeElm327Command(fuelTask.getCommand().getRequest());
+        return (Integer) fuelTask.getCommand().parse(response);
     }
 
     /**
@@ -476,9 +524,7 @@ public class ObdManager {
      */
     private String executeElm327Command(String command) {
         String response = bluetoothManager.sendCommand(command + "\r");
-
-        if (response == null)
-            return null;
+        if (response == null) return null;
 
         return normalizeResponse(response);
     }

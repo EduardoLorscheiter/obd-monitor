@@ -58,7 +58,14 @@ public interface ObdDataListener {
     /**
      * Chamado quando receber um novo valor de tensão de alimentação do módulo de controle (ECU).
      *
-     * @param voltage Tensão de alimentação do módulo de controle (ECU), em V.
+     * @param voltage Tensão de alimentação do módulo de controle (ECU), em Volts (V).
      */
     void onObdControlModuleVoltageChanged(double voltage);
+
+    /**
+     * Chamado quando receber um novo valor de nível de combustível.
+     *
+     * @param fuel Nível de combustível, em %.
+     */
+    void onObdFuelLevelChanged(int fuel);
 }

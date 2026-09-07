@@ -6,7 +6,7 @@
  **  @date    25/07/2026
  **  @version 1.0
  **  @brief   Componente gráfico responsável por exibir uma métrica do veículo em formato de cartão.
- **  @details O componente encapsula um layout contendo título, valor e unidade de medida,
+ **  @details O componente encapsula um layout contendo imagem, título, valor e unidade de medida,
  **           permitindo reutilização em diferentes telas do aplicativo para exibição de informações
  **           provenientes da ECU.
  **=================================================================================================
@@ -15,6 +15,8 @@
 package com.eduardo.obdmonitor.view;
 
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
@@ -26,31 +28,22 @@ import androidx.core.content.ContextCompat;
 import com.eduardo.obdmonitor.R;
 
 public class MetricView extends LinearLayout {
-    // Ícone da métrica
-    private ImageView imgIcon;
-
-    // Texto responsável por identificar a métrica exibida
-    private TextView txtTitle;
-
     // Texto responsável por exibir o valor atual da métrica
     private TextView txtValue;
 
-    // Texto responsável por exibir a unidade de medida da métrica
-    private TextView txtUnit;
-
     public MetricView(Context context) {
         super(context);
-        init(context);
+        init(context, null);
     }
 
     public MetricView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init(context, attrs);
     }
 
     public MetricView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init(context, attrs);
     }
 
     /**
@@ -62,40 +55,35 @@ public class MetricView extends LinearLayout {
      * dinamicamente em tempo de execução.</p>
      *
      * @param context Contexto utilizado para inflar o layout.
+     * @param attrs   Atributos personalizados definidos no XML para o componente.
      */
-    private void init(Context context) {
+    private void init(Context context, AttributeSet attrs) {
         LayoutInflater.from(context).inflate(R.layout.view_metric, this, true);
-        imgIcon = findViewById(R.id.imgIcon);
-        txtTitle = findViewById(R.id.txtTitle);
+        ImageView imgIcon = findViewById(R.id.imgIcon);
+        TextView txtTitle = findViewById(R.id.txtTitle);
+        TextView txtUnit = findViewById(R.id.txtUnit);
         txtValue = findViewById(R.id.txtValue);
-        txtUnit = findViewById(R.id.txtUnit);
-    }
 
-    /**
-     * Define o ícone exibido ao lado do título da métrica.
-     *
-     * @param icon Recurso drawable do ícone.
-     */
-    public void setIcon(int icon) {
-        imgIcon.setImageResource(icon);
-    }
+        if (attrs != null) {
+            try (TypedArray attributes = context.obtainStyledAttributes(
+                    attrs,
+                    R.styleable.MetricView)) {
 
-    /**
-     * Define o título da métrica exibida pelo cartão.
-     *
-     * <p>Normalmente representa o nome do parâmetro proveniente da ECU, como "Velocidade", "RPM",
-     * "Temperatura" ou "Bateria".</p>
-     *
-     * @param title Texto do título.
-     */
-    public void setTitle(String title) {
-        txtTitle.setText(title);
+                Drawable icon = attributes.getDrawable(R.styleable.MetricView_metricIcon);
+                String title = attributes.getString(R.styleable.MetricView_metricTitle);
+                String value = attributes.getString(R.styleable.MetricView_metricValue);
+                String unit = attributes.getString(R.styleable.MetricView_metricUnit);
+
+                if (icon != null) imgIcon.setImageDrawable(icon);
+                if (title != null) txtTitle.setText(title);
+                if (value != null) txtValue.setText(value);
+                if (unit != null) txtUnit.setText(unit);
+            }
+        }
     }
 
     /**
      * Atualiza o valor principal exibido pelo cartão.
-     *
-     * <p>Este valor representa a leitura atual da métrica monitorada.</p>
      *
      * @param value Valor a ser exibido.
      */
@@ -110,16 +98,5 @@ public class MetricView extends LinearLayout {
      */
     public void setValueColor(int color) {
         txtValue.setTextColor(ContextCompat.getColor(getContext(), color));
-    }
-
-    /**
-     * Define a unidade de medida apresentada ao lado do valor.
-     *
-     * <p>Exemplos: RPM, km/h, °C, %, V.</p>
-     *
-     * @param unit Unidade de medida da métrica.
-     */
-    public void setUnit(String unit) {
-        txtUnit.setText(unit);
     }
 }

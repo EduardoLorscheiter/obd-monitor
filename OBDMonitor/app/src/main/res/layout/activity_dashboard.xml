@@ -45,13 +45,13 @@
                 android:textSize="28sp"
                 android:textStyle="bold|italic"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/btnConnect"
+                app:layout_constraintEnd_toStartOf="@id/btnConnection"
                 app:layout_constraintStart_toEndOf="@id/btnSettings"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/btnConnect"
-                style="@style/ConnectButtonComponent"
+                android:id="@+id/btnConnection"
+                style="@style/ConnectionButtonComponent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -65,7 +65,7 @@
             app:layout_constraintTop_toBottomOf="@id/containerHeader" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/containerMetrics"
+            android:id="@+id/containerDashboardMetrics"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@id/containerStatus"
@@ -81,51 +81,95 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardSpeed"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardThrottle"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardMap"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardCoolant"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardIntake"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <com.eduardo.obdmonitor.view.MetricView
-                android:id="@+id/cardBattery"
-                android:layout_width="0dp"
-                android:layout_height="100dp" />
-
-            <androidx.constraintlayout.helper.widget.Flow
-                android:id="@+id/flowCards"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/containerMetrics"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                app:constraint_referenced_ids="cardSpeed,cardThrottle,cardMap,cardCoolant,cardIntake,cardBattery"
-                app:flow_horizontalGap="2dp"
-                app:flow_horizontalStyle="spread_inside"
-                app:flow_maxElementsWrap="3"
-                app:flow_verticalAlign="center"
-                app:flow_wrapMode="chain"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/shiftLight" />
+                app:layout_constraintTop_toBottomOf="@id/shiftLight">
 
+                <androidx.constraintlayout.helper.widget.Flow
+                    android:id="@+id/flowCards"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    app:constraint_referenced_ids="cardSpeed,cardThrottle,cardMap,cardCoolant,cardIntake,cardBattery"
+                    app:flow_horizontalGap="2dp"
+                    app:flow_horizontalStyle="spread_inside"
+                    app:flow_maxElementsWrap="3"
+                    app:flow_verticalAlign="center"
+                    app:flow_wrapMode="chain"
+                    app:layout_constraintEnd_toStartOf="@id/fuelLevel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardSpeed"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_speedometer"
+                    app:metricTitle="@string/speed"
+                    app:metricUnit="km/h"
+                    app:metricValue="0" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardThrottle"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_throttle"
+                    app:metricTitle="@string/throttle"
+                    app:metricUnit="%"
+                    app:metricValue="0" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardMap"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_pressure_gauge"
+                    app:metricTitle="@string/map"
+                    app:metricUnit="kPa"
+                    app:metricValue="0" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardCoolant"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_thermometer"
+                    app:metricTitle="@string/engine_t"
+                    app:metricUnit="°C"
+                    app:metricValue="0" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardIntake"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_thermometer"
+                    app:metricTitle="@string/intake_t"
+                    app:metricUnit="°C"
+                    app:metricValue="0" />
+
+                <com.eduardo.obdmonitor.view.MetricView
+                    android:id="@+id/cardBattery"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    app:metricIcon="@drawable/ic_dashboard_lightning_charge"
+                    app:metricTitle="@string/battery"
+                    app:metricUnit="V"
+                    app:metricValue="0.0" />
+
+                <com.eduardo.obdmonitor.view.FuelLevelView
+                    android:id="@+id/fuelLevel"
+                    android:layout_width="90dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="2dp"
+                    app:layout_constraintBottom_toBottomOf="@id/flowCards"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/flowCards"
+                    app:layout_constraintTop_toTopOf="@id/flowCards" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
