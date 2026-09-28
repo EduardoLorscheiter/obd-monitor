@@ -74,10 +74,14 @@ public class MetricView extends LinearLayout {
                 String value = attributes.getString(R.styleable.MetricView_metricValue);
                 String unit = attributes.getString(R.styleable.MetricView_metricUnit);
 
-                if (icon != null) imgIcon.setImageDrawable(icon);
-                if (title != null) txtTitle.setText(title);
-                if (value != null) txtValue.setText(value);
-                if (unit != null) txtUnit.setText(unit);
+                if (icon != null)
+                    imgIcon.setImageDrawable(icon);
+                if (title != null)
+                    txtTitle.setText(title);
+                if (value != null)
+                    txtValue.setText(value);
+                if (unit != null)
+                    txtUnit.setText(unit);
             }
         }
     }

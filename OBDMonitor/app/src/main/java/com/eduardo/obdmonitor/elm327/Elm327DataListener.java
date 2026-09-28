@@ -1,8 +1,8 @@
 /*
  **=================================================================================================
- **  @file    ObdDataListener.java
+ **  @file    Elm327DataListener.java
  **  @author  Eduardo Lorscheiter
- **  @class   ObdDataListener
+ **  @class   Elm327DataListener
  **  @date    23/07/2026
  **  @version 1.0
  **  @brief   Interface de callbacks responsável por notificar os valores dos parâmetros monitorados
@@ -10,9 +10,9 @@
  **=================================================================================================
  */
 
-package com.eduardo.obdmonitor.obd;
+package com.eduardo.obdmonitor.elm327;
 
-public interface ObdDataListener {
+public interface Elm327DataListener {
     /**
      * Chamado quando receber um novo valor de rotação do motor (RPM).
      *

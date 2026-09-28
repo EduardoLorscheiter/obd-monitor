@@ -31,6 +31,7 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.model.Device;
 
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BluetoothManager implements BluetoothConnectionListener {
     // Instância única do gerenciador Bluetooth (Singleton)
@@ -42,11 +43,15 @@ public class BluetoothManager implements BluetoothConnectionListener {
     // Responsável pela comunicação Bluetooth de baixo nível
     private final BluetoothConnection connection;
 
-    // Listener utilizado para reportar eventos Bluetooth à interface
-    private BluetoothManagerListener listener;
+    // Lista de listeners utilizados para reportar eventos Bluetooth às interfaces
+    private final CopyOnWriteArrayList<BluetoothManagerListener> listeners =
+            new CopyOnWriteArrayList<>();
 
     // Indica se o BroadcastReceiver está registrado
     private boolean receiverRegistered;
+
+    // Quantidade de componentes que utilizam o monitoramento do estado do Bluetooth
+    private int receiverUsers;
 
     // Dispositivo cuja conexão está sendo estabelecida
     private Device connectingDevice;
@@ -71,23 +76,6 @@ public class BluetoothManager implements BluetoothConnectionListener {
     }
 
     /**
-     * Retorna a instância única do gerenciador Bluetooth previamente inicializada.
-     *
-     * <p>Deve ser utilizado após a criação da instância através de {@link #getInstance(Context)}.
-     * Caso o gerenciador ainda não tenha sido inicializado, uma {@link IllegalStateException} será
-     * lançada.</p>
-     *
-     * @return Instância única de {@code BluetoothManager}.
-     * @throws IllegalStateException Caso o gerenciador ainda não tenha sido inicializado.
-     */
-    public static synchronized BluetoothManager getInstance() {
-        if (instance == null)
-            throw new IllegalStateException("BluetoothManager has not been initialized!");
-
-        return instance;
-    }
-
-    /**
      * Cria uma nova instância do gerenciador Bluetooth.
      *
      * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
@@ -101,15 +89,24 @@ public class BluetoothManager implements BluetoothConnectionListener {
     }
 
     /**
-     * Define o listener responsável por receber os eventos do Bluetooth.
+     * Adiciona um listener para receber eventos relacionados ao Bluetooth.
      *
-     * <p>O listener de conexão recebe as alterações de estado do adaptador, descoberta de
-     * dispositivos pareados, conexão, desconexão e erros durante a comunicação.</p>
-     *
-     * @param listener Listener que receberá eventos do Bluetooth.
+     * @param listener Listener que receberá os eventos do Bluetooth.
      */
-    public void setListener(BluetoothManagerListener listener) {
-        this.listener = listener;
+    public void addListener(BluetoothManagerListener listener) {
+        if (listener == null)
+            return;
+
+        listeners.addIfAbsent(listener);
+    }
+
+    /**
+     * Remove um listener previamente registrado.
+     *
+     * @param listener Listener que deixará de receber os eventos do Bluetooth.
+     */
+    public void removeListener(BluetoothManagerListener listener) {
+        listeners.remove(listener);
     }
 
     /**
@@ -121,7 +118,9 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * <p>Deve ser chamado antes de iniciar o monitoramento do Bluetooth e deve ser acompanhado da
      * chamada do {@link #unregisterReceivers()} quando não for mais necessário.</p>
      */
-    public void registerReceivers() {
+    public synchronized void registerReceivers() {
+        receiverUsers++;
+
         if (receiverRegistered)
             return;
 
@@ -137,8 +136,11 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * <p>Deve ser chamado quando o componente responsável pelo Bluetooth for finalizado, evitando
      * vazamentos de memória e registros duplicados dos receptores.</p>
      */
-    public void unregisterReceivers() {
-        if (!receiverRegistered)
+    public synchronized void unregisterReceivers() {
+        if (receiverUsers > 0)
+            receiverUsers--;
+
+        if (receiverUsers > 0 || !receiverRegistered)
             return;
 
         context.unregisterReceiver(bluetoothReceiver);
@@ -202,7 +204,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
                     connectedDevice.getMacAddress().equals(device.getMacAddress()))
                 device.setStatusConnected();
 
-            if (listener != null)
+            for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDeviceBondedFound(device);
         }
     }
@@ -223,9 +225,8 @@ public class BluetoothManager implements BluetoothConnectionListener {
 
         // Ignora um novo clique no mesmo dispositivo que já está conectando
         if (connectingDevice != null &&
-                connectingDevice.getMacAddress().equals(device.getMacAddress())) {
+                connectingDevice.getMacAddress().equals(device.getMacAddress()))
             return;
-        }
 
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
 
@@ -243,7 +244,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
             connection.disconnect();
             connectedDevice.setStatusDisconnected();
 
-            if (listener != null)
+            for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
                         connectedDevice,
                         context.getString(R.string.device_disconnected, connectedDevice.getName())
@@ -261,9 +262,9 @@ public class BluetoothManager implements BluetoothConnectionListener {
             connection.cancelConnection();
 
             previousDevice.setStatusDisconnected();
-            if (listener != null)
+            for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
-                        connectingDevice,
+                        previousDevice,
                         context.getString(R.string.device_disconnected, connectingDevice.getName())
                 );
         }
@@ -273,7 +274,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
 
         device.setStatusConnecting();
 
-        if (listener != null)
+        for (BluetoothManagerListener listener : listeners)
             listener.onBluetoothManagerConnecting(device);
 
         connection.connect(bluetoothDevice);
@@ -293,7 +294,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
 
             device.setStatusDisconnected();
 
-            if (listener != null)
+            for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
                         device,
                         context.getString(
@@ -305,9 +306,8 @@ public class BluetoothManager implements BluetoothConnectionListener {
             return;
         }
 
-        if (connectedDevice != null) {
+        if (connectedDevice != null)
             connection.disconnect();
-        }
     }
 
     /**
@@ -319,9 +319,6 @@ public class BluetoothManager implements BluetoothConnectionListener {
             if (!BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction()))
                 return;
 
-            if (listener == null)
-                return;
-
             int state = intent.getIntExtra(
                     BluetoothAdapter.EXTRA_STATE,
                     BluetoothAdapter.ERROR
@@ -329,10 +326,12 @@ public class BluetoothManager implements BluetoothConnectionListener {
 
             switch (state) {
                 case BluetoothAdapter.STATE_ON:
-                    listener.onBluetoothManagerEnabled();
+                    for (BluetoothManagerListener listener : listeners)
+                        listener.onBluetoothManagerEnabled();
                     break;
                 case BluetoothAdapter.STATE_OFF:
-                    listener.onBluetoothManagerDisabled();
+                    for (BluetoothManagerListener listener : listeners)
+                        listener.onBluetoothManagerDisabled();
                     break;
                 default:
                     break;
@@ -363,10 +362,11 @@ public class BluetoothManager implements BluetoothConnectionListener {
         connectedDevice = device;
         device.setStatusConnected();
 
-        if (listener != null) {
-            String message = context.getString(R.string.device_connected, device.getName());
-            listener.onBluetoothManagerConnected(device, message);
-        }
+        for (BluetoothManagerListener listener : listeners)
+            listener.onBluetoothManagerConnected(
+                    device,
+                    context.getString(R.string.device_connected, device.getName())
+            );
     }
 
     @Override
@@ -378,10 +378,11 @@ public class BluetoothManager implements BluetoothConnectionListener {
         connectedDevice = null;
         device.setStatusDisconnected();
 
-        if (listener != null) {
-            String message = context.getString(R.string.device_disconnected, device.getName());
-            listener.onBluetoothManagerDisconnected(device, message);
-        }
+        for (BluetoothManagerListener listener : listeners)
+            listener.onBluetoothManagerDisconnected(
+                    device,
+                    context.getString(R.string.device_disconnected, device.getName())
+            );
     }
 
     @Override
@@ -393,7 +394,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
         connectingDevice = null;
         device.setStatusDisconnected();
 
-        if (listener != null)
+        for (BluetoothManagerListener listener : listeners)
             listener.onBluetoothManagerError(device, message);
     }
 
@@ -467,7 +468,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * @param error Tipo do erro ocorrido.
      */
     private void notifyError(BluetoothManagerError error) {
-        if (listener != null)
+        for (BluetoothManagerListener listener : listeners)
             listener.onBluetoothManagerError(connectedDevice, error.getMessage(context));
     }
 }

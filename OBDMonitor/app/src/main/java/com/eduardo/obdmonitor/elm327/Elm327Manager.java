@@ -1,22 +1,21 @@
 /*
  **=================================================================================================
- **  @file    ObdManager.java
+ **  @file    Elm327Manager.java
  **  @author  Eduardo Lorscheiter
- **  @class   ObdManager
+ **  @class   Elm327Manager
  **  @date    21/07/2026
  **  @version 1.0
  **  @brief   Gerencia a comunicação entre a aplicação, o adaptador ELM327 e a ECU do veículo,
- **           realizando a inicialização, monitoramento e leitura dos dados OBD-II.
+ **           realizando a inicialização, monitoramento e leitura dos dados do OBD-II.
  **=================================================================================================
  */
 
-package com.eduardo.obdmonitor.obd;
+package com.eduardo.obdmonitor.elm327;
 
 import android.content.Context;
 
 import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
-import com.eduardo.obdmonitor.elm327.Elm327Commands;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.obd.commands.CoolantCommand;
 import com.eduardo.obdmonitor.obd.commands.FuelCommand;
@@ -32,8 +31,9 @@ import com.eduardo.obdmonitor.obd.scheduler.PidPriority;
 import com.eduardo.obdmonitor.obd.scheduler.PidTask;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ObdManager {
+public class Elm327Manager {
     // Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos
     private static final int ELM327_RESET_DELAY_MS = 1000;
 
@@ -41,13 +41,13 @@ public class ObdManager {
     private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
 
     // Intervalos de tempo entre leituras da ECU durante o monitoramento, em milissegundos
-    private static final int HIGH_INTERVAL_MS = 100;
-    private static final int MEDIUM_INTERVAL_MS = 300;
-    private static final int LOW_INTERVAL_MS = 1000;
-    private static final int VERY_LOW_INTERVAL_MS = 2000;
+    private static final int FAST_READ_INTERVAL_MS = 100;
+    private static final int NORMAL_READ_INTERVAL_MS = 300;
+    private static final int SLOW_READ_INTERVAL_MS = 1000;
+    private static final int VERY_SLOW_READ_INTERVAL_MS = 2000;
 
-    // Instância única do gerenciador OBD-II (Singleton)
-    private static ObdManager instance;
+    // Instância única do adaptador ELM327 (Singleton)
+    private static Elm327Manager instance;
 
     // Contexto global da aplicação utilizado para acessar serviços Android
     private final Context applicationContext;
@@ -55,11 +55,11 @@ public class ObdManager {
     // Gerenciador responsável pela comunicação Bluetooth
     private final BluetoothManager bluetoothManager;
 
-    // Listener responsável por receber eventos relacionados ao estado da conexão OBD-II
-    private ObdConnectionListener connectionListener;
+    // Lista de listeners utilizados para reportar eventos de conexão às interfaces
+    private final List<Elm327ConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
 
-    // Listener responsável por receber os dados monitorados da ECU
-    private ObdDataListener dataListener;
+    // Lista de listeners utilizados para reportar eventos de dados às interfaces
+    private final List<Elm327DataListener> dataListeners = new CopyOnWriteArrayList<>();
 
     // Indica se o monitoramento contínuo da ECU está ativo
     // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
@@ -85,57 +85,40 @@ public class ObdManager {
 
     // Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II
     private final PidTask rpmTask =
-            new PidTask(new RpmCommand(), HIGH_INTERVAL_MS, PidPriority.HIGH);
+            new PidTask(new RpmCommand(), FAST_READ_INTERVAL_MS, PidPriority.HIGH);
     private final PidTask speedTask =
-            new PidTask(new SpeedCommand(), HIGH_INTERVAL_MS, PidPriority.HIGH);
+            new PidTask(new SpeedCommand(), FAST_READ_INTERVAL_MS, PidPriority.HIGH);
     private final PidTask throttleTask =
-            new PidTask(new ThrottleCommand(), MEDIUM_INTERVAL_MS, PidPriority.MEDIUM);
+            new PidTask(new ThrottleCommand(), NORMAL_READ_INTERVAL_MS, PidPriority.MEDIUM);
     private final PidTask mapTask =
-            new PidTask(new MapCommand(), MEDIUM_INTERVAL_MS, PidPriority.MEDIUM);
+            new PidTask(new MapCommand(), NORMAL_READ_INTERVAL_MS, PidPriority.MEDIUM);
     private final PidTask coolantTask =
-            new PidTask(new CoolantCommand(), LOW_INTERVAL_MS, PidPriority.LOW);
+            new PidTask(new CoolantCommand(), SLOW_READ_INTERVAL_MS, PidPriority.LOW);
     private final PidTask intakeAirTask =
-            new PidTask(new IntakeCommand(), LOW_INTERVAL_MS, PidPriority.LOW);
+            new PidTask(new IntakeCommand(), SLOW_READ_INTERVAL_MS, PidPriority.LOW);
     private final PidTask voltageTask =
-            new PidTask(new VoltageCommand(), VERY_LOW_INTERVAL_MS, PidPriority.LOW);
+            new PidTask(new VoltageCommand(), VERY_SLOW_READ_INTERVAL_MS, PidPriority.LOW);
     private final PidTask fuelTask =
-            new PidTask(new FuelCommand(), VERY_LOW_INTERVAL_MS, PidPriority.LOW);
+            new PidTask(new FuelCommand(), VERY_SLOW_READ_INTERVAL_MS, PidPriority.LOW);
 
     /**
-     * Retorna a instância única do gerenciador OBD-II.
+     * Retorna a instância única do adaptador ELM327.
      *
      * <p>O contexto recebido é convertido internamente para o contexto da aplicação, evitando
      * a retenção de referências de componentes com ciclo de vida curto, como Activities.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
-     * @return Instância única de {@code ObdManager}.
+     * @return Instância única de {@code Elm327Manager}.
      */
-    public static synchronized ObdManager getInstance(Context context) {
+    public static synchronized Elm327Manager getInstance(Context context) {
         if (instance == null)
-            instance = new ObdManager(context);
+            instance = new Elm327Manager(context);
 
         return instance;
     }
 
     /**
-     * Retorna a instância única do gerenciador OBD-II previamente inicializada.
-     *
-     * <p>Deve ser utilizado após a criação da instância através de {@link #getInstance(Context)}.
-     * Caso o gerenciador ainda não tenha sido inicializado, uma {@link IllegalStateException} será
-     * lançada.</p>
-     *
-     * @return Instância única de {@code ObdManager}.
-     * @throws IllegalStateException Caso o gerenciador ainda não tenha sido inicializado.
-     */
-    public static synchronized ObdManager getInstance() {
-        if (instance == null)
-            throw new IllegalStateException("ObdManager has not been initialized!");
-
-        return instance;
-    }
-
-    /**
-     * Cria uma nova instância do gerenciador OBD-II.
+     * Cria uma nova instância do adaptador ELM327.
      *
      * <p>O contexto é armazenado como contexto da aplicação para garantir que o Singleton não
      * mantenha referências a componentes com ciclo de vida curto, como Activities.</p>
@@ -146,9 +129,9 @@ public class ObdManager {
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      */
-    private ObdManager(Context context) {
-        this.applicationContext = context.getApplicationContext();
-        bluetoothManager = BluetoothManager.getInstance();
+    private Elm327Manager(Context context) {
+        applicationContext = context.getApplicationContext();
+        bluetoothManager = BluetoothManager.getInstance(applicationContext);
         obdScheduler.addTask(rpmTask);
         obdScheduler.addTask(speedTask);
         obdScheduler.addTask(throttleTask);
@@ -161,19 +144,55 @@ public class ObdManager {
     }
 
     /**
-     * Define os listeners responsáveis por receber os eventos da comunicação OBD-II.
+     * Adiciona um listener para receber eventos relacionados à conexão com o adaptador ELM327.
      *
-     * <p>O listener de conexão recebe as alterações de estado da comunicação com o adaptador ELM327
-     * e a ECU, enquanto o listener de dados recebe os valores monitorados durante a comunicação.
-     * </p>
-     *
-     * @param connectionListener Listener que receberá os eventos de conexão OBD-II.
-     * @param dataListener       Listener que receberá os dados monitorados da ECU.
+     * @param listener Listener que receberá os eventos de conexão com o adaptador ELM327.
      */
-    public void setListeners(ObdConnectionListener connectionListener, ObdDataListener dataListener) {
-        this.connectionListener = connectionListener;
-        this.dataListener = dataListener;
-        notifyConnectionState();
+    public void addConnectionListener(Elm327ConnectionListener listener) {
+        if (listener == null)
+            return;
+
+        if (!connectionListeners.contains(listener)) {
+            connectionListeners.add(listener);
+            notifyConnectionState(listener);
+        }
+    }
+
+    /**
+     * Remove um listener de conexão com o adaptador ELM327 previamente registrado.
+     *
+     * @param listener Listener que deixará de receber os eventos de conexão com o adaptador ELM327.
+     */
+    public void removeConnectionListener(Elm327ConnectionListener listener) {
+        if (listener == null)
+            return;
+
+        connectionListeners.remove(listener);
+    }
+
+    /**
+     * Adiciona um listener para receber eventos de dados da ECU.
+     *
+     * @param listener Listener que receberá os eventos de dados da ECU.
+     */
+    public void addDataListener(Elm327DataListener listener) {
+        if (listener == null)
+            return;
+
+        if (!dataListeners.contains(listener))
+            dataListeners.add(listener);
+    }
+
+    /**
+     * Remove um listener de dados da ECU previamente registrado.
+     *
+     * @param listener Listener que deixará de receber os eventos de dados da ECU.
+     */
+    public void removeDataListener(Elm327DataListener listener) {
+        if (listener == null)
+            return;
+
+        dataListeners.remove(listener);
     }
 
     /**
@@ -207,10 +226,11 @@ public class ObdManager {
     private void finishConnection(Device device) {
         ecuConnected = true;
         obdProtocol = readProtocol();
+
         notifyConnectionState();
 
-        if (connectionListener != null)
-            connectionListener.onObdConnected(device);
+        for (Elm327ConnectionListener listener : connectionListeners)
+            listener.onElm327Connected(device);
 
         startMonitoring();
     }
@@ -226,9 +246,9 @@ public class ObdManager {
         resetConnectionState();
         notifyConnectionState();
 
-        if (connectionListener != null)
-            connectionListener.onObdError(
-                    ObdManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext));
+        for (Elm327ConnectionListener listener : connectionListeners)
+            listener.onElm327Error(
+                    Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext));
     }
 
     /**
@@ -284,7 +304,8 @@ public class ObdManager {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean sendCommandOk(String command) {
         String response = executeElm327Command(command);
-        if (response == null) return false;
+        if (response == null)
+            return false;
 
         return response.contains(applicationContext.getString(R.string.elm327)) ||
                 response.contains(applicationContext.getString(R.string.ok));
@@ -312,9 +333,11 @@ public class ObdManager {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                if (monitoring && connectionListener != null)
-                    connectionListener.onObdError(
-                            ObdManagerError.MONITORING_INTERRUPTED.getMessage(applicationContext));
+                if (monitoring) {
+                    for (Elm327ConnectionListener listener : connectionListeners)
+                        listener.onElm327Error(
+                                Elm327ManagerError.MONITORING_INTERRUPTED.getMessage(applicationContext));
+                }
             } finally {
                 monitoringThread = null;
             }
@@ -327,7 +350,7 @@ public class ObdManager {
      * dados monitorados.
      *
      * <p>Os valores são obtidos por meio dos respectivos PIDs OBD-II e enviados ao
-     * {@link ObdDataListener}, quando definido.</p>
+     * {@link Elm327DataListener}, quando definido.</p>
      */
     private void readVehicleData() {
         long currentTime = System.currentTimeMillis();
@@ -337,36 +360,36 @@ public class ObdManager {
         for (PidTask task : readyTasks) {
             if (task == rpmTask) {
                 int engineRpm = readEngineRpm();
-                if (dataListener != null)
-                    dataListener.onObdEngineRpmChanged(engineRpm);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdEngineRpmChanged(engineRpm);
             } else if (task == speedTask) {
                 int vehicleSpeed = readVehicleSpeed();
-                if (dataListener != null)
-                    dataListener.onObdVehicleSpeedChanged(vehicleSpeed);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdVehicleSpeedChanged(vehicleSpeed);
             } else if (task == throttleTask) {
                 int throttlePosition = readThrottlePosition();
-                if (dataListener != null)
-                    dataListener.onObdThrottlePositionChanged(throttlePosition);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdThrottlePositionChanged(throttlePosition);
             } else if (task == mapTask) {
                 int intakeManifoldPressure = readIntakeManifoldPressure();
-                if (dataListener != null)
-                    dataListener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
             } else if (task == coolantTask) {
                 int engineCoolantTemperature = readEngineCoolantTemperature();
-                if (dataListener != null)
-                    dataListener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
             } else if (task == intakeAirTask) {
                 int intakeAirTemperature = readIntakeAirTemperature();
-                if (dataListener != null)
-                    dataListener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
             } else if (task == voltageTask) {
                 double controlModuleVoltage = readControlModuleVoltage();
-                if (dataListener != null)
-                    dataListener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdControlModuleVoltageChanged(controlModuleVoltage);
             } else if (task == fuelTask) {
                 int fuelLevel = readFuelLevel();
-                if (dataListener != null)
-                    dataListener.onObdFuelLevelChanged(fuelLevel);
+                for (Elm327DataListener listener : dataListeners)
+                    listener.onObdFuelLevelChanged(fuelLevel);
             }
 
             obdScheduler.updateTaskExecution(task, currentTime);
@@ -471,7 +494,8 @@ public class ObdManager {
         if (response != null) {
             try {
                 double voltage = (Double) voltageTask.getCommand().parse(response);
-                if (voltage > 0.0) return voltage;
+                if (voltage > 0.0)
+                    return voltage;
             } catch (Exception ignored) {
             }
         }
@@ -491,7 +515,8 @@ public class ObdManager {
      */
     private double readElm327Voltage() {
         String response = executeElm327Command(Elm327Commands.READ_VOLTAGE);
-        if (response == null) return 0.0;
+        if (response == null)
+            return 0.0;
 
         try {
             return Double.parseDouble(response.replace("V", "").trim());
@@ -501,10 +526,10 @@ public class ObdManager {
     }
 
     /**
-     * Realiza a leitura da tensão de alimentação do módulo de controle (ECU).
+     * Realiza a leitura do nível de combustível.
      *
-     * @return Tensão de alimentação da ECU em volts (V) ou {@code 0} caso não seja possível obter
-     * uma resposta válida.
+     * @return Nível de combustível em porcentagem (%) ou {@code 0} caso não seja possível obter uma
+     * resposta válida.
      */
     private int readFuelLevel() {
         String response = executeElm327Command(fuelTask.getCommand().getRequest());
@@ -524,7 +549,8 @@ public class ObdManager {
      */
     private String executeElm327Command(String command) {
         String response = bluetoothManager.sendCommand(command + "\r");
-        if (response == null) return null;
+        if (response == null)
+            return null;
 
         return normalizeResponse(response);
     }
@@ -559,19 +585,25 @@ public class ObdManager {
     }
 
     /**
-     * Notifica o listener da conexão com o estado atual da conexão OBD-II.
+     * Notifica os listeners da conexão com o estado atual da conexão OBD-II.
      *
      * <p>São notificadas as informações de conexão Bluetooth, comunicação com a ECU e protocolo
      * utilizado.</p>
      */
     private void notifyConnectionState() {
-        ObdConnectionListener listener = connectionListener;
+        for (Elm327ConnectionListener listener : connectionListeners) {
+            notifyConnectionState(listener);
+        }
+    }
 
-        if (listener == null)
-            return;
-
-        listener.onObdBluetoothStatusChanged(bluetoothConnected);
-        listener.onObdEcuStatusChanged(ecuConnected);
-        listener.onObdProtocolChanged(obdProtocol);
+    /**
+     * Notifica o listener da conexão com o estado atual da conexão OBD-II.
+     *
+     * @param listener Listener que receberá os eventos de conexão com o adaptador ELM327.
+     */
+    private void notifyConnectionState(Elm327ConnectionListener listener) {
+        listener.onElm327BluetoothStatusChanged(bluetoothConnected);
+        listener.onElm327EcuStatusChanged(ecuConnected);
+        listener.onElm327ProtocolChanged(obdProtocol);
     }
 }

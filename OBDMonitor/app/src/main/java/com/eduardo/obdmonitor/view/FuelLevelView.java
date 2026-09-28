@@ -120,7 +120,8 @@ public class FuelLevelView extends View {
      * @param canvas Área de desenho utilizada para renderizar o ícone.
      */
     private void drawFuelIcon(Canvas canvas) {
-        if (fuelIcon == null) return;
+        if (fuelIcon == null)
+            return;
 
         float iconSize = 28.0f;
 

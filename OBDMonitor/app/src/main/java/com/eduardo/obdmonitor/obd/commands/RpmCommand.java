@@ -42,7 +42,8 @@ public class RpmCommand extends ObdCommand<Integer> {
     @Override
     public Integer parse(String response) {
         String data = getPidData(response);
-        if (data == null) return getLastValue();
+        if (data == null)
+            return getLastValue();
 
         try {
             int a = hexToInt(data.substring(0, 2));

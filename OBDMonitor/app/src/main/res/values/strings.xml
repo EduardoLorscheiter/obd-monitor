@@ -9,7 +9,7 @@
     <!-- Protocolos / Constantes -->
     <!-- ======================================================================================= -->
     <string name="bluetooth" translatable="false">Bluetooth</string>
-    <string name="bluetooth_obd_ii" translatable="false">Bluetooth ⇄ OBD-II</string>
+    <string name="bluetooth_elm327_obd_ii" translatable="false">Bluetooth ⇄ ELM327 (OBD-II)</string>
     <string name="ecu" translatable="false">ECU</string>
     <string name="elm327" translatable="false">ELM327</string>
     <string name="ok" translatable="false">OK</string>

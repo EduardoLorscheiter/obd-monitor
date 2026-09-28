@@ -94,7 +94,6 @@
                     android:id="@+id/flowCards"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
                     app:constraint_referenced_ids="cardSpeed,cardThrottle,cardMap,cardCoolant,cardIntake,cardBattery"
                     app:flow_horizontalGap="2dp"
                     app:flow_horizontalStyle="spread_inside"

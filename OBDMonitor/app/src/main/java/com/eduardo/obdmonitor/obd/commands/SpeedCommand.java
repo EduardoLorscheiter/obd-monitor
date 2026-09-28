@@ -44,7 +44,8 @@ public class SpeedCommand extends ObdCommand<Integer> {
     @Override
     public Integer parse(String response) {
         String data = getPidData(response);
-        if (data == null) return getLastValue();
+        if (data == null)
+            return getLastValue();
 
         try {
             int speed = hexToInt(data);

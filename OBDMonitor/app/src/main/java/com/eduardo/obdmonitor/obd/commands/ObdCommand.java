@@ -96,9 +96,13 @@ public abstract class ObdCommand<T> {
      * não contenha o PID esperado ou não possua a quantidade necessária de bytes.
      */
     protected String getPidData(String response) {
+        if (response == null)
+            return null;
+
         String header = SERVICE_CURRENT_DATA_RESPONSE + pid;
         int index = response.indexOf(header);
-        if (index == -1) return null;
+        if (index == -1)
+            return null;
 
         int start = index + header.length();
         int end = start + (dataBytes * 2);

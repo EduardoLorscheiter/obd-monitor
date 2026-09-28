@@ -22,18 +22,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.BuildConfig;
-import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
-import com.eduardo.obdmonitor.obd.ObdManager;
 
 @SuppressLint("CustomSplashScreen")
-public class SplashActivity extends AppCompatActivity {
+public class SplashActivity extends BaseActivity {
     // Tempo de exibição da Splash Screen, em milissegundos
     private static final long SPLASH_DURATION_MS = 1500L;
 
@@ -53,7 +50,6 @@ public class SplashActivity extends AppCompatActivity {
 
         initViews();
         startLogoAnimation();
-        initApplication();
         scheduleNavigation();
     }
 
@@ -86,18 +82,6 @@ public class SplashActivity extends AppCompatActivity {
                 .scaleY(1f)
                 .setDuration(750)
                 .start();
-    }
-
-    /**
-     * Inicializa os gerenciadores globais utilizados pela aplicação.
-     *
-     * <p>Cria as instâncias singleton responsáveis pelo gerenciamento da comunicação Bluetooth e da
-     * comunicação OBD-II, garantindo que estejam disponíveis para as demais Activities durante a
-     * execução do aplicativo.</p>
-     */
-    private void initApplication() {
-        BluetoothManager.getInstance(this);
-        ObdManager.getInstance(this);
     }
 
     /**

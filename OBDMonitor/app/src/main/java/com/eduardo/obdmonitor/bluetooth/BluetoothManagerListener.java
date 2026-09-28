@@ -16,12 +16,12 @@ import com.eduardo.obdmonitor.model.Device;
 
 public interface BluetoothManagerListener {
     /**
-     * Chamado quando o Bluetooth é habilitado.
+     * Chamado quando o Bluetooth do dispositivo é habilitado.
      */
     void onBluetoothManagerEnabled();
 
     /**
-     * Chamado quando o Bluetooth é desabilitado.
+     * Chamado quando o Bluetooth do dispositivo é desabilitado.
      */
     void onBluetoothManagerDisabled();
 
@@ -43,7 +43,7 @@ public interface BluetoothManagerListener {
      * Chamado quando um dispositivo Bluetooth é conectado.
      *
      * @param device  Dispositivo Bluetooth.
-     * @param message Mensagem informativa sobre a desconexão.
+     * @param message Mensagem informativa sobre a conexão.
      */
     void onBluetoothManagerConnected(Device device, String message);
 

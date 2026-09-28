@@ -26,16 +26,15 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.elm327.Elm327Manager;
 import com.eduardo.obdmonitor.model.Device;
-import com.eduardo.obdmonitor.obd.ObdConnectionListener;
-import com.eduardo.obdmonitor.obd.ObdDataListener;
-import com.eduardo.obdmonitor.obd.ObdManager;
+import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
+import com.eduardo.obdmonitor.elm327.Elm327DataListener;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 import com.eduardo.obdmonitor.view.FuelLevelView;
@@ -44,18 +43,15 @@ import com.eduardo.obdmonitor.view.ShiftLightView;
 
 import java.util.Locale;
 
-public class DashboardActivity extends AppCompatActivity implements ObdConnectionListener, ObdDataListener {
+public class DashboardActivity extends BaseActivity implements Elm327ConnectionListener,
+                                                               Elm327DataListener {
     // Componentes da janela da Activity
     private ImageButton btnConnection;
     private ShiftLightView shiftLight;
     private MetricView cardSpeed, cardThrottle, cardMap, cardCoolant, cardIntake, cardBattery;
     private FuelLevelView fuelLevel;
-
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
-
-    // Gerenciador responsável pela comunicação OBD-II
-    private ObdManager obdManager;
 
     // Launcher utilizado para iniciar a tela de conexão Bluetooth
     private ActivityResultLauncher<Intent> connectionLauncher;
@@ -76,7 +72,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         });
 
         initViews();
-        initConnection();
         setupActivityResult();
         setListeners();
     }
@@ -84,7 +79,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        obdManager.setListeners(null, null);
     }
 
     /**
@@ -110,14 +104,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     }
 
     /**
-     * Inicializa os gerenciadores responsáveis pela comunicação OBD-II.
-     */
-    private void initConnection() {
-        obdManager = ObdManager.getInstance();
-        obdManager.setListeners(this, this);
-    }
-
-    /**
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
@@ -129,7 +115,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                obdManager.disconnect();
+                elm327Manager.disconnect();
                 finish();
             }
         });
@@ -138,7 +124,7 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     /**
      * Configura o launcher responsável por receber o resultado da tela de conexão.
      *
-     * <p>Após o retorno da {@link ConnectionActivity}, os listeners do {@link ObdManager} são
+     * <p>Após o retorno da {@link ConnectionActivity}, os listeners do {@link Elm327Manager} são
      * registrados novamente e uma mensagem é exibida informando o sucesso ou falha da conexão com
      * o dispositivo OBD-II.</p>
      */
@@ -146,8 +132,6 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
         connectionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    obdManager.setListeners(this, this);
-
                     if (result.getResultCode() == RESULT_OK) {
                         ToastUtils.showToast(this, getString(R.string.obd_connection_success));
                     } else {
@@ -158,27 +142,27 @@ public class DashboardActivity extends AppCompatActivity implements ObdConnectio
     }
 
     @Override
-    public void onObdConnected(Device device) {
+    public void onElm327Connected(Device device) {
 
     }
 
     @Override
-    public void onObdBluetoothStatusChanged(boolean bluetoothConnected) {
+    public void onElm327BluetoothStatusChanged(boolean bluetoothConnected) {
         ViewUtils.setStatusIndicator(viewBluetooth, bluetoothConnected);
     }
 
     @Override
-    public void onObdEcuStatusChanged(boolean ecuConnected) {
+    public void onElm327EcuStatusChanged(boolean ecuConnected) {
         ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
     }
 
     @Override
-    public void onObdProtocolChanged(String protocol) {
+    public void onElm327ProtocolChanged(String protocol) {
         txtProtocol.setText(protocol == null ? getString(R.string.__) : protocol);
     }
 
     @Override
-    public void onObdError(String message) {
+    public void onElm327Error(String message) {
         ToastUtils.showToast(this, message);
     }
 

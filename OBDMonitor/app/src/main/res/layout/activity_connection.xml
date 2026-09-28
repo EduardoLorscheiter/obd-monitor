@@ -53,7 +53,7 @@
                 android:id="@+id/txtTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/bluetooth_obd_ii"
+                android:text="@string/bluetooth_elm327_obd_ii"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="28sp"
                 android:textStyle="bold"

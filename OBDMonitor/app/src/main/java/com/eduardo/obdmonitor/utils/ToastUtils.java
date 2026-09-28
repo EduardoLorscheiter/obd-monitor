@@ -47,9 +47,8 @@ public class ToastUtils {
      */
     public static void showToast(Activity activity, String text) {
         // Cancela o Toast anterior caso esteja sendo exibido
-        if (currentToast != null) {
+        if (currentToast != null)
             currentToast.cancel();
-        }
 
         // Cria um novo Toast com duração longa
         Toast toast = Toast.makeText(activity, text, Toast.LENGTH_LONG);

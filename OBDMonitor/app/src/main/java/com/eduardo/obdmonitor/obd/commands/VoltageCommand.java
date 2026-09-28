@@ -43,7 +43,8 @@ public class VoltageCommand extends ObdCommand<Double> {
     @Override
     public Double parse(String response) {
         String data = getPidData(response);
-        if (data == null) return getLastValue();
+        if (data == null)
+            return getLastValue();
 
         try {
             int a = hexToInt(data.substring(0, 2));

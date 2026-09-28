@@ -56,7 +56,8 @@ public class SupportedPidsCommand extends ObdCommand<Long> {
     @Override
     public Long parse(String response) {
         String data = getPidData(response);
-        if (data == null) return getLastValue();
+        if (data == null)
+            return getLastValue();
 
         try {
             long a = hexToInt(data.substring(0, 2));

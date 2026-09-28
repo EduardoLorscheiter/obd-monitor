@@ -43,7 +43,8 @@ public class ThrottleCommand extends ObdCommand<Integer> {
     @Override
     public Integer parse(String response) {
         String data = getPidData(response);
-        if (data == null) return getLastValue();
+        if (data == null)
+            return getLastValue();
 
         try {
             int a = hexToInt(data);

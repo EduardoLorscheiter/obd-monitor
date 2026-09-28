@@ -25,7 +25,6 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -34,11 +33,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
-import com.eduardo.obdmonitor.bluetooth.BluetoothManagerListener;
-import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.model.Device;
-import com.eduardo.obdmonitor.obd.ObdConnectionListener;
-import com.eduardo.obdmonitor.obd.ObdManager;
+import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 
@@ -46,19 +42,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ConnectionActivity extends AppCompatActivity implements BluetoothManagerListener, ObdConnectionListener {
+public class ConnectionActivity extends BaseActivity implements Elm327ConnectionListener {
     // Componentes da janela da Activity
     private ImageButton btnBack;
     private TextView txtBluetoothStatus;
     private SwitchCompat switchBluetooth;
     private ConstraintLayout containerBluetooth;
     private LinearLayout containerDevices, containerBondedDevices;
-
-    // Gerenciador responsável pela comunicação Bluetooth
-    private BluetoothManager bluetoothManager;
-
-    // Gerenciador responsável pela comunicação OBD-II
-    private ObdManager obdManager;
 
     // Lista de dispositivos Bluetooth pareados
     private final List<Device> bondedDevices = new ArrayList<>();
@@ -79,7 +69,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
         });
 
         initViews();
-        initConnection();
         setListeners();
     }
 
@@ -87,12 +76,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
     protected void onResume() {
         super.onResume();
         updateDevices();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        finishConnection();
     }
 
     /**
@@ -109,17 +92,6 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
         containerBluetooth = findViewById(R.id.containerBluetooth);
         containerDevices = findViewById(R.id.containerDevices);
         containerBondedDevices = findViewById(R.id.containerBondedDevices);
-    }
-
-    /**
-     * Inicializa os gerenciadores responsáveis pela comunicação Bluetooth e OBD-II.
-     */
-    private void initConnection() {
-        bluetoothManager = BluetoothManager.getInstance();
-        bluetoothManager.setListener(this);
-        bluetoothManager.registerReceivers();
-        obdManager = ObdManager.getInstance();
-        obdManager.setListeners(this, null);
     }
 
     /**
@@ -152,90 +124,73 @@ public class ConnectionActivity extends AppCompatActivity implements BluetoothMa
         });
     }
 
-    /**
-     * Finaliza os recursos utilizados pela Activity.
-     */
-    private void finishConnection() {
-        bluetoothManager.unregisterReceivers();
+    @Override
+    protected void onBluetoothEnabled() {
+        updateBluetoothStatus(true);
+        loadDevices();
     }
 
     @Override
-    public void onBluetoothManagerEnabled() {
-        runOnUiThread(() -> {
-            updateBluetoothStatus(true);
-            loadDevices();
-        });
+    protected void onBluetoothDisabled() {
+        updateBluetoothStatus(false);
+        cleanDevices();
     }
 
     @Override
-    public void onBluetoothManagerDisabled() {
-        runOnUiThread(() -> {
-            updateBluetoothStatus(false);
-            cleanDevices();
-        });
+    protected void onBluetoothDeviceBondedFound(Device device) {
+        addBluetoothDevice(device, bondedDevices, containerBondedDevices);
     }
 
     @Override
-    public void onBluetoothManagerDeviceBondedFound(Device device) {
-        runOnUiThread(() -> addBluetoothDevice(device, bondedDevices, containerBondedDevices));
+    protected void onBluetoothConnecting(Device device) {
+        updateStatus(device);
     }
 
     @Override
-    public void onBluetoothManagerConnecting(Device device) {
-        runOnUiThread(() -> updateStatus(device));
+    protected void onBluetoothConnected(Device device, String message) {
+        updateStatus(device);
+        ToastUtils.showToast(this, message);
+        try {
+            elm327Manager.connect(device);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void onBluetoothManagerConnected(Device device, String message) {
-        runOnUiThread(() -> {
-            updateStatus(device);
-            ToastUtils.showToast(this, message);
-            try {
-                obdManager.connect(device);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    protected void onBluetoothDisconnected(Device device, String message) {
+        updateStatus(device);
+        ToastUtils.showToast(this, message);
     }
 
     @Override
-    public void onBluetoothManagerDisconnected(Device device, String message) {
-        runOnUiThread(() -> {
-            updateStatus(device);
-            ToastUtils.showToast(this, message);
-        });
+    protected void onBluetoothError(Device device, String message) {
+        updateStatus(device);
+        ToastUtils.showToast(this, message);
     }
 
     @Override
-    public void onBluetoothManagerError(Device device, String message) {
-        runOnUiThread(() -> {
-            updateStatus(device);
-            ToastUtils.showToast(this, message);
-        });
-    }
-
-    @Override
-    public void onObdConnected(Device device) {
+    public void onElm327Connected(Device device) {
 
     }
 
     @Override
-    public void onObdBluetoothStatusChanged(boolean bluetoothConnected) {
+    public void onElm327BluetoothStatusChanged(boolean bluetoothConnected) {
 
     }
 
     @Override
-    public void onObdEcuStatusChanged(boolean obdConnected) {
+    public void onElm327EcuStatusChanged(boolean obdConnected) {
 
     }
 
     @Override
-    public void onObdProtocolChanged(String protocol) {
+    public void onElm327ProtocolChanged(String protocol) {
 
     }
 
     @Override
-    public void onObdError(String message) {
+    public void onElm327Error(String message) {
         runOnUiThread(() -> ToastUtils.showToast(this, message));
     }
 
