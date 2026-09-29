@@ -6,8 +6,8 @@
  **  @date    07/09/2026
  **  @version 1.0
  **  @brief   Activity base responsável pelo gerenciamento comum dos eventos Bluetooth da aplicação.
- **  @details Controla o ciclo de vida dos listeners e do BroadcastReceiver utilizado pelo
- **           BluetoothManager.
+ **  @details Gerencia o ciclo de vida dos listeners do BluetoothManager e do Elm327Manager, além do
+ **           registro e cancelamento dos BroadcastReceivers utilizados pelo BluetoothManager.
  **=================================================================================================
  */
 
@@ -41,32 +41,43 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        initializeManagers();
+    }
+
+    /**
+     * Inicializa os gerenciadores utilizados pela Activity.
+     */
+    private void initializeManagers() {
         bluetoothManager = BluetoothManager.getInstance(this);
         elm327Manager = Elm327Manager.getInstance(this);
     }
 
     /**
-     * Registra a Activity como listener do BluetoothManager e inicia o monitoramento do estado do
-     * adaptador Bluetooth.
+     * Registra a Activity como listener do {@link BluetoothManager} e registra os listeners do
+     * {@link Elm327Manager] de acordo com a implementação da Activity.
+     *
+     * <p>Também consulta o estado atual do Bluetooth e retoma a inicialização do ELM327 quando já
+     * existe uma conexão Bluetooth ativa no aplicativo.</p>
      */
     @Override
     protected void onStart() {
         super.onStart();
 
-        bluetoothManager.addListener(this);
-        bluetoothManager.registerReceivers();
-
-        registerElm327Listeners();
+        registerListeners();
+        registerBluetoothReceivers();
+        synchronizeConnectionState();
     }
 
     /**
-     * Registra automaticamente os listeners do ELM327 implementados pela Activity.
+     * Registra os listeners utilizados pela Activity.
      *
      * <p>A Activity é registrada como listener de conexão quando implementa
      * {@link Elm327ConnectionListener} e como listener de dados quando implementa
      * {@link Elm327DataListener}.</p>
      */
-    private void registerElm327Listeners() {
+    private void registerListeners() {
+        bluetoothManager.addListener(this);
+
         if (this instanceof Elm327ConnectionListener)
             elm327Manager.addConnectionListener((Elm327ConnectionListener) this);
 
@@ -75,30 +86,72 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     }
 
     /**
-     * Remove a Activity como listener e encerra o monitoramento do BroadcastReceiver quando não
-     * houver mais componentes utilizando-o.
+     * Registra os BroadcastReceivers utilizados pelo {@link BluetoothManager}.
+     */
+    private void registerBluetoothReceivers() {
+        bluetoothManager.registerReceivers();
+    }
+
+    /**
+     * Sincroniza o estado da Activity com o estado atual do {@link  BluetoothManager}.
+     *
+     * <p>Notifica a Activity sobre o estado atual do Bluetooth e retoma a conexão com o ELM327
+     * quando já existe um dispositivo Bluetooth conectado.</p>
+     */
+    private void synchronizeConnectionState() {
+        if (!bluetoothManager.isBluetoothEnabled()) {
+            onBluetoothManagerDisabled();
+            return;
+        }
+
+        onBluetoothManagerEnabled();
+
+        reconnectElm327();
+    }
+
+    /**
+     * Retoma a conexão com o ELM327 quando existe um dispositivo Bluetooth conectado.
+     */
+    private void reconnectElm327() {
+        Device connectedDevice = bluetoothManager.getConnectedDevice();
+
+        if (connectedDevice != null)
+            elm327Manager.connectAsync(connectedDevice);
+    }
+
+    /**
+     * Remove a Activity dos listeners do {@link BluetoothManager} e do {@link Elm327Manager} e
+     * solicita o cancelamento dos BroadcastReceivers gerenciados pelo {@link BluetoothManager}.
      */
     @Override
     protected void onStop() {
-        unregisterElm327Listeners();
-
-        bluetoothManager.removeListener(this);
-        bluetoothManager.unregisterReceivers();
+        unregisterListeners();
+        unregisterBluetoothReceivers();
 
         super.onStop();
     }
 
     /**
-     * Remove automaticamente os listeners do ELM327 implementados pela Activity.
+     * Remove os listeners registrados pela Activity.
      *
-     * <p>Os listeners são removidos de acordo com as interfaces implementadas pela Activity.</p>
+     * <p>Os listeners de conexão e de dados do ELM327 do {@link Elm327Manager} são removidos de
+     * acordo com as interfaces implementadas pela Activity.</p>
      */
-    private void unregisterElm327Listeners() {
+    private void unregisterListeners() {
         if (this instanceof Elm327ConnectionListener)
             elm327Manager.removeConnectionListener((Elm327ConnectionListener) this);
 
         if (this instanceof Elm327DataListener)
             elm327Manager.removeDataListener((Elm327DataListener) this);
+
+        bluetoothManager.removeListener(this);
+    }
+
+    /**
+     * Cancela os BroadcastReceivers utilizados pelo {@link BluetoothManager}.
+     */
+    private void unregisterBluetoothReceivers() {
+        bluetoothManager.unregisterReceivers();
     }
 
     /**
@@ -197,7 +250,10 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
      */
     @Override
     public final void onBluetoothManagerConnected(Device device, String message) {
-        runOnUiThread(() -> onBluetoothConnected(device, message));
+        runOnUiThread(() -> {
+            onBluetoothConnected(device, message);
+            elm327Manager.connectAsync(device);
+        });
     }
 
     /**

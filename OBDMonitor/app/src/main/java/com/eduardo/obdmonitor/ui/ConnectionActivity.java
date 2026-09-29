@@ -5,11 +5,11 @@
  **  @class   ConnectionActivity
  **  @date    21/07/2026
  **  @version 1.0
- **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador OBD-II ELM327.
+ **  @brief   Interface de gerenciamento da conexão Bluetooth com o adaptador ELM327.
  **  @details Esta Activity permite ao usuário verificar o estado do Bluetooth, visualizar
- **           dispositivos pareados, estabelecer conexão com o adaptador OBD-II e iniciar a
- **           comunicação com a ECU do veículo. Também realiza o controle visual dos estados de
- **           conexão e erros durante o processo de comunicação.
+ **           dispositivos pareados, estabelecer conexão com o adaptador ELM327 e iniciar a
+ **           comunicação com a ECU do veículo através do protocolo OBD-II. Também realiza o
+ **           controle visual dos estados de conexão e erros durante o processo de comunicação.
  **=================================================================================================
  */
 
@@ -72,12 +72,6 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         setListeners();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateDevices();
-    }
-
     /**
      * Inicializa os componentes visuais da Activity.
      *
@@ -98,10 +92,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        btnBack.setOnClickListener(v -> {
-            setResult(RESULT_OK);
-            finish();
-        });
+        btnBack.setOnClickListener(v -> finish());
 
         switchBluetooth.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!buttonView.isPressed())
@@ -118,7 +109,6 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                setResult(RESULT_OK);
                 finish();
             }
         });
@@ -150,11 +140,6 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     protected void onBluetoothConnected(Device device, String message) {
         updateStatus(device);
         ToastUtils.showToast(this, message);
-        try {
-            elm327Manager.connect(device);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
@@ -171,7 +156,10 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
 
     @Override
     public void onElm327Connected(Device device) {
-
+        runOnUiThread(() -> {
+            if (!isFinishing())
+                setResult(RESULT_OK);
+        });
     }
 
     @Override
@@ -192,19 +180,6 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     @Override
     public void onElm327Error(String message) {
         runOnUiThread(() -> ToastUtils.showToast(this, message));
-    }
-
-    /**
-     * Atualiza a interface de acordo com o estado atual do Bluetooth.
-     */
-    private void updateDevices() {
-        if (bluetoothManager.isBluetoothEnabled()) {
-            updateBluetoothStatus(true);
-            loadDevices();
-        } else {
-            updateBluetoothStatus(false);
-            cleanDevices();
-        }
     }
 
     /**

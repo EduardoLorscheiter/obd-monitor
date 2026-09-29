@@ -57,7 +57,8 @@ public class BluetoothManager implements BluetoothConnectionListener {
     private Device connectingDevice;
 
     // Dispositivo atualmente conectado
-    private Device connectedDevice;
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    private volatile Device connectedDevice;
 
     /**
      * Retorna a instância única do gerenciador Bluetooth.
@@ -107,6 +108,21 @@ public class BluetoothManager implements BluetoothConnectionListener {
      */
     public void removeListener(BluetoothManagerListener listener) {
         listeners.remove(listener);
+    }
+
+    /**
+     * Retorna uma cópia do dispositivo conectado pelo aplicativo, se houver.
+     *
+     * @return Dispositivo conectado ou {@code null} quando não há conexão ativa.
+     */
+    public Device getConnectedDevice() {
+        Device device = connectedDevice;
+        if (device == null)
+            return null;
+
+        Device connectedDeviceCopy = new Device(device.getName(), device.getMacAddress());
+        connectedDeviceCopy.setStatusConnected();
+        return connectedDeviceCopy;
     }
 
     /**
@@ -172,6 +188,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * @return {@code true} caso o Bluetooth esteja disponível e ativado, {@code false} caso
      * contrário.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isBluetoothEnabled() {
         BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
         return bluetoothAdapter != null && bluetoothAdapter.isEnabled();

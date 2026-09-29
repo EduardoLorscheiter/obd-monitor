@@ -32,6 +32,8 @@ import com.eduardo.obdmonitor.obd.scheduler.PidTask;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Elm327Manager {
     // Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos
@@ -65,14 +67,26 @@ public class Elm327Manager {
     // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
     private volatile boolean monitoring;
 
+    // Indica que a inicialização da comunicação está em andamento.
+    private boolean initializing;
+
+    // Evita agendar inicializações duplicadas quando Activities retomam uma conexão existente
+    private boolean connectionInitializationScheduled;
+
+    // Executor único para manter a inicialização do ELM327 fora da thread principal
+    private final ExecutorService connectionExecutor = Executors.newSingleThreadExecutor();
+
     // Indica se o Bluetooth está conectado
-    private boolean bluetoothConnected;
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    private volatile boolean bluetoothConnected;
 
     // Indica se a ECU está conectada
-    private boolean ecuConnected;
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    private volatile boolean ecuConnected;
 
     // Protocolo OBD-II identificado durante a conexão
-    private String obdProtocol;
+    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    private volatile String obdProtocol;
 
     // Thread responsável pela execução contínua do ciclo de monitoramento
     private Thread monitoringThread;
@@ -181,6 +195,9 @@ public class Elm327Manager {
 
         if (!dataListeners.contains(listener))
             dataListeners.add(listener);
+
+        if (ecuConnected)
+            startMonitoring();
     }
 
     /**
@@ -206,13 +223,64 @@ public class Elm327Manager {
      * @throws InterruptedException Caso a thread seja interrompida durante a inicialização.
      */
     public void connect(Device device) throws InterruptedException {
-        bluetoothConnected = true;
+        synchronized (this) {
+            if (initializing)
+                return;
 
-        if (initializeElm327()) {
-            finishConnection(device);
-        } else {
-            handleInitializationError();
+            if (ecuConnected) {
+                startMonitoring();
+                return;
+            }
+
+            initializing = true;
+            bluetoothConnected = true;
         }
+
+        try {
+            if (initializeElm327()) {
+                finishConnection(device);
+            } else {
+                handleInitializationError();
+            }
+        } finally {
+            synchronized (this) {
+                initializing = false;
+            }
+        }
+    }
+
+    /**
+     * Inicializa o ELM327 em segundo plano ou retoma o monitoramento se a ECU já estiver conectada.
+     *
+     * @param device Dispositivo Bluetooth conectado ao adaptador ELM327.
+     */
+    public void connectAsync(Device device) {
+        if (device == null)
+            return;
+
+        synchronized (this) {
+            if (ecuConnected) {
+                startMonitoring();
+                return;
+            }
+
+            if (initializing || connectionInitializationScheduled)
+                return;
+
+            connectionInitializationScheduled = true;
+        }
+
+        connectionExecutor.execute(() -> {
+            try {
+                connect(device);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                synchronized (Elm327Manager.this) {
+                    connectionInitializationScheduled = false;
+                }
+            }
+        });
     }
 
     /**
@@ -319,7 +387,7 @@ public class Elm327Manager {
      *
      * <p>O monitoramento é executado em uma thread dedicada.</p>
      */
-    private void startMonitoring() {
+    private synchronized void startMonitoring() {
         if (!ecuConnected || monitoring)
             return;
 

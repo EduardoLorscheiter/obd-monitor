@@ -31,7 +31,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
-import com.eduardo.obdmonitor.elm327.Elm327Manager;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.elm327.Elm327DataListener;
@@ -74,11 +73,6 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
         initViews();
         setupActivityResult();
         setListeners();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
     /**
@@ -124,9 +118,8 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     /**
      * Configura o launcher responsável por receber o resultado da tela de conexão.
      *
-     * <p>Após o retorno da {@link ConnectionActivity}, os listeners do {@link Elm327Manager} são
-     * registrados novamente e uma mensagem é exibida informando o sucesso ou falha da conexão com
-     * o dispositivo OBD-II.</p>
+     * <p>Após o retorno da {@link ConnectionActivity}, uma mensagem de sucesso é exibida somente
+     * se a inicialização da ECU tiver sido concluída.</p>
      */
     private void setupActivityResult() {
         connectionLauncher = registerForActivityResult(
@@ -134,8 +127,6 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
                         ToastUtils.showToast(this, getString(R.string.obd_connection_success));
-                    } else {
-                        ToastUtils.showToast(this, getString(R.string.obd_connection_failed));
                     }
                 }
         );
