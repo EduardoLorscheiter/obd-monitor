@@ -13,6 +13,7 @@
 
 package com.eduardo.obdmonitor.ui;
 
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -24,13 +25,31 @@ import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.elm327.Elm327DataListener;
 import com.eduardo.obdmonitor.elm327.Elm327Manager;
 import com.eduardo.obdmonitor.model.Device;
+import com.eduardo.obdmonitor.utils.SettingsUtils;
 
 public abstract class BaseActivity extends AppCompatActivity implements BluetoothManagerListener {
-    // Gerenciador responsável pela comunicação Bluetooth
+    /**
+     * Gerenciador responsável pela comunicação Bluetooth.
+     */
     protected BluetoothManager bluetoothManager;
 
-    // Gerenciador responsável pela comunicação com o adaptador ELM327
+    /**
+     * Gerenciador responsável pela comunicação com o adaptador ELM327.
+     */
     protected Elm327Manager elm327Manager;
+
+    /**
+     * Aplica as configurações do aplicativo ao contexto base da Activity.
+     *
+     * <p>As configurações aplicadas incluem o modo de aparência e o idioma selecionados pelo
+     * usuário.</p>
+     *
+     * @param newBase Contexto base fornecido pelo Android durante a criação da Activity.
+     */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(SettingsUtils.applyConfig(newBase));
+    }
 
     /**
      * Inicializa os recursos comuns utilizados pelas Activities.

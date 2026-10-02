@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="MainContainer">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_marginStart">20dp</item>
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:layout_marginEnd">20dp</item>
+        <item name="android:layout_marginBottom">5dp</item>
+    </style>
+
     <style name="ButtonComponent">
         <item name="android:layout_width">48dp</item>
         <item name="android:layout_height">48dp</item>
@@ -28,5 +37,63 @@
         <item name="android:layout_marginTop">2dp</item>
         <item name="android:layout_marginBottom">2dp</item>
         <item name="android:background">@drawable/separator_background</item>
+    </style>
+
+    <style name="SettingsCard">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="SettingsBaseComponent">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="SettingsTextComponent" parent="SettingsBaseComponent">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="SettingsSectionTitle" parent="SettingsTextComponent">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SettingsLabel" parent="SettingsTextComponent">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SettingsDescription" parent="SettingsTextComponent">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="SettingsHelper" parent="SettingsTextComponent">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="SettingsSpinner" parent="SettingsBaseComponent">
+        <item name="android:background">@drawable/spinner_background</item>
+        <item name="android:dropDownVerticalOffset">5dp</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:popupBackground">?attr/colorSurface</item>
+        <item name="android:spinnerMode">dropdown</item>
+    </style>
+
+    <style name="SettingsValueInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:imeOptions">actionDone</item>
+        <item name="android:inputType">number</item>
+        <item name="android:maxLength">5</item>
+        <item name="android:selectAllOnFocus">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">20sp</item>
     </style>
 </resources>

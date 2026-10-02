@@ -16,6 +16,8 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.util.TypedValue;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
@@ -70,5 +72,22 @@ public class ViewUtils {
 
         if (trackColor != null)
             switchCompat.setTrackTintList(trackColor);
+    }
+
+    /**
+     * Configura um Spinner utilizando as opções e os layouts visuais especificados.
+     *
+     * @param context         Contexto utilizado para acesso aos recursos.
+     * @param spinner         Spinner que receberá as opções.
+     * @param optionsResource Recurso contendo as opções exibidas.
+     */
+    public static void configureSpinner(Context context, Spinner spinner, int optionsResource) {
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                context,
+                optionsResource,
+                R.layout.spinner_selected_item
+        );
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        spinner.setAdapter(adapter);
     }
 }

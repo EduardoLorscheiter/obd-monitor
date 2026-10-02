@@ -41,6 +41,12 @@
             android:windowSoftInputMode="adjustResize"
             tools:ignore="DiscouragedApi" />
         <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"
+            tools:ignore="DiscouragedApi" />
+        <activity
             android:name=".ui.ConnectionActivity"
             android:exported="false"
             android:screenOrientation="landscape"

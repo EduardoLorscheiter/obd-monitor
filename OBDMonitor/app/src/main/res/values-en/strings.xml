@@ -43,10 +43,39 @@
     <string name="intake_t">Intake T.</string>
     <string name="throttle">Throttle</string>
     <string name="map">MAP</string>
-    <string name="back">Back</string>
     <!-- ======================================================================================= -->
     <!-- Acessibilidade -->
     <!-- ======================================================================================= -->
     <string name="settings">Settings</string>
     <string name="connection">Connection</string>
+    <string name="back">Back</string>
+    <string name="appearance">Appearance</string>
+    <string name="vehicle">Vehicle</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string-array name="theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string name="language">Language</string>
+    <string name="language_portuguese">Portuguese</string>
+    <string name="language_english">English</string>
+    <string-array name="language_options">
+        <item>@string/language_portuguese</item>
+        <item>@string/language_english</item>
+    </string-array>
+    <string name="vehicle_max_rpm_title">Vehicle maximum RPM</string>
+    <string name="vehicle_max_rpm_description">Set the RPM limit to adjust the dashboard scale and warning.</string>
+    <string name="vehicle_max_rpm_hint">Maximum RPM</string>
+    <string name="vehicle_max_rpm_range">Enter a value between %1$d and %2$d rpm.</string>
+    <string name="vehicle_max_rpm_invalid">Enter a value between %1$d and %2$d rpm.</string>
+    <string name="rpm_blink_start_title">RPM warning</string>
+    <string name="rpm_blink_start_description">Choose the RPM at which the dashboard overlay starts blinking.</string>
+    <string name="rpm_blink_start_hint">Start warning at RPM</string>
+    <string name="rpm_blink_start_range">Use at least %1$d rpm and do not exceed the vehicle maximum RPM.</string>
+    <string name="rpm_blink_start_invalid">Enter a value between %1$d and %2$d rpm. The warning must start at or below the maximum RPM.</string>
+    <string name="save">Save</string>
 </resources>

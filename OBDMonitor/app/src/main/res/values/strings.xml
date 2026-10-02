@@ -58,6 +58,35 @@
     <string name="settings">Configurações</string>
     <string name="connection">Conexão</string>
     <string name="back">Voltar</string>
+    <string name="appearance">Aparência</string>
+    <string name="vehicle">Veículo</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
+    <string-array name="theme_options">
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+    </string-array>
+    <string name="language">Idioma</string>
+    <string name="language_portuguese">Português</string>
+    <string name="language_english">Inglês</string>
+    <string-array name="language_options">
+        <item>@string/language_portuguese</item>
+        <item>@string/language_english</item>
+    </string-array>
+    <string name="vehicle_max_rpm_title">RPM máximo do veículo</string>
+    <string name="vehicle_max_rpm_description">Defina o limite de rotação para ajustar a escala e o alerta de RPM do painel.</string>
+    <string name="vehicle_max_rpm_hint">RPM máximo</string>
+    <string name="vehicle_max_rpm_range">Informe um valor entre %1$d e %2$d rpm.</string>
+    <string name="vehicle_max_rpm_invalid">Digite um valor entre %1$d e %2$d rpm.</string>
+    <string name="rpm_blink_start_title">Alerta de rotação</string>
+    <string name="rpm_blink_start_description">Defina a rotação a partir da qual a janela do painel começa a piscar.</string>
+    <string name="rpm_blink_start_hint">Iniciar alerta em RPM</string>
+    <string name="rpm_blink_start_range">Use no mínimo %1$d rpm e não exceda o RPM máximo do veículo.</string>
+    <string name="rpm_blink_start_invalid">Digite um valor entre %1$d e %2$d rpm. O alerta deve começar até o RPM máximo.</string>
+    <string name="save">Salvar</string>
     <!-- ======================================================================================= -->
     <!-- Constantes -->
     <!-- ======================================================================================= -->

@@ -34,6 +34,7 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.elm327.Elm327DataListener;
+import com.eduardo.obdmonitor.utils.SettingsUtils;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 import com.eduardo.obdmonitor.view.FuelLevelView;
@@ -43,17 +44,29 @@ import com.eduardo.obdmonitor.view.ShiftLightView;
 import java.util.Locale;
 
 public class DashboardActivity extends BaseActivity implements Elm327ConnectionListener,
-                                                               Elm327DataListener {
-    // Componentes da janela da Activity
-    private ImageButton btnConnection;
+        Elm327DataListener {
+    /**
+     * Componentes da janela da Activity.
+     */
+    private ImageButton btnSettings, btnConnection;
     private ShiftLightView shiftLight;
     private MetricView cardSpeed, cardThrottle, cardMap, cardCoolant, cardIntake, cardBattery;
     private FuelLevelView fuelLevel;
     private TextView txtProtocol;
     private View viewBluetooth, viewEcu, viewLimiter;
 
-    // Launcher utilizado para iniciar a tela de conexão Bluetooth
+    /**
+     * Launchers utilizados para iniciar a tela de conexão Bluetooth.
+     */
+    private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<Intent> connectionLauncher;
+
+    // Limite de rotação definido para o veículo
+    private int maxRpm = SettingsUtils.DEFAULT_MAX_RPM;
+    private int blinkStartRpm;
+    private int currentRpm;
+    private int appliedLanguageIndex;
+    private int appliedThemeMode;
 
     // Animador responsável pelo efeito de piscar quando o motor atinge alta rotação
     private ValueAnimator blinkAnimator;
@@ -71,6 +84,9 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
         });
 
         initViews();
+        applyMaxRpmSetting();
+        appliedLanguageIndex = SettingsUtils.getLanguageIndex(this);
+        appliedThemeMode = SettingsUtils.getThemeMode(this);
         setupActivityResult();
         setListeners();
     }
@@ -82,6 +98,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * declarados no layout.</p>
      */
     private void initViews() {
+        btnSettings = findViewById(R.id.btnSettings);
         btnConnection = findViewById(R.id.btnConnection);
         shiftLight = findViewById(R.id.shiftLight);
         viewBluetooth = findViewById(R.id.viewBluetooth);
@@ -101,6 +118,11 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
+        btnSettings.setOnClickListener(v -> {
+            Intent intent = new Intent(DashboardActivity.this, SettingsActivity.class);
+            settingsLauncher.launch(intent);
+        });
+
         btnConnection.setOnClickListener(v -> {
             Intent intent = new Intent(DashboardActivity.this, ConnectionActivity.class);
             connectionLauncher.launch(intent);
@@ -122,6 +144,22 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * se a inicialização da ECU tiver sido concluída.</p>
      */
     private void setupActivityResult() {
+        settingsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        boolean themeChanged = appliedThemeMode != SettingsUtils.getThemeMode(this);
+                        boolean languageChanged = appliedLanguageIndex != SettingsUtils.getLanguageIndex(this);
+                        applyMaxRpmSetting();
+                        if (themeChanged)
+                            SettingsUtils.applyTheme(this);
+
+                        if (languageChanged && !themeChanged)
+                            recreate();
+                    }
+                }
+        );
+
         connectionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -130,6 +168,18 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
                     }
                 }
         );
+    }
+
+    /**
+     * Aplica as configurações de rotação definidas pelo usuário aos componentes responsáveis pelo
+     * monitoramento do RPM.
+     */
+    private void applyMaxRpmSetting() {
+        maxRpm = SettingsUtils.getMaxRpm(this);
+        blinkStartRpm = SettingsUtils.getBlinkStartRpm(this);
+        shiftLight.setMaxRpm(maxRpm);
+        shiftLight.setRpm(currentRpm);
+        updateRevLimiter(currentRpm);
     }
 
     @Override
@@ -160,12 +210,9 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     @Override
     public void onObdEngineRpmChanged(int rpm) {
         runOnUiThread(() -> {
+            currentRpm = rpm;
             shiftLight.setRpm(rpm);
-            if (rpm >= 3500) {
-                startRevLimiterBlink();
-            } else {
-                stopRevLimiterBlink();
-            }
+            updateRevLimiter(rpm);
         });
     }
 
@@ -235,6 +282,21 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     @Override
     public void onObdFuelLevelChanged(int fuel) {
         runOnUiThread(() -> fuelLevel.setFuelLevel(fuel));
+    }
+
+    /**
+     * Atualiza o estado do alerta visual do limitador de rotação.
+     *
+     * <p>O efeito de piscar é iniciado quando a rotação atual atinge ou ultrapassa o limite
+     * configurado e interrompido quando a rotação retorna para um valor inferior.</p>
+     *
+     * @param rpm Rotação atual do motor em RPM.
+     */
+    private void updateRevLimiter(int rpm) {
+        if (rpm >= blinkStartRpm)
+            startRevLimiterBlink();
+        else
+            stopRevLimiterBlink();
     }
 
     /**
