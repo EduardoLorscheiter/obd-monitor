@@ -31,10 +31,14 @@ import com.eduardo.obdmonitor.BuildConfig;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseActivity {
-    // Tempo de exibição da Splash Screen, em milissegundos
+    /**
+     * Tempo de exibição da Splash Screen, em milissegundos.
+     */
     private static final long SPLASH_DURATION_MS = 1500L;
 
-    // Componentes da janela da Activity
+    /**
+     * Componentes da janela da Activity.
+     */
     private ImageView imgLogo;
 
     @Override

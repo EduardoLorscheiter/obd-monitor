@@ -15,16 +15,24 @@ package com.eduardo.obdmonitor.obd.scheduler;
 import com.eduardo.obdmonitor.obd.commands.ObdCommand;
 
 public class PidTask {
-    // Comando OBD-II associado à tarefa
+    /**
+     * Comando OBD-II associado à tarefa.
+     */
     private final ObdCommand<?> command;
 
-    // Intervalo mínimo entre duas execuções da tarefa, em milissegundos
+    /**
+     * Intervalo mínimo entre duas execuções da tarefa, em milissegundos.
+     */
     private final int interval;
 
-    // Prioridade utilizada pelo scheduler para ordenar a execução da tarefa
+    /**
+     * Prioridade utilizada pelo scheduler para ordenar a execução da tarefa.
+     */
     private final PidPriority priority;
 
-    // Momento da última execução da tarefa, em milissegundos
+    /**
+     * Momento da última execução da tarefa, em milissegundos.
+     */
     private long lastExecutionTime;
 
     /**

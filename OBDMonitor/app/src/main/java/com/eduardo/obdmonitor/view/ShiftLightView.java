@@ -32,56 +32,87 @@ import com.eduardo.obdmonitor.R;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 
 public class ShiftLightView extends View {
-    // Quantidade total de LEDs exibidos na Shift Light
+    /**
+     * Quantidade total de LEDs exibidos na Shift Light.
+     */
     private static final int LED_COUNT = 60;
 
-    // Altura reservada para a escala de RPM em relação a altura total da View
+    /**
+     * Altura reservada para a escala de RPM em relação a altura total da View.
+     */
     private static final float RPM_SCALE_HEIGHT_FACTOR = 0.18f;
 
-    // Proporção mínima e máxima dos LEDs em relação a altura total disponível para os LEDs
+    /**
+     * Proporção mínima e máxima dos LEDs em relação a altura total disponível para os LEDs.
+     */
     private static final float MIN_LED_HEIGHT_FACTOR = 0.05f;
     private static final float MAX_LED_HEIGHT_FACTOR = 0.95f;
 
-    // Espaçamento entre os LEDs, em pixels
+    /**
+     * Espaçamento entre os LEDs, em pixels.
+     */
     private static final float LED_SPACING = 2f;
 
-    // Altura reservada para o valor do RPM em relação ao maior LED
+    /**
+     * Altura reservada para o valor do RPM em relação ao maior LED.
+     */
     private static final float RPM_VALUE_HEIGHT_FACTOR = 0.70f;
 
-    // Altura reservada para a unidade do RPM em relação ao valor do RPM
+    /**
+     * Altura reservada para a unidade do RPM em relação ao valor do RPM.
+     */
     private static final float RPM_UNIT_HEIGHT_FACTOR = 0.45f;
 
-    // Percentuais de transição das cores dos LEDs
+    /**
+     * Percentuais de transição das cores dos LEDs.
+     */
     private static final float LED_PERCENT_GREEN_LIME = 0.30f;
     private static final float LED_PERCENT_LIME_YELLOW = 0.40f;
     private static final float LED_PERCENT_YELLOW_ORANGE = 0.65f;
 
-    // Expoente utilizado para calcular a curva de crescimento da altura dos LEDs
+    /**
+     * Expoente utilizado para calcular a curva de crescimento da altura dos LEDs.
+     */
     private static final float LED_CURVE = 3.84f;
 
-    // Raio utilizado para arredondar os cantos dos LEDs
+    /**
+     * Raio utilizado para arredondar os cantos dos LEDs.
+     */
     private static final float LED_CORNER_RADIUS = 8f;
 
-    // Índice do LED utilizado como referência para posicionar o valor do RPM
+    /**
+     * Índice do LED utilizado como referência para posicionar o valor do RPM.
+     */
     private static final int RPM_REFERENCE_LED = 0;
 
-    // Tamanho do texto da escala de RPM
+    /**
+     * Tamanho do texto da escala de RPM.
+     */
     private static final float RPM_SCALE_TEXT_SIZE = 34f;
 
-    // Espaçamento entre o valor do RPM e a unidade, em pixels
+    /**
+     * Espaçamento entre o valor do RPM e a unidade, em pixels.
+     */
     private static final float RPM_UNIT_SPACING = 8f;
 
-    // Objetos utilizados para desenhar a Shift Light
+    /**
+     * Objetos utilizados para desenhar a Shift Light.
+     */
     private final Paint rpmValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rpmUnitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ledsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rpmScalePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    // Interpolador suave para mudanças de cores entre os estágios da Shift Light
-    // Obs.: Evita transições bruscas entre os LEDs
+    /**
+     * Interpolador suave para mudanças de cores entre os estágios da Shift Light.
+     *
+     * <p>Evita transições bruscas entre os LEDs.</p>
+     */
     private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
 
-    // Cores dos LEDs
+    /**
+     * Cores dos LEDs.
+     */
     private int ledOff;
     private int ledGreen;
     private int ledLime;
@@ -89,29 +120,43 @@ public class ShiftLightView extends View {
     private int ledOrange;
     private int ledRed;
 
-    // Cores pré-calculadas de cada LED da barra
+    /**
+     * Cores pré-calculadas de cada LED da barra.
+     */
     private final int[] ledColors = new int[LED_COUNT];
     private final LinearGradient[] ledOnGradients = new LinearGradient[LED_COUNT];
     private final LinearGradient[] ledOffGradients = new LinearGradient[LED_COUNT];
 
-    // Fatores de altura pré-calculados de cada LED da barra
+    /**
+     * Fatores de altura pré-calculados de cada LED da barra.
+     */
     private final float[] ledHeightFactors = new float[LED_COUNT];
 
-    // Métricas geométricas pré-calculadas dos LEDs da barra
+    /**
+     * Métricas geométricas pré-calculadas dos LEDs da barra.
+     */
     private float ledWidth;
     private float ledBottom;
     private final float[] ledTops = new float[LED_COUNT];
 
-    // Métricas tipográficas do valor do RPM utilizadas para alinhamento vertical do texto
+    /**
+     * Métricas tipográficas do valor do RPM utilizadas para alinhamento vertical do texto.
+     */
     private Paint.FontMetrics rpmFontMetrics;
 
-    // Altura ocupada pelo texto do valor do RPM
+    /**
+     * Altura ocupada pelo texto do valor do RPM.
+     */
     private float rpmTextHeight;
 
-    // Rotação máxima considerada para acendimento completo da barra
+    /**
+     * Rotação máxima considerada para acendimento completo da barra.
+     */
     private int maxRpm = 7000;
 
-    // Rotação do motor (RPM) atual
+    /**
+     * Rotação do motor (RPM) atual.
+     */
     private int rpm = 0;
 
     public ShiftLightView(Context context) {

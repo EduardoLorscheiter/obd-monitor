@@ -18,14 +18,16 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.eduardo.obdmonitor.R;
+
 public class Device implements Parcelable {
-    private static final String DEVICE_STATUS_DISCONNECTED = "Desconectado";
-    private static final String DEVICE_STATUS_CONNECTING = "Conectando...";
-    private static final String DEVICE_STATUS_CONNECTED = "Conectado";
+    private static final int DEVICE_STATUS_DISCONNECTED = R.string.disconnected;
+    private static final int DEVICE_STATUS_CONNECTING = R.string.connecting;
+    private static final int DEVICE_STATUS_CONNECTED = R.string.connected;
 
     private String name;
     private String macAddress;
-    private String status;
+    private int status;
 
     @SuppressWarnings("unused")
     public Device() {
@@ -71,7 +73,7 @@ public class Device implements Parcelable {
         this.macAddress = macAddress;
     }
 
-    public String getStatus() {
+    public int getStatus() {
         return status;
     }
 
@@ -106,6 +108,6 @@ public class Device implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(name);
         dest.writeString(macAddress);
-        dest.writeString(status);
+        dest.writeInt(status);
     }
 }

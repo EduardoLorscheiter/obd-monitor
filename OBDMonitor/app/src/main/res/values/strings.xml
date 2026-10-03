@@ -19,6 +19,9 @@
     <!-- Geral -->
     <string name="enabled">Ativado</string>
     <string name="disabled">Desativado</string>
+    <string name="connected">Conectado</string>
+    <string name="connecting">Conectando…</string>
+    <string name="disconnected">Desconectado</string>
     <string name="paired_devices">Dispositivos pareados</string>
     <string name="device_connected">Dispositivo %s conectado!</string>
     <string name="device_disconnected">Dispositivo %s desconectado!</string>

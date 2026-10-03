@@ -43,17 +43,23 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ConnectionActivity extends BaseActivity implements Elm327ConnectionListener {
-    // Componentes da janela da Activity
+    /**
+     * Componentes da janela da Activity.
+     */
     private ImageButton btnBack;
     private TextView txtBluetoothStatus;
     private SwitchCompat switchBluetooth;
     private ConstraintLayout containerBluetooth;
     private LinearLayout containerDevices, containerBondedDevices;
 
-    // Lista de dispositivos Bluetooth pareados
+    /**
+     * Lista de dispositivos Bluetooth pareados.
+     */
     private final List<Device> bondedDevices = new ArrayList<>();
 
-    // Mapa do status de cada dispositivo Bluetooth
+    /**
+     * Mapa do status de cada dispositivo Bluetooth.
+     */
     private final HashMap<String, TextView> statusDevices = new HashMap<>();
 
     @Override
@@ -320,7 +326,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
      * @param status Status inicial do dispositivo.
      * @return TextView configurado.
      */
-    private TextView getTvStatus(String status) {
+    private TextView getTvStatus(int status) {
         TextView tvStatus = new TextView(this);
         tvStatus.setText(status);
         tvStatus.setTextSize(13);
@@ -351,7 +357,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
      * @param tvStatus Componente que exibirá o status.
      * @param status   Novo status do dispositivo.
      */
-    private void configureStatusTextView(TextView tvStatus, String status) {
+    private void configureStatusTextView(TextView tvStatus, int status) {
         tvStatus.setText(status);
         tvStatus.setTextColor(getColor(R.color.ios_grey));
     }

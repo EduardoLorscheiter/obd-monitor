@@ -61,14 +61,18 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<Intent> connectionLauncher;
 
-    // Limite de rotação definido para o veículo
+    /**
+     * Limite de rotação definido para o veículo.
+     */
     private int maxRpm = SettingsUtils.DEFAULT_MAX_RPM;
     private int blinkStartRpm;
     private int currentRpm;
     private int appliedLanguageIndex;
     private int appliedThemeMode;
 
-    // Animador responsável pelo efeito de piscar quando o motor atinge alta rotação
+    /**
+     * Animador responsável pelo efeito de piscar quando o motor atinge alta rotação.
+     */
     private ValueAnimator blinkAnimator;
 
     @Override

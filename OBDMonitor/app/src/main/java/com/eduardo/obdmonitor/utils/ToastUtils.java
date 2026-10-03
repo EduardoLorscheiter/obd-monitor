@@ -24,7 +24,9 @@ import android.widget.Toast;
 import com.google.android.material.R;
 
 public class ToastUtils {
-    // Referência para o Toast atual
+    /**
+     * Referência para o Toast atual.
+     */
     private static Toast currentToast;
 
     /**

@@ -28,7 +28,9 @@ import androidx.core.content.ContextCompat;
 import com.eduardo.obdmonitor.R;
 
 public class MetricView extends LinearLayout {
-    // Texto responsável por exibir o valor atual da métrica
+    /**
+     * Texto responsável por exibir o valor atual da métrica.
+     */
     private TextView txtValue;
 
     public MetricView(Context context) {

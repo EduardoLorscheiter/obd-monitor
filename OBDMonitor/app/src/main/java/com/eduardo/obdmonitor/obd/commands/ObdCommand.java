@@ -13,19 +13,29 @@
 package com.eduardo.obdmonitor.obd.commands;
 
 public abstract class ObdCommand<T> {
-    // Código que identifica uma requisição do Modo de Serviço 01 (Current Data)
+    /**
+     * Código que identifica uma requisição do Modo de Serviço 01 (Current Data).
+     */
     private static final String SERVICE_CURRENT_DATA_REQUEST = "01";
 
-    // Código que identifica uma resposta ao Modo de Serviço 01 (Current Data)
+    /**
+     * Código que identifica uma resposta ao Modo de Serviço 01 (Current Data).
+     */
     private static final String SERVICE_CURRENT_DATA_RESPONSE = "41";
 
-    // PID do comando OBD-II
+    /**
+     * PID do comando OBD-II.
+     */
     private final String pid;
 
-    // Número de bytes que o comando OBD-II espera como resposta
+    /**
+     * Número de bytes que o comando OBD-II espera como resposta.
+     */
     private final int dataBytes;
 
-    // Último valor válido obtido a partir do comando OBD-II
+    /**
+     * Último valor válido obtido a partir do comando OBD-II.
+     */
     private T lastValue;
 
     /**

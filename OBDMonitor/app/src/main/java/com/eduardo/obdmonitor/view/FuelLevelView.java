@@ -29,19 +29,29 @@ import androidx.core.content.ContextCompat;
 import com.eduardo.obdmonitor.R;
 
 public class FuelLevelView extends View {
-    // Ícone utilizado para identificar visualmente o nível de combustível
+    /**
+     * Ícone utilizado para identificar visualmente o nível de combustível.
+     */
     private Drawable fuelIcon;
 
-    // Nível atual de combustível, representado em percentual (0 a 100%)
+    /**
+     * Nível atual de combustível, representado em percentual (0 a 100%).
+     */
     private float fuelLevel;
 
-    // Objeto responsável pelas propriedades de pintura dos elementos gráficos
+    /**
+     * Objeto responsável pelas propriedades de pintura dos elementos gráficos.
+     */
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    // Caminho utilizado para definir a área preenchida que representa o combustível
+    /**
+     * Caminho utilizado para definir a área preenchida que representa o combustível.
+     */
     private final Path liquidPath = new Path();
 
-    // Área delimitada do recipiente utilizado para representar o nível de combustível
+    /**
+     * Área delimitada do recipiente utilizado para representar o nível de combustível.
+     */
     private final RectF fuelRect = new RectF();
 
     public FuelLevelView(Context context) {

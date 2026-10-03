@@ -17,7 +17,9 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ObdScheduler {
-    // Lista de tarefas responsáveis pelo agendamento das leituras dos PIDs OBD-II
+    /**
+     * Lista de tarefas responsáveis pelo agendamento das leituras dos PIDs OBD-II.
+     */
     private final List<PidTask> tasks = new ArrayList<>();
 
     /**

@@ -24,40 +24,63 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 public class BluetoothConnection {
-    // UUID padrão do perfil Serial Port Profile (SPP)
+    /**
+     * UUID padrão do perfil Serial Port Profile (SPP).
+     */
     private static final UUID SERIAL_UUID =
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-    // Tempo máximo de espera pela resposta do dispositivo, em milissegundos
+    /**
+     * Tempo máximo de espera pela resposta do dispositivo, em milissegundos.
+     */
     private static final long RESPONSE_TIMEOUT_MS = 5000;
 
-    // Contexto da aplicação utilizado para acessar recursos
+    /**
+     * Contexto da aplicação utilizado para acessar recursos.
+     */
     private final Context context;
 
-    // Listener utilizado para reportar eventos da conexão
+    /**
+     * Listener utilizado para reportar eventos da conexão.
+     */
     private final BluetoothConnectionListener listener;
 
-    // Socket utilizado para estabelecer a comunicação Bluetooth
+    /**
+     * Socket utilizado para estabelecer a comunicação Bluetooth.
+     */
     private BluetoothSocket socket;
 
-    // Fluxo de entrada utilizado para receber dados do dispositivo
+    /**
+     * Fluxo de entrada utilizado para receber dados do dispositivo.
+     */
     private InputStream input;
 
-    // Fluxo de saída utilizado para enviar dados ao dispositivo
+    /**
+     * Fluxo de saída utilizado para enviar dados ao dispositivo.
+     */
     private OutputStream output;
 
-    // Indica se existe uma conexão Bluetooth ativa
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Indica se existe uma conexão Bluetooth ativa.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile boolean connected;
 
-    // Indica se existe uma tentativa de conexão Bluetooth em andamento
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Indica se existe uma tentativa de conexão Bluetooth em andamento.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile boolean connecting;
 
-    // Identificador da tentativa de conexão atual
-    // Obs.1: O modificador 'volatile' garante a visibilidade da variável entre threads
-    // Obs.2: Cada nova tentativa recebe um identificador diferente, permitindo invalidar tentativas
-    // anteriores que ainda estejam sendo executadas em segundo plano
+    /**
+     * Identificador da tentativa de conexão atual.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     * <p>Cada nova tentativa recebe um identificador diferente, permitindo invalidar tentativas
+     * anteriores que ainda estejam sendo executadas em segundo plano.</p>
+     */
     private volatile long connectionId;
 
     /**

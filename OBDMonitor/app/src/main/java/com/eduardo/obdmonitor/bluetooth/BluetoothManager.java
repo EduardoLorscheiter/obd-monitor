@@ -34,30 +34,47 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BluetoothManager implements BluetoothConnectionListener {
-    // Instância única do gerenciador Bluetooth (Singleton)
+    /**
+     * Instância única do gerenciador Bluetooth (Singleton).
+     */
     private static BluetoothManager instance;
 
-    // Contexto da aplicação utilizado para acessar recursos
+    /**
+     * Contexto da aplicação utilizado para acessar recursos.
+     */
     private final Context context;
 
-    // Responsável pela comunicação Bluetooth de baixo nível
+    /**
+     * Responsável pela comunicação Bluetooth de baixo nível.
+     */
     private final BluetoothConnection connection;
 
-    // Lista de listeners utilizados para reportar eventos Bluetooth às interfaces
+    /**
+     * Lista de listeners utilizados para reportar eventos Bluetooth às interfaces.
+     */
     private final CopyOnWriteArrayList<BluetoothManagerListener> listeners =
             new CopyOnWriteArrayList<>();
 
-    // Indica se o BroadcastReceiver está registrado
+    /**
+     * Indica se o BroadcastReceiver está registrado.
+     */
     private boolean receiverRegistered;
 
-    // Quantidade de componentes que utilizam o monitoramento do estado do Bluetooth
+    /**
+     * Quantidade de componentes que utilizam o monitoramento do estado do Bluetooth.
+     */
     private int receiverUsers;
 
-    // Dispositivo cuja conexão está sendo estabelecida
+    /**
+     * Dispositivo cuja conexão está sendo estabelecida.
+     */
     private Device connectingDevice;
 
-    // Dispositivo atualmente conectado
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Dispositivo atualmente conectado.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile Device connectedDevice;
 
     /**

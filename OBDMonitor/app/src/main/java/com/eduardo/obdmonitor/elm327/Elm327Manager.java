@@ -36,68 +36,110 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Elm327Manager {
-    // Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos
+    /**
+     * Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos.
+     */
     private static final int ELM327_RESET_DELAY_MS = 1000;
 
-    // Tempo de espera para identificação automática do protocolo OBD-II, em milissegundos
+    /**
+     * Tempo de espera para identificação automática do protocolo OBD-II, em milissegundos.
+     */
     private static final int ELM327_PROTOCOL_DELAY_MS = 5000;
 
-    // Intervalos de tempo entre leituras da ECU durante o monitoramento, em milissegundos
+    /**
+     * Intervalos de tempo entre leituras da ECU durante o monitoramento, em milissegundos.
+     */
     private static final int FAST_READ_INTERVAL_MS = 100;
     private static final int NORMAL_READ_INTERVAL_MS = 300;
     private static final int SLOW_READ_INTERVAL_MS = 1000;
     private static final int VERY_SLOW_READ_INTERVAL_MS = 2000;
 
-    // Instância única do adaptador ELM327 (Singleton)
+    /**
+     * Instância única do adaptador ELM327 (Singleton).
+     */
     private static Elm327Manager instance;
 
-    // Contexto global da aplicação utilizado para acessar serviços Android
+    /**
+     * Contexto global da aplicação utilizado para acessar serviços Android.
+     */
     private final Context applicationContext;
 
-    // Gerenciador responsável pela comunicação Bluetooth
+    /**
+     * Gerenciador responsável pela comunicação Bluetooth.
+     */
     private final BluetoothManager bluetoothManager;
 
-    // Lista de listeners utilizados para reportar eventos de conexão às interfaces
+    /**
+     * Lista de listeners utilizados para reportar eventos de conexão às interfaces.
+     */
     private final List<Elm327ConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
 
-    // Lista de listeners utilizados para reportar eventos de dados às interfaces
+    /**
+     * Lista de listeners utilizados para reportar eventos de dados às interfaces.
+     */
     private final List<Elm327DataListener> dataListeners = new CopyOnWriteArrayList<>();
 
-    // Indica se o monitoramento contínuo da ECU está ativo
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Indica se o monitoramento contínuo da ECU está ativo.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile boolean monitoring;
 
-    // Indica que a inicialização da comunicação está em andamento.
+    /**
+     * Indica que a inicialização da comunicação está em andamento.
+     */
     private boolean initializing;
 
-    // Evita agendar inicializações duplicadas quando Activities retomam uma conexão existente
+    /**
+     * Evita agendar inicializações duplicadas quando Activities retomam uma conexão existente.
+     */
     private boolean connectionInitializationScheduled;
 
-    // Executor único para manter a inicialização do ELM327 fora da thread principal
+    /**
+     * Executor único para manter a inicialização do ELM327 fora da thread principal.
+     */
     private final ExecutorService connectionExecutor = Executors.newSingleThreadExecutor();
 
-    // Indica se o Bluetooth está conectado
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Indica se o Bluetooth está conectado.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile boolean bluetoothConnected;
 
-    // Indica se a ECU está conectada
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Indica se a ECU está conectada.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile boolean ecuConnected;
 
-    // Protocolo OBD-II identificado durante a conexão
-    // Obs.: O modificador 'volatile' garante a visibilidade da variável entre threads
+    /**
+     * Protocolo OBD-II identificado durante a conexão.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
+     */
     private volatile String obdProtocol;
 
-    // Thread responsável pela execução contínua do ciclo de monitoramento
+    /**
+     * Thread responsável pela execução contínua do ciclo de monitoramento.
+     */
     private Thread monitoringThread;
 
-    // Scheduler responsável por controlar a periodicidade e a prioridade das leituras dos PIDs
+    /**
+     * Scheduler responsável por controlar a periodicidade e a prioridade das leituras dos PIDs.
+     */
     private final ObdScheduler obdScheduler = new ObdScheduler();
 
-    // Comando utilizado durante a inicialização para validar a comunicação com a ECU
+    /**
+     * Comando utilizado durante a inicialização para validar a comunicação com a ECU.
+     */
     private final SupportedPidsCommand supportedPidsCommand = new SupportedPidsCommand();
 
-    // Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II
+    /**
+     * Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II.
+     */
     private final PidTask rpmTask =
             new PidTask(new RpmCommand(), FAST_READ_INTERVAL_MS, PidPriority.HIGH);
     private final PidTask speedTask =
