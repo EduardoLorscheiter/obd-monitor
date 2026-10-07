@@ -38,8 +38,8 @@ public class MapCommand extends ObdCommand<Integer> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Pressão absoluta do coletor de admissão (MAP) em kPa ou o valor anterior válido caso
-     * a resposta seja inválida.
+     * @return Pressão absoluta do coletor de admissão (MAP) em kPa ou o último valor válido caso a
+     * resposta seja inválida.
      */
     @Override
     public Integer parse(String response) {

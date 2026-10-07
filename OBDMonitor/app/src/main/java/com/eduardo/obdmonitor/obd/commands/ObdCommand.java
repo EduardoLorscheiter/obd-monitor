@@ -34,7 +34,7 @@ public abstract class ObdCommand<T> {
     private final int dataBytes;
 
     /**
-     * Último valor válido obtido a partir do comando OBD-II.
+     * Último valor válido recebido para este comando.
      */
     private T lastValue;
 
@@ -43,7 +43,7 @@ public abstract class ObdCommand<T> {
      *
      * @param pid          Identificador hexadecimal do PID OBD-II.
      * @param dataBytes    Quantidade de bytes de dados esperados na resposta.
-     * @param initialValue Valor inicial para o comando caso a primeira resposta for inválida.
+     * @param initialValue Valor inicial usado até a primeira resposta válida.
      */
     protected ObdCommand(String pid, int dataBytes, T initialValue) {
         this.pid = pid;
@@ -71,24 +71,28 @@ public abstract class ObdCommand<T> {
      * pelo respectivo PID.</p>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Valor processado correspondente ao PID.
+     * @return Valor processado definido pela implementação do comando.
      */
     public abstract T parse(String response);
 
     /**
-     * Retorna o último valor válido obtido pelo comando.
+     * Retorna o PID consultado por este comando.
      *
-     * @return Último valor válido ou o valor inicial caso ainda não tenha sido realizada uma
-     * leitura válida.
+     * @return PID em formato hexadecimal.
+     */
+    public String getPid() {
+        return pid;
+    }
+
+    /**
+     * Retorna o último valor válido ou o valor inicial do comando.
      */
     protected T getLastValue() {
         return lastValue;
     }
 
     /**
-     * Atualiza o último valor válido obtido pelo comando.
-     *
-     * @param lastValue Novo valor válido.
+     * Armazena um novo valor válido.
      */
     protected void setLastValue(T lastValue) {
         this.lastValue = lastValue;

@@ -32,6 +32,7 @@ import com.eduardo.obdmonitor.model.Device;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BluetoothManager implements BluetoothConnectionListener {
     /**
@@ -76,6 +77,11 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
      */
     private volatile Device connectedDevice;
+
+    /**
+     * Número da sessão Bluetooth atual, incrementado a cada conexão estabelecida.
+     */
+    private final AtomicLong connectionGeneration = new AtomicLong();
 
     /**
      * Retorna a instância única do gerenciador Bluetooth.
@@ -140,6 +146,19 @@ public class BluetoothManager implements BluetoothConnectionListener {
         Device connectedDeviceCopy = new Device(device.getName(), device.getMacAddress());
         connectedDeviceCopy.setStatusConnected();
         return connectedDeviceCopy;
+    }
+
+    /**
+     * Retorna o identificador da sessão Bluetooth atual.
+     *
+     * <p>O valor é incrementado sempre que uma nova conexão Bluetooth é estabelecida com sucesso.
+     * Componentes que executam operações assíncronas podem utilizar esse identificador para
+     * verificar se o resultado de uma operação ainda pertence à sessão Bluetooth atual.</p>
+     *
+     * @return Identificador da sessão Bluetooth atual.
+     */
+    public long getConnectionGeneration() {
+        return connectionGeneration.get();
     }
 
     /**
@@ -390,6 +409,8 @@ public class BluetoothManager implements BluetoothConnectionListener {
     public void onBluetoothConnectionConnected() {
         if (connectingDevice == null)
             return;
+
+        connectionGeneration.incrementAndGet();
 
         Device device = connectingDevice;
         connectingDevice = null;

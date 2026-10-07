@@ -37,7 +37,7 @@ public class RpmCommand extends ObdCommand<Integer> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Rotação do motor em RPM ou o valor anterior válido caso a resposta seja inválida.
+     * @return Rotação do motor em RPM ou o último valor válido quando a resposta for inválida.
      */
     @Override
     public Integer parse(String response) {

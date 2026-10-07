@@ -37,8 +37,8 @@ public class CoolantCommand extends ObdCommand<Integer> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Temperatura do líquido de arrefecimento em ºC ou o valor anterior válido caso a
-     * resposta seja inválida.
+     * @return Temperatura do líquido de arrefecimento em ºC ou o último valor válido quando a
+     * resposta for inválida.
      */
     @Override
     public Integer parse(String response) {

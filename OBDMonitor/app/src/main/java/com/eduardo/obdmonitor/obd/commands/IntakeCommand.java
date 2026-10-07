@@ -37,7 +37,7 @@ public class IntakeCommand extends ObdCommand<Integer> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Temperatura do ar admitido em ºC ou o valor anterior válido caso a resposta seja
+     * @return Temperatura do ar admitido em ºC ou o último valor válido quando a resposta for
      * inválida.
      */
     @Override

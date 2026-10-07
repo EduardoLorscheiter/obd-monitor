@@ -123,6 +123,11 @@ public class Elm327Manager {
     private volatile String obdProtocol;
 
     /**
+     * Sessão Bluetooth para a qual as máscaras de PIDs foram consultadas.
+     */
+    private volatile long initializedConnectionGeneration = -1;
+
+    /**
      * Thread responsável pela execução contínua do ciclo de monitoramento.
      */
     private Thread monitoringThread;
@@ -133,9 +138,18 @@ public class Elm327Manager {
     private final ObdScheduler obdScheduler = new ObdScheduler();
 
     /**
-     * Comando utilizado durante a inicialização para validar a comunicação com a ECU.
+     * Comando responsável pela consulta dos PIDs suportados no intervalo de {@code 0x01} a
+     * {@code 0x20}.
      */
-    private final SupportedPidsCommand supportedPidsCommand = new SupportedPidsCommand();
+    private final SupportedPidsCommand basePidsCommand =
+            new SupportedPidsCommand(SupportedPidsCommand.SUPPORTED_PIDS_00_PID);
+
+    /**
+     * Comando responsável pela consulta dos PIDs suportados no intervalo de {@code 0x21} a
+     * {@code 0x40}.
+     */
+    private final SupportedPidsCommand extendedPidsCommand =
+            new SupportedPidsCommand(SupportedPidsCommand.SUPPORTED_PIDS_20_PID);
 
     /**
      * Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II.
@@ -150,7 +164,7 @@ public class Elm327Manager {
             new PidTask(new MapCommand(), NORMAL_READ_INTERVAL_MS, PidPriority.MEDIUM);
     private final PidTask coolantTask =
             new PidTask(new CoolantCommand(), SLOW_READ_INTERVAL_MS, PidPriority.LOW);
-    private final PidTask intakeAirTask =
+    private final PidTask intakeTask =
             new PidTask(new IntakeCommand(), SLOW_READ_INTERVAL_MS, PidPriority.LOW);
     private final PidTask voltageTask =
             new PidTask(new VoltageCommand(), VERY_SLOW_READ_INTERVAL_MS, PidPriority.LOW);
@@ -193,7 +207,7 @@ public class Elm327Manager {
         obdScheduler.addTask(throttleTask);
         obdScheduler.addTask(mapTask);
         obdScheduler.addTask(coolantTask);
-        obdScheduler.addTask(intakeAirTask);
+        obdScheduler.addTask(intakeTask);
         obdScheduler.addTask(voltageTask);
         obdScheduler.addTask(fuelTask);
         resetConnectionState();
@@ -258,37 +272,260 @@ public class Elm327Manager {
      * Inicializa a comunicação com o adaptador ELM327 e estabelece a comunicação com a ECU do
      * veículo.
      *
-     * <p>Caso a inicialização seja concluída com sucesso, o monitoramento contínuo dos dados da ECU
-     * é iniciado automaticamente.</p>
+     * <p>Coordena o processo de conexão, delegando a preparação do estado, a inicialização do
+     * ELM327 e a finalização da conexão para métodos específicos.</p>
+     *
+     * <p>Caso o ELM327 já esteja conectado à sessão Bluetooth atual, apenas o monitoramento dos
+     * dados da ECU é retomado.</p>
      *
      * @param device Dispositivo OBD-II conectado.
      * @throws InterruptedException Caso a thread seja interrompida durante a inicialização.
      */
     public void connect(Device device) throws InterruptedException {
-        synchronized (this) {
-            if (initializing)
-                return;
-
-            if (ecuConnected) {
-                startMonitoring();
-                return;
-            }
-
-            initializing = true;
-            bluetoothConnected = true;
-        }
+        if (!prepareConnection())
+            return;
 
         try {
-            if (initializeElm327()) {
-                finishConnection(device);
-            } else {
+            if (initializeElm327())
+                completeConnection(device);
+            else
                 handleInitializationError();
-            }
         } finally {
-            synchronized (this) {
-                initializing = false;
-            }
+            finishInitialization();
         }
+    }
+
+    /**
+     * Prepara o estado interno para uma nova conexão com o adaptador ELM327.
+     *
+     * <p>Verifica se já existe uma inicialização em andamento ou se a ECU já está conectada à
+     * sessão Bluetooth atual. Quando uma sessão anterior ainda está ativa, seu estado é encerrado
+     * antes de iniciar uma nova inicialização.</p>
+     *
+     * @return {@code true} caso uma nova inicialização deva ser realizada, {@code false} caso a
+     * conexão já esteja sendo inicializada ou a sessão atual possa ser reutilizada.
+     */
+    private synchronized boolean prepareConnection() {
+        if (initializing)
+            return false;
+
+        if (isCurrentConnectionActive()) {
+            startMonitoring();
+            return false;
+        }
+
+        if (ecuConnected)
+            resetPreviousSession();
+
+        initializing = true;
+        bluetoothConnected = true;
+
+        return true;
+    }
+
+    /**
+     * Encerra o estado da sessão anterior da ECU antes de iniciar uma nova inicialização.
+     *
+     * <p>O monitoramento atual é interrompido, os dados referentes à conexão anterior são removidos
+     * e o suporte aos PIDs é redefinido.</p>
+     */
+    private void resetPreviousSession() {
+        monitoring = false;
+
+        if (monitoringThread != null)
+            monitoringThread.interrupt();
+
+        ecuConnected = false;
+        obdProtocol = null;
+
+        clearTaskSupport();
+
+        notifyConnectionState();
+    }
+
+    /**
+     * Inicializa o adaptador ELM327.
+     *
+     * <p>Realiza a configuração inicial do adaptador e identifica os PIDs suportados pela ECU do
+     * veículo.</p>
+     *
+     * @return {@code true} caso a inicialização seja concluída com sucesso, {@code false} caso
+     * contrário.
+     * @throws InterruptedException Caso a thread seja interrompida durante o tempo de espera entre
+     *                              os comandos de inicialização.
+     */
+    private boolean initializeElm327() throws InterruptedException {
+        if (!configureElm327())
+            return false;
+
+        return discoverSupportedPids();
+    }
+
+    /**
+     * Configura o adaptador ELM327 para comunicação com a ECU.
+     *
+     * <p>Envia os comandos AT necessários para preparar o adaptador antes da comunicação com o
+     * veículo.</p>
+     *
+     * @return {@code true} caso todos os comandos sejam executados com sucesso, {@code false}
+     * caso algum comando falhe.
+     * @throws InterruptedException Caso a thread seja interrompida durante o tempo de espera
+     *                              entre os comandos.
+     */
+    private boolean configureElm327() throws InterruptedException {
+        // Reinicia o adaptador ELM327
+        if (!sendCommandOk(Elm327Commands.RESET))
+            return false;
+
+        Thread.sleep(ELM327_RESET_DELAY_MS);
+
+        // Configura o formato das respostas do adaptador
+        if (!sendCommandOk(Elm327Commands.ECHO_OFF))
+            return false;
+
+        if (!sendCommandOk(Elm327Commands.LINE_FEEDS_OFF))
+            return false;
+
+        if (!sendCommandOk(Elm327Commands.SPACES_OFF))
+            return false;
+
+        if (!sendCommandOk(Elm327Commands.HEADERS_OFF))
+            return false;
+
+        // Configura a seleção automática do protocolo OBD-II
+        if (!sendCommandOk(Elm327Commands.AUTO_PROTOCOL))
+            return false;
+
+        Thread.sleep(ELM327_PROTOCOL_DELAY_MS);
+
+        return true;
+    }
+
+    /**
+     * Envia um comando ao ELM327 e verifica se a resposta indica sucesso.
+     *
+     * @param command Comando a ser enviado.
+     * @return {@code true} caso a resposta contenha 'OK' ou a identificação do ELM327 durante o
+     * processo de inicialização, {@code false} caso contrário.
+     */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean sendCommandOk(String command) {
+        String response = executeElm327Command(command);
+        if (response == null)
+            return false;
+
+        return response.contains(applicationContext.getString(R.string.elm327)) ||
+                response.contains(applicationContext.getString(R.string.ok));
+    }
+
+    /**
+     * Identifica os PIDs suportados pela ECU do veículo.
+     *
+     * <p>Primeiro consulta os PIDs básicos. Caso a ECU informe suporte ao PID {@code 0x20}, também
+     * são consultados os PIDs estendidos.</p>
+     *
+     * <p>Ao final, as tarefas de leitura são configuradas de acordo com os PIDs identificados.</p>
+     *
+     * @return {@code true} caso a consulta dos PIDs básicos seja concluída com sucesso,
+     * {@code false} caso contrário.
+     */
+    private boolean discoverSupportedPids() {
+        // Consulta os PIDs básicos suportados pela ECU
+        Long basePids = basePidsCommand.parse(
+                executeElm327Command(basePidsCommand.getRequest())
+        );
+
+        if (basePids == null)
+            return false;
+
+        // Consulta os PIDs estendidos, caso a ECU informe suporte ao PID 0x20
+        Long extendedPids = null;
+
+        if (basePidsCommand.isPidSupported(basePids, extendedPidsCommand.getRequest())) {
+            extendedPids = extendedPidsCommand.parse(
+                    executeElm327Command(extendedPidsCommand.getRequest())
+            );
+        }
+
+        // Atualiza o suporte das tarefas conforme os PIDs identificados
+        configurePidTasks(basePids, extendedPids);
+
+        return true;
+    }
+
+    /**
+     * Atualiza o suporte das tarefas de leitura conforme os PIDs suportados pela ECU.
+     *
+     * @param basePids     Máscara de PIDs de {@code 0x01} a {@code 0x20} suportados pela ECU.
+     * @param extendedPids Máscara de PIDs de {@code 0x21} a {@code 0x40} suportados pela ECU,
+     *                     podendo ser {@code null} caso o intervalo não seja suportado.
+     */
+    private void configurePidTasks(Long basePids, Long extendedPids) {
+        rpmTask.updateSupport(basePidsCommand, basePids);
+        speedTask.updateSupport(basePidsCommand, basePids);
+        throttleTask.updateSupport(basePidsCommand, basePids);
+        mapTask.updateSupport(basePidsCommand, basePids);
+        coolantTask.updateSupport(basePidsCommand, basePids);
+        intakeTask.updateSupport(basePidsCommand, basePids);
+        voltageTask.updateSupport(basePidsCommand, basePids);
+        fuelTask.updateSupport(extendedPidsCommand, extendedPids);
+    }
+
+    /**
+     * Completa a conexão após a inicialização do ELM327 ser concluída com sucesso.
+     *
+     * <p>O estado da ECU é atualizado, o protocolo OBD-II é identificado, a geração da conexão
+     * Bluetooth é registrada e os listeners são notificados. Ao final, o monitoramento contínuo
+     * dos dados da ECU é iniciado.</p>
+     *
+     * @param device Dispositivo OBD-II conectado.
+     */
+    private void completeConnection(Device device) {
+        ecuConnected = true;
+        obdProtocol = readProtocol();
+        initializedConnectionGeneration = bluetoothManager.getConnectionGeneration();
+
+        notifyConnectionState();
+        notifyElm327Connected(device);
+
+        startMonitoring();
+    }
+
+    /**
+     * Notifica os listeners sobre a conexão bem-sucedida com o adaptador ELM327.
+     *
+     * @param device Dispositivo OBD-II conectado.
+     */
+    private void notifyElm327Connected(Device device) {
+        for (Elm327ConnectionListener listener : connectionListeners)
+            listener.onElm327Connected(device);
+    }
+
+    /**
+     * Finaliza a tentativa de conexão após uma falha na inicialização do ELM327.
+     *
+     * <p>A conexão Bluetooth é encerrada, os estados internos são redefinidos e o listener é
+     * notificado sobre o erro ocorrido.</p>
+     */
+    private void handleInitializationError() {
+        bluetoothManager.disconnect();
+        resetConnectionState();
+        notifyConnectionState();
+
+        for (Elm327ConnectionListener listener : connectionListeners)
+            listener.onElm327Error(
+                    Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext)
+            );
+    }
+
+    /**
+     * Finaliza o estado de inicialização da conexão.
+     *
+     * <p>Garante que novas tentativas de conexão possam ser realizadas após o término da
+     * inicialização, independentemente de seu resultado.</p>
+     */
+    private synchronized void finishInitialization() {
+        initializing = false;
     }
 
     /**
@@ -301,7 +538,7 @@ public class Elm327Manager {
             return;
 
         synchronized (this) {
-            if (ecuConnected) {
+            if (isCurrentConnectionActive()) {
                 startMonitoring();
                 return;
             }
@@ -326,39 +563,14 @@ public class Elm327Manager {
     }
 
     /**
-     * Finaliza o processo de conexão com o adaptador OBD-II.
+     * Verifica se a conexão atual com a ECU pertence à sessão Bluetooth ativa.
      *
-     * <p>Atualiza o estado interno da conexão, identifica o protocolo de comunicação, inicia o
-     * monitoramento contínuo da ECU e notifica o listener sobre o sucesso da conexão.</p>
-     *
-     * @param device Dispositivo OBD-II conectado.
+     * @return {@code true} caso a ECU esteja conectada e a geração da conexão Bluetooth seja a
+     * mesma utilizada durante sua inicialização, {@code false} caso contrário.
      */
-    private void finishConnection(Device device) {
-        ecuConnected = true;
-        obdProtocol = readProtocol();
-
-        notifyConnectionState();
-
-        for (Elm327ConnectionListener listener : connectionListeners)
-            listener.onElm327Connected(device);
-
-        startMonitoring();
-    }
-
-    /**
-     * Finaliza a tentativa de conexão após uma falha na inicialização do ELM327.
-     *
-     * <p>A conexão Bluetooth é encerrada, os estados internos são redefinidos e o listener é
-     * notificado sobre o erro ocorrido.</p>
-     */
-    private void handleInitializationError() {
-        bluetoothManager.disconnect();
-        resetConnectionState();
-        notifyConnectionState();
-
-        for (Elm327ConnectionListener listener : connectionListeners)
-            listener.onElm327Error(
-                    Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext));
+    private boolean isCurrentConnectionActive() {
+        return ecuConnected &&
+                initializedConnectionGeneration == bluetoothManager.getConnectionGeneration();
     }
 
     /**
@@ -374,51 +586,6 @@ public class Elm327Manager {
 
         resetConnectionState();
         notifyConnectionState();
-    }
-
-    /**
-     * Inicializa o adaptador ELM327.
-     *
-     * <p>Durante a inicialização são enviados os comandos AT necessários para configurar o
-     * adaptador antes da comunicação com a ECU.</p>
-     *
-     * <p>Ao final, é realizada uma leitura dos PIDs suportados para validar a comunicação com o
-     * veículo.</p>
-     *
-     * @return {@code true} caso a inicialização seja concluída com sucesso, {@code false} caso
-     * contrário.
-     * @throws InterruptedException Caso a thread seja interrompida durante o tempo de espera entre
-     *                              os comandos de inicialização.
-     */
-    private boolean initializeElm327() throws InterruptedException {
-        if (!sendCommandOk(Elm327Commands.RESET)) return false;
-        Thread.sleep(ELM327_RESET_DELAY_MS);
-        if (!sendCommandOk(Elm327Commands.ECHO_OFF)) return false;
-        if (!sendCommandOk(Elm327Commands.LINE_FEEDS_OFF)) return false;
-        if (!sendCommandOk(Elm327Commands.SPACES_OFF)) return false;
-        if (!sendCommandOk(Elm327Commands.HEADERS_OFF)) return false;
-        if (!sendCommandOk(Elm327Commands.AUTO_PROTOCOL)) return false;
-        Thread.sleep(ELM327_PROTOCOL_DELAY_MS);
-
-        String response = executeElm327Command(supportedPidsCommand.getRequest());
-        return supportedPidsCommand.isValid(response);
-    }
-
-    /**
-     * Envia um comando ao ELM327 e verifica se a resposta indica sucesso.
-     *
-     * @param command Comando a ser enviado.
-     * @return {@code true} caso a resposta contenha 'OK' ou a identificação do ELM327 durante o
-     * processo de inicialização, {@code false} caso contrário.
-     */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean sendCommandOk(String command) {
-        String response = executeElm327Command(command);
-        if (response == null)
-            return false;
-
-        return response.contains(applicationContext.getString(R.string.elm327)) ||
-                response.contains(applicationContext.getString(R.string.ok));
     }
 
     /**
@@ -446,7 +613,8 @@ public class Elm327Manager {
                 if (monitoring) {
                     for (Elm327ConnectionListener listener : connectionListeners)
                         listener.onElm327Error(
-                                Elm327ManagerError.MONITORING_INTERRUPTED.getMessage(applicationContext));
+                                Elm327ManagerError.MONITORING_INTERRUPTED.getMessage(applicationContext)
+                        );
                 }
             } finally {
                 monitoringThread = null;
@@ -469,51 +637,41 @@ public class Elm327Manager {
 
         for (PidTask task : readyTasks) {
             if (task == rpmTask) {
-                int engineRpm = readEngineRpm();
+                int value = readEngineRpm();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdEngineRpmChanged(engineRpm);
+                    listener.onObdEngineRpmChanged(value);
             } else if (task == speedTask) {
-                int vehicleSpeed = readVehicleSpeed();
+                int value = readVehicleSpeed();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdVehicleSpeedChanged(vehicleSpeed);
+                    listener.onObdVehicleSpeedChanged(value);
             } else if (task == throttleTask) {
-                int throttlePosition = readThrottlePosition();
+                int value = readThrottlePosition();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdThrottlePositionChanged(throttlePosition);
+                    listener.onObdThrottlePositionChanged(value);
             } else if (task == mapTask) {
-                int intakeManifoldPressure = readIntakeManifoldPressure();
+                int value = readIntakeManifoldPressure();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdIntakeManifoldPressureChanged(intakeManifoldPressure);
+                    listener.onObdIntakeManifoldPressureChanged(value);
             } else if (task == coolantTask) {
-                int engineCoolantTemperature = readEngineCoolantTemperature();
+                int value = readEngineCoolantTemperature();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdEngineCoolantTemperatureChanged(engineCoolantTemperature);
-            } else if (task == intakeAirTask) {
-                int intakeAirTemperature = readIntakeAirTemperature();
+                    listener.onObdEngineCoolantTemperatureChanged(value);
+            } else if (task == intakeTask) {
+                int value = readIntakeTemperature();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdIntakeAirTemperatureChanged(intakeAirTemperature);
+                    listener.onObdIntakeAirTemperatureChanged(value);
             } else if (task == voltageTask) {
-                double controlModuleVoltage = readControlModuleVoltage();
+                double value = readControlModuleVoltage();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdControlModuleVoltageChanged(controlModuleVoltage);
+                    listener.onObdControlModuleVoltageChanged(value);
             } else if (task == fuelTask) {
-                int fuelLevel = readFuelLevel();
+                int value = readFuelLevel();
                 for (Elm327DataListener listener : dataListeners)
-                    listener.onObdFuelLevelChanged(fuelLevel);
+                    listener.onObdFuelLevelChanged(value);
             }
 
             obdScheduler.updateTaskExecution(task, currentTime);
         }
-    }
-
-    /**
-     * Aguarda o intervalo configurado entre duas leituras consecutivas da ECU.
-     *
-     * @throws InterruptedException Caso a thread de monitoramento seja interrompida durante a
-     *                              espera.
-     */
-    private void sleepMonitoring() throws InterruptedException {
-        Thread.sleep(10);
     }
 
     /**
@@ -528,8 +686,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da rotação do motor (RPM).
      *
-     * @return Valor da rotação do motor em RPM ou zero caso não seja possível obter uma resposta
-     * válida.
+     * @return Valor da rotação do motor em RPM.
      */
     private int readEngineRpm() {
         String response = executeElm327Command(rpmTask.getCommand().getRequest());
@@ -539,8 +696,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da velocidade atual do veículo.
      *
-     * @return Velocidade do veículo em km/h ou {@code 0} caso não seja possível obter uma resposta
-     * válida.
+     * @return Velocidade do veículo em km/h.
      */
     private int readVehicleSpeed() {
         String response = executeElm327Command(speedTask.getCommand().getRequest());
@@ -550,8 +706,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da posição absoluta da borboleta de aceleração.
      *
-     * @return Posição da borboleta em porcentagem (%) ou {@code 0} caso não seja possível obter uma
-     * resposta válida.
+     * @return Posição da borboleta em porcentagem (%).
      */
     private int readThrottlePosition() {
         String response = executeElm327Command(throttleTask.getCommand().getRequest());
@@ -561,8 +716,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da pressão absoluta do coletor de admissão (MAP).
      *
-     * @return Pressão absoluta do coletor de admissão em kPa ou {@code 0} caso não seja possível
-     * obter uma resposta válida.
+     * @return Pressão absoluta do coletor de admissão em kPa.
      */
     private int readIntakeManifoldPressure() {
         String response = executeElm327Command(mapTask.getCommand().getRequest());
@@ -572,8 +726,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da temperatura do líquido de arrefecimento do motor.
      *
-     * @return Temperatura do líquido de arrefecimento em °C ou {@code 0} caso não seja possível
-     * obter uma resposta válida.
+     * @return Temperatura do líquido de arrefecimento em °C.
      */
     private int readEngineCoolantTemperature() {
         String response = executeElm327Command(coolantTask.getCommand().getRequest());
@@ -583,34 +736,34 @@ public class Elm327Manager {
     /**
      * Realiza a leitura da temperatura do ar admitido pelo motor.
      *
-     * @return Temperatura do ar admitido em °C ou {@code 0} caso não seja possível obter uma
-     * resposta válida.
+     * @return Temperatura do ar admitido em °C.
      */
-    private int readIntakeAirTemperature() {
-        String response = executeElm327Command(intakeAirTask.getCommand().getRequest());
-        return (Integer) intakeAirTask.getCommand().parse(response);
+    private int readIntakeTemperature() {
+        String response = executeElm327Command(intakeTask.getCommand().getRequest());
+        return (Integer) intakeTask.getCommand().parse(response);
     }
 
     /**
      * Realiza a leitura da tensão de alimentação do módulo de controle (ECU).
      *
-     * @return Tensão de alimentação da ECU em volts (V) ou {@code 0} caso não seja possível obter
-     * uma resposta válida.
+     * @return Tensão de alimentação da ECU em volts (V).
      */
     private double readControlModuleVoltage() {
-        // Primeira tentativa: leitura pelo PID OBD-II
-        String response = executeElm327Command(voltageTask.getCommand().getRequest());
+        // Primeira tentativa: se a tarefa suporta a leitura pelo PID OBD-II
+        if (voltageTask.isSupported()) {
+            String response = executeElm327Command(voltageTask.getCommand().getRequest());
 
-        if (response != null) {
-            try {
-                double voltage = (Double) voltageTask.getCommand().parse(response);
-                if (voltage > 0.0)
-                    return voltage;
-            } catch (Exception ignored) {
+            if (response != null) {
+                try {
+                    double voltage = (Double) voltageTask.getCommand().parse(response);
+                    if (voltage > 0.0)
+                        return voltage;
+                } catch (Exception ignored) {
+                }
             }
         }
 
-        // Segunda tentativa: leitura direta pelo ELM327
+        // Segunda tentativa: caso não tenha suporte na tarefa, faz a leitura direta pelo ELM327
         return readElm327Voltage();
     }
 
@@ -638,8 +791,7 @@ public class Elm327Manager {
     /**
      * Realiza a leitura do nível de combustível.
      *
-     * @return Nível de combustível em porcentagem (%) ou {@code 0} caso não seja possível obter uma
-     * resposta válida.
+     * @return Nível de combustível em porcentagem (%).
      */
     private int readFuelLevel() {
         String response = executeElm327Command(fuelTask.getCommand().getRequest());
@@ -685,6 +837,20 @@ public class Elm327Manager {
     }
 
     /**
+     * Aguarda brevemente antes de iniciar o próximo ciclo de monitoramento.
+     *
+     * <p>Os intervalos individuais de leitura dos PIDs são controlados pelo {@link ObdScheduler}.
+     * Este intervalo apenas evita que a thread de monitoramento execute ciclos continuamente sem
+     * uma pequena pausa.</p>
+     *
+     * @throws InterruptedException Caso a thread de monitoramento seja interrompida durante a
+     *                              espera.
+     */
+    private void sleepMonitoring() throws InterruptedException {
+        Thread.sleep(10);
+    }
+
+    /**
      * Reinicia os estados da conexão OBD-II.
      */
     private void resetConnectionState() {
@@ -692,6 +858,22 @@ public class Elm327Manager {
         bluetoothConnected = false;
         ecuConnected = false;
         obdProtocol = null;
+        initializedConnectionGeneration = -1;
+        clearTaskSupport();
+    }
+
+    /**
+     * Reinicia o suporte das tarefas de leitura dos PIDs OBD-II.
+     */
+    private void clearTaskSupport() {
+        rpmTask.setSupported(false);
+        speedTask.setSupported(false);
+        throttleTask.setSupported(false);
+        mapTask.setSupported(false);
+        coolantTask.setSupported(false);
+        intakeTask.setSupported(false);
+        voltageTask.setSupported(false);
+        fuelTask.setSupported(false);
     }
 
     /**

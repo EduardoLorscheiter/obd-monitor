@@ -38,7 +38,7 @@ public class SpeedCommand extends ObdCommand<Integer> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Velocidade do veículo em km/h ou o valor anterior válido caso a resposta seja
+     * @return Velocidade do veículo em km/h ou o último valor válido quando a resposta for
      * inválida.
      */
     @Override

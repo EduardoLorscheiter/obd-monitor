@@ -48,7 +48,7 @@ public class ObdScheduler {
         List<PidTask> readyTasks = new ArrayList<>();
 
         for (PidTask task : tasks) {
-            if (task.isReady(currentTime))
+            if (task.isSupported() && task.isReady(currentTime))
                 readyTasks.add(task);
         }
 
