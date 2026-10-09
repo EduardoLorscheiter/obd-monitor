@@ -14,7 +14,10 @@
 package com.eduardo.obdmonitor.ui;
 
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,6 +42,21 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     protected Elm327Manager elm327Manager;
 
     /**
+     * Gerenciador responsável pela reprodução dos sons de interação da interface.
+     */
+    private SoundPool clickSoundPool;
+
+    /**
+     * Identificador do recurso de áudio utilizado nos cliques.
+     */
+    private int clickSoundId;
+
+    /**
+     * Indica se o recurso de áudio foi carregado com sucesso.
+     */
+    private boolean clickSoundLoaded;
+
+    /**
      * Aplica as configurações do aplicativo ao contexto base da Activity.
      *
      * <p>As configurações aplicadas incluem o modo de aparência e o idioma selecionados pelo
@@ -59,6 +77,20 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        clickSoundPool = new SoundPool.Builder()
+                .setMaxStreams(2)
+                .setAudioAttributes(audioAttributes)
+                .build();
+        clickSoundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {
+            if (sampleId == clickSoundId && status == 0)
+                clickSoundLoaded = true;
+        });
+        clickSoundId = clickSoundPool.load(this, com.eduardo.obdmonitor.R.raw.ui_click, 1);
 
         initializeManagers();
     }
@@ -171,6 +203,34 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
      */
     private void unregisterBluetoothReceivers() {
         bluetoothManager.unregisterReceivers();
+    }
+
+    /**
+     * Libera os recursos de áudio quando a Activity é destruída.
+     */
+    @Override
+    protected void onDestroy() {
+        if (clickSoundPool != null) {
+            clickSoundPool.release();
+            clickSoundPool = null;
+            clickSoundLoaded = false;
+        }
+        super.onDestroy();
+    }
+
+    /**
+     * Configura um listener de clique que reproduz o som da interface antes de executar a ação
+     * associada à View.
+     *
+     * @param view   View que receberá o listener de clique.
+     * @param action Ação executada quando a View é clicada.
+     */
+    protected void setClickSoundListener(View view, View.OnClickListener action) {
+        view.setOnClickListener(clickedView -> {
+            if (clickSoundLoaded && clickSoundPool != null)
+                clickSoundPool.play(clickSoundId, 1f, 1f, 1, 0, 1f);
+            action.onClick(clickedView);
+        });
     }
 
     /**

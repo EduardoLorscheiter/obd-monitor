@@ -122,12 +122,12 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        btnSettings.setOnClickListener(v -> {
+        setClickSoundListener(btnSettings, v -> {
             Intent intent = new Intent(DashboardActivity.this, SettingsActivity.class);
             settingsLauncher.launch(intent);
         });
 
-        btnConnection.setOnClickListener(v -> {
+        setClickSoundListener(btnConnection, v -> {
             Intent intent = new Intent(DashboardActivity.this, ConnectionActivity.class);
             connectionLauncher.launch(intent);
         });

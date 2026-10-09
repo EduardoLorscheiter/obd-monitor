@@ -98,7 +98,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        btnBack.setOnClickListener(v -> finish());
+        setClickSoundListener(btnBack, v -> finish());
 
         switchBluetooth.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!buttonView.isPressed())
@@ -265,7 +265,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         // Adiciona cardView ao container dos dispositivos Bluetooth visíveis
         container.addView(cardView);
 
-        cardView.setOnClickListener(v -> bluetoothManager.connect(device));
+        setClickSoundListener(cardView, v -> bluetoothManager.connect(device));
     }
 
     /**

@@ -96,8 +96,8 @@ public class SettingsActivity extends BaseActivity {
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        btnBack.setOnClickListener(v -> finish());
-        btnSave.setOnClickListener(v -> saveSettings());
+        setClickSoundListener(btnBack, v -> finish());
+        setClickSoundListener(btnSave, v -> saveSettings());
     }
 
     /**
