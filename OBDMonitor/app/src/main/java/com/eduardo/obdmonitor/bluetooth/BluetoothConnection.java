@@ -51,6 +51,11 @@ public class BluetoothConnection {
     private BluetoothSocket socket;
 
     /**
+     * Socket pertencente à tentativa que ainda está estabelecendo a conexão.
+     */
+    private BluetoothSocket pendingSocket;
+
+    /**
      * Fluxo de entrada utilizado para receber dados do dispositivo.
      */
     private InputStream input;
@@ -92,6 +97,7 @@ public class BluetoothConnection {
     protected BluetoothConnection(Context context, BluetoothConnectionListener listener) {
         this.context = context;
         this.listener = listener;
+        this.connectionId = 0;
     }
 
     /**
@@ -101,40 +107,61 @@ public class BluetoothConnection {
      * Cada tentativa recebe um identificador exclusivo, permitindo que uma tentativa anterior seja
      * invalidada caso uma nova conexão seja solicitada.</p>
      *
-     * <p>Caso já exista uma conexão estabelecida ou uma tentativa de conexão em andamento, nenhuma
-     * nova tentativa será iniciada.</p>
+     * <p>Uma tentativa anterior é cancelada antes de iniciar a nova, garantindo prioridade à
+     * solicitação mais recente.</p>
      *
      * @param bluetoothDevice Dispositivo Bluetooth remoto (físico).
      */
     protected synchronized void connect(BluetoothDevice bluetoothDevice) {
-        if (connected || connecting)
+        // Se houver uma tentativa de conexão está em andamento.
+        // Obs.: Uma nova solicitação sempre substitui uma tentativa anterior.
+        if (connecting)
+            cancelConnection();
+
+        // Se houver uma conexão estabelecida.
+        // Obs.: Não substitui uma conexão já estabelecida sem que o gerenciador a encerre primeiro.
+        if (connected)
             return;
 
-        // Gera um novo identificador para a tentativa atual
+        // Gera um novo identificador para a tentativa atual.
         long currentConnectionId = ++connectionId;
 
-        // Indica que uma tentativa de conexão está em andamento
+        // Indica que uma tentativa de conexão está em andamento.
         connecting = true;
 
         new Thread(() -> {
-            // Recursos locais utilizados exclusivamente por esta tentativa de conexão
+            // Recursos locais utilizados exclusivamente por esta tentativa de conexão.
             BluetoothSocket localSocket = null;
             InputStream localInput = null;
             OutputStream localOutput = null;
 
             try {
-                // Cria e estabelece o socket Bluetooth
+                // Cria um socket RFCOMM associado ao serviço SPP do dispositivo remoto.
+                // Obs.: A conexão será estabelecida na chamada connect(), executada nesta thread
+                // para evitar bloquear a thread principal da aplicação.
                 localSocket = bluetoothDevice.createRfcommSocketToServiceRecord(SERIAL_UUID);
+                synchronized (this) {
+                    // Verifica se a tentativa ainda é válida antes de registrar o socket.
+                    // Obs.: Caso tenha sido cancelada enquanto o socket era criado, fecha o recurso
+                    // e encerra esta thread sem iniciar a conexão.
+                    if (currentConnectionId != connectionId || !connecting) {
+                        closeResource(localSocket, false);
+                        return;
+                    }
+                    // Registra o socket antes de iniciar a conexão para permitir que
+                    // cancelConnection() tente interromper a operação connect() em andamento.
+                    pendingSocket = localSocket;
+                }
                 localSocket.connect();
 
-                // Obtém os fluxos de comunicação do socket
+                // Obtém os fluxos de comunicação do socket.
                 localInput = localSocket.getInputStream();
                 localOutput = localSocket.getOutputStream();
 
                 synchronized (this) {
-                    // Verifica se a tentativa ainda é válida antes de assumir os recursos
+                    // Verifica se a tentativa ainda é válida antes de assumir os recursos.
                     // Obs.: Caso tenha sido cancelada ou substituída por outra tentativa, os
-                    // recursos recém-criados são fechados sem gerar notificações de erro
+                    // recursos recém-criados são fechados sem gerar notificações de erro.
                     if (currentConnectionId != connectionId || !connecting) {
                         closeResource(localInput, false);
                         closeResource(localOutput, false);
@@ -142,32 +169,39 @@ public class BluetoothConnection {
                         return;
                     }
 
-                    // Transfere os recursos locais para os atributos da conexão
+                    // A tentativa ainda é válida. Transfere os recursos locais para a instância,
+                    // que passa a ser responsável por utilizá-los e encerrá-los.
+                    // A remoção de pendingSocket indica que o socket deixou de ser pendente.
                     socket = localSocket;
+                    pendingSocket = null;
                     input = localInput;
                     output = localOutput;
 
-                    // A conexão foi estabelecida com sucesso
+                    // Atualiza o estado somente após a conexão e a obtenção dos fluxos terem sido
+                    // concluídas com sucesso.
                     connected = true;
                     connecting = false;
                 }
 
                 listener.onBluetoothConnectionConnected();
             } catch (IOException e) {
-                // Fecha os recursos criados por esta tentativa sem gerar erro de fechamento
+                // Fecha os recursos criados por esta tentativa sem gerar erro de fechamento.
                 closeResource(localInput, false);
                 closeResource(localOutput, false);
                 closeResource(localSocket, false);
 
                 synchronized (this) {
-                    // Se a tentativa já não é mais a atual, o erro pertence a uma tentativa
-                    // cancelada ou substituída e, portanto, deve ser ignorado
+                    // Uma tentativa cancelada ou substituída pode lançar IOException porque seu
+                    // socket foi fechado. Nesse caso, o erro não pertence à tentativa atual e não
+                    // deve ser reportado ao listener.
                     if (currentConnectionId != connectionId)
                         return;
 
-                    // A tentativa atual foi encerrada devido a uma falha
+                    // A tentativa atual falhou. Limpa seu estado antes de notificar o gerenciador
+                    // sobre o erro de conexão.
                     connected = false;
                     connecting = false;
+                    pendingSocket = null;
                 }
 
                 notifyError(BluetoothConnectionError.CONNECTION_FAILED);
@@ -182,7 +216,12 @@ public class BluetoothConnection {
      *
      * <p>Caso não exista uma conexão ativa, nenhuma ação é realizada.</p>
      */
-    protected void disconnect() {
+    protected synchronized void disconnect() {
+        if (connecting) {
+            cancelConnection();
+            return;
+        }
+
         if (!connected)
             return;
 
@@ -191,6 +230,7 @@ public class BluetoothConnection {
         input = closeResource(input, true);
         output = closeResource(output, true);
         socket = closeResource(socket, true);
+        pendingSocket = closeResource(pendingSocket, false);
 
         listener.onBluetoothConnectionDisconnected();
     }
@@ -204,20 +244,53 @@ public class BluetoothConnection {
      *
      * <p>Caso não exista uma tentativa de conexão em andamento, nenhuma ação é realizada.</p>
      */
-    protected synchronized void cancelConnection() {
+    private synchronized void cancelConnection() {
         if (!connecting)
             return;
 
-        // Indica que não existe mais uma tentativa de conexão ativa
+        // Indica que não existe mais uma tentativa de conexão ativa.
         connecting = false;
 
-        // Invalida imediatamente a tentativa atual
+        // Invalida a tentativa atual. Quando a thread de conexão verificar connectionId,
+        // reconhecerá que não deve mais concluir essa tentativa.
         connectionId++;
 
-        // Fecha eventuais recursos associados à tentativa cancelada
+        // O cancelamento é intencional, portanto falhas ao fechar esses recursos não devem ser
+        // reportadas como erros de comunicação ao usuário.
         input = closeResource(input, false);
         output = closeResource(output, false);
         socket = closeResource(socket, false);
+        pendingSocket = closeResource(pendingSocket, false);
+    }
+
+    /**
+     * Fecha um recurso utilizado pela conexão Bluetooth.
+     *
+     * <p>Aceita qualquer recurso que implemente {@link Closeable}, permitindo o fechamento do
+     * socket e dos fluxos de entrada e saída através de uma única implementação.</p>
+     *
+     * <p>Fecha um recurso e retorna null para permitir limpar a referência armazenada pelo chamador
+     * em uma única atribuição.</p>
+     *
+     * <p>Exemplo: input = closeResource(input, true).</p>
+     *
+     * @param <T>         Tipo do recurso que implementa {@link Closeable}.
+     * @param resource    Recurso a ser fechado.
+     * @param notifyError {@code true} para notificar o listener caso ocorra erro durante o
+     *                    fechamento do recurso, ou {@code false} para ignorar esse erro.
+     * @return {@code null}, permitindo limpar a referência ao recurso após o fechamento.
+     */
+    private <T extends Closeable> T closeResource(T resource, boolean notifyError) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (IOException e) {
+                if (notifyError)
+                    notifyError(BluetoothConnectionError.RESOURCE_CLOSE_FAILED);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -249,31 +322,6 @@ public class BluetoothConnection {
     }
 
     /**
-     * Fecha um recurso utilizado pela conexão Bluetooth.
-     *
-     * <p>Aceita qualquer recurso que implemente {@link Closeable}, permitindo o fechamento do
-     * socket e dos fluxos de entrada e saída através de uma única implementação.</p>
-     *
-     * @param <T>         Tipo do recurso que implementa {@link Closeable}.
-     * @param resource    Recurso a ser fechado.
-     * @param notifyError {@code true} para notificar o listener caso ocorra erro durante o
-     *                    fechamento do recurso, ou {@code false} para ignorar esse erro.
-     * @return {@code null}, permitindo limpar a referência ao recurso após o fechamento.
-     */
-    private <T extends Closeable> T closeResource(T resource, boolean notifyError) {
-        if (resource != null) {
-            try {
-                resource.close();
-            } catch (IOException e) {
-                if (notifyError)
-                    notifyError(BluetoothConnectionError.RESOURCE_CLOSE_FAILED);
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Envia um comando ao dispositivo Bluetooth.
      *
      * @param command Comando a ser enviado.
@@ -294,23 +342,25 @@ public class BluetoothConnection {
      * @throws IOException Caso ocorra falha durante a leitura dos dados.
      */
     private String readResponse() throws IOException {
+        // Acumula os caracteres recebidos até o ELM327 indicar o fim da resposta com '>' ou até
+        // ocorrer o encerramento da leitura.
         StringBuilder response = new StringBuilder();
 
-        // Define o instante máximo para aguardar a resposta
+        // Define o instante máximo para aguardar a resposta.
         long timeout = System.currentTimeMillis() + RESPONSE_TIMEOUT_MS;
 
         // Lê os dados recebidos até encontrar o caractere de término ('>') ou até que o tempo
-        // limite seja atingido
+        // limite seja atingido.
         while (System.currentTimeMillis() < timeout) {
             int data = input.read();
 
-            // Encerra a leitura caso o fluxo tenha sido fechado
+            // Encerra a leitura caso o fluxo tenha sido fechado.
             if (data == -1)
                 break;
 
             char character = (char) data;
 
-            // O ELM327 utiliza o caractere '>' para indicar que finalizou o comando
+            // O ELM327 utiliza o caractere '>' para indicar que finalizou o comando.
             if (character == '>')
                 break;
 

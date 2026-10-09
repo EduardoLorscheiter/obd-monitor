@@ -112,7 +112,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     }
 
     /**
-     * Sincroniza o estado da Activity com o estado atual do {@link  BluetoothManager}.
+     * Sincroniza o estado da Activity com o estado atual do {@link BluetoothManager}.
      *
      * <p>Notifica a Activity sobre o estado atual do Bluetooth e retoma a conexão com o ELM327
      * quando já existe um dispositivo Bluetooth conectado.</p>

@@ -140,6 +140,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      */
     public Device getConnectedDevice() {
         Device device = connectedDevice;
+
         if (device == null)
             return null;
 
@@ -271,14 +272,15 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * @param device Dispositivo Bluetooth alvo da conexão.
      */
     public void connect(Device device) {
+        // Se o dispositivo solicitado já está conectado, não faz nada.
+        if (connectedDevice != null &&
+                connectedDevice.getMacAddress().equals(device.getMacAddress())) {
+            return;
+        }
+
         BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
 
         if (bluetoothAdapter == null)
-            return;
-
-        // Ignora um novo clique no mesmo dispositivo que já está conectando
-        if (connectingDevice != null &&
-                connectingDevice.getMacAddress().equals(device.getMacAddress()))
             return;
 
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
@@ -288,9 +290,9 @@ public class BluetoothManager implements BluetoothConnectionListener {
             return;
         }
 
-        cancelDiscovery();
+        cancelDiscovery(bluetoothAdapter);
 
-        // Se já existe uma conexão estabelecida, encerra essa conexão antes de iniciar uma nova
+        // Se já existe uma conexão estabelecida, encerra essa conexão antes de iniciar uma nova.
         if (connectedDevice != null &&
                 !connectedDevice.getMacAddress().equals(device.getMacAddress())) {
 
@@ -306,23 +308,22 @@ public class BluetoothManager implements BluetoothConnectionListener {
             connectedDevice = null;
         }
 
-        // Se existe uma tentativa de conexão, cancela essa tentativa antes de iniciar a nova
-        if (connectingDevice != null &&
-                !connectingDevice.getMacAddress().equals(device.getMacAddress())) {
+        // A camada de conexão substitui qualquer tentativa anterior quando connect() é chamado.
+        // Aqui apenas é atualizado o estado e notificada a troca do dispositivo solicitado.
+        if (connectingDevice != null) {
 
             Device previousDevice = connectingDevice;
-
-            connection.cancelConnection();
+            connectingDevice = null;
 
             previousDevice.setStatusDisconnected();
             for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
                         previousDevice,
-                        context.getString(R.string.device_disconnected, connectingDevice.getName())
+                        context.getString(R.string.device_disconnected, previousDevice.getName())
                 );
         }
 
-        // Define o novo dispositivo como alvo da tentativa
+        // Define o novo dispositivo como alvo da tentativa.
         connectingDevice = device;
 
         device.setStatusConnecting();
@@ -340,7 +341,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      */
     public void disconnect() {
         if (connectingDevice != null) {
-            connection.cancelConnection();
+            connection.disconnect();
 
             Device device = connectingDevice;
             connectingDevice = null;
@@ -458,13 +459,12 @@ public class BluetoothManager implements BluetoothConnectionListener {
      *
      * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de busca pode reduzir
      * significativamente o desempenho ou até impedir o estabelecimento da conexão Bluetooth.</p>
+     *
+     * @param bluetoothAdapter Adaptador Bluetooth já validado.
      */
     @SuppressLint("MissingPermission")
-    private void cancelDiscovery() {
-        BluetoothAdapter bluetoothAdapter = getBluetoothAdapter();
-
-        if (bluetoothAdapter != null)
-            bluetoothAdapter.cancelDiscovery();
+    private void cancelDiscovery(BluetoothAdapter bluetoothAdapter) {
+        bluetoothAdapter.cancelDiscovery();
     }
 
     /**
