@@ -53,12 +53,12 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     private LinearLayout containerDevices, containerBondedDevices;
 
     /**
-     * Lista de dispositivos Bluetooth pareados.
+     * Lista de dispositivos do tipo Bluetooth pareados.
      */
     private final List<Device> bondedDevices = new ArrayList<>();
 
     /**
-     * Mapa do status de cada dispositivo Bluetooth.
+     * Mapa de posição de cada dispositivo Bluetooth.
      */
     private final HashMap<String, TextView> statusDevices = new HashMap<>();
 
@@ -291,7 +291,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     }
 
     /**
-     * Cria o layout vertical utilizado para organizar o nome e o status do dispositivo Bluetooth.
+     * Cria o layout vertical utilizado para organizar o nome e a posição do dispositivo Bluetooth.
      *
      * @return Layout configurado.
      */
@@ -321,7 +321,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     }
 
     /**
-     * Cria o componente responsável por exibir o status do dispositivo.
+     * Cria o componente responsável por exibir a posição do dispositivo.
      *
      * @param status Status inicial do dispositivo.
      * @return TextView configurado.
@@ -336,9 +336,9 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     }
 
     /**
-     * Atualiza o status exibido na interface para um determinado dispositivo.
+     * Atualiza a posição exibido na interface para um determinado dispositivo.
      *
-     * @param device Dispositivo cujo status será atualizado.
+     * @param device Dispositivo cuja posição será atualizado.
      */
     private void updateStatus(Device device) {
         if (device == null)
@@ -351,7 +351,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
     }
 
     /**
-     * Configura o texto e a aparência visual do componente responsável por exibir o status de um
+     * Configura o texto e a aparência visual do componente responsável por exibir a posição de um
      * dispositivo Bluetooth.
      *
      * @param tvStatus Componente que exibirá o status.

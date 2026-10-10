@@ -51,7 +51,7 @@ public class BluetoothConnection {
     private BluetoothSocket socket;
 
     /**
-     * Socket pertencente à tentativa que ainda está estabelecendo a conexão.
+     * Socket pertencente à tentativa que continua estabelecendo a conexão.
      */
     private BluetoothSocket pendingSocket;
 
@@ -105,7 +105,7 @@ public class BluetoothConnection {
      *
      * <p>A conexão é realizada em uma thread separada para evitar o bloqueio da thread principal.
      * Cada tentativa recebe um identificador exclusivo, permitindo que uma tentativa anterior seja
-     * invalidada caso uma nova conexão seja solicitada.</p>
+     * invalidada caso uma nova conexão, seja solicitada.</p>
      *
      * <p>Uma tentativa anterior é cancelada antes de iniciar a nova, garantindo prioridade à
      * solicitação mais recente.</p>
@@ -267,7 +267,7 @@ public class BluetoothConnection {
      * Fecha um recurso utilizado pela conexão Bluetooth.
      *
      * <p>Aceita qualquer recurso que implemente {@link Closeable}, permitindo o fechamento do
-     * socket e dos fluxos de entrada e saída através de uma única implementação.</p>
+     * socket e dos fluxos de entrada e saída por meio de uma única implementação.</p>
      *
      * <p>Fecha um recurso e retorna null para permitir limpar a referência armazenada pelo chamador
      * em uma única atribuição.</p>

@@ -59,7 +59,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     /**
      * Aplica as configurações do aplicativo ao contexto base da Activity.
      *
-     * <p>As configurações aplicadas incluem o modo de aparência e o idioma selecionados pelo
+     * <p>As configurações aplicadas incluem o modo de aparência e o idioma selecionado pelo
      * usuário.</p>
      *
      * @param newBase Contexto base fornecido pelo Android durante a criação da Activity.
@@ -185,8 +185,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     /**
      * Remove os listeners registrados pela Activity.
      *
-     * <p>Os listeners de conexão e de dados do ELM327 do {@link Elm327Manager} são removidos de
-     * acordo com as interfaces implementadas pela Activity.</p>
+     * <p>Os listeners de conexão e de dados do ELM327 do {@link Elm327Manager} são removidos
+     * conforme as interfaces implementadas pela Activity.</p>
      */
     private void unregisterListeners() {
         if (this instanceof Elm327ConnectionListener)

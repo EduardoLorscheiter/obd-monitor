@@ -51,7 +51,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
     private final BluetoothConnection connection;
 
     /**
-     * Lista de listeners utilizados para reportar eventos Bluetooth às interfaces.
+     * Lista de listeners utilizados para reportar eventos de Bluetooth às interfaces.
      */
     private final CopyOnWriteArrayList<BluetoothManagerListener> listeners =
             new CopyOnWriteArrayList<>();
@@ -187,7 +187,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      * Remove os BroadcastReceivers previamente registrados.
      *
      * <p>Deve ser chamado quando o componente responsável pelo Bluetooth for finalizado, evitando
-     * vazamentos de memória e registros duplicados dos receptores.</p>
+     * vazamento de memória e registros duplicados dos receptores.</p>
      */
     public synchronized void unregisterReceivers() {
         if (receiverUsers > 0)
@@ -455,7 +455,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
     }
 
     /**
-     * Cancela uma eventual descoberta de dispositivos Bluetooth em andamento.
+     * Cancela uma eventual descoberta de dispositivos por Bluetooth em andamento.
      *
      * <p>Deve ser interrompida antes de iniciar uma conexão, pois o processo de busca pode reduzir
      * significativamente o desempenho ou até impedir o estabelecimento da conexão Bluetooth.</p>

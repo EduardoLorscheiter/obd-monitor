@@ -194,8 +194,8 @@ public class Elm327Manager {
      * mantenha referências a componentes com ciclo de vida curto, como Activities.</p>
      *
      * <p>Durante a inicialização, as tarefas responsáveis pela leitura dos PIDs são cadastradas
-     * no {@link ObdScheduler}, que posteriormente controla sua execução de acordo com os
-     * respectivos intervalos e prioridades.</p>
+     * no {@link ObdScheduler}, que posteriormente controla sua execução conforme os respectivos
+     * intervalos e prioridades.</p>
      *
      * @param context Contexto utilizado para obter o contexto da aplicação.
      */
@@ -299,7 +299,7 @@ public class Elm327Manager {
      * Prepara o estado interno para uma nova conexão com o adaptador ELM327.
      *
      * <p>Verifica se já existe uma inicialização em andamento ou se a ECU já está conectada à
-     * sessão Bluetooth atual. Quando uma sessão anterior ainda está ativa, seu estado é encerrado
+     * sessão Bluetooth atual. Quando uma sessão anterior continua ativa, seu estado é encerrado
      * antes de iniciar uma nova inicialização.</p>
      *
      * @return {@code true} caso uma nova inicialização deva ser realizada, {@code false} caso a
@@ -424,7 +424,7 @@ public class Elm327Manager {
      * <p>Primeiro consulta os PIDs básicos. Caso a ECU informe suporte ao PID {@code 0x20}, também
      * são consultados os PIDs estendidos.</p>
      *
-     * <p>Ao final, as tarefas de leitura são configuradas de acordo com os PIDs identificados.</p>
+     * <p>Ao final, as tarefas de leitura são configuradas conforme os PIDs identificados.</p>
      *
      * @return {@code true} caso a consulta dos PIDs básicos seja concluída com sucesso,
      * {@code false} caso contrário.

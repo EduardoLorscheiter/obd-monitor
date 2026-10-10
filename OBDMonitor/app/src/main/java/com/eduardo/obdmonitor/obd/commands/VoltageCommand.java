@@ -5,8 +5,7 @@
  **  @class   VoltageCommand
  **  @date    14/08/2026
  **  @version 1.0
- **  @brief   Implementa a leitura da tensão de alimentação do módulo de controle (ECU) em Volts (V)
- **           .
+ **  @brief   Implementa a leitura da tensão de alimentação do módulo de controle (ECU) em (V).
  **=================================================================================================
  */
 

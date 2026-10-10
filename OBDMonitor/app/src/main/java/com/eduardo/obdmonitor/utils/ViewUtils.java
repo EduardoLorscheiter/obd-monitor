@@ -48,7 +48,7 @@ public class ViewUtils {
     }
 
     /**
-     * Atualiza o indicador visual de status.
+     * Atualiza o indicador visual de posição.
      *
      * @param view      View utilizada como indicador.
      * @param connected Estado atual do indicador.

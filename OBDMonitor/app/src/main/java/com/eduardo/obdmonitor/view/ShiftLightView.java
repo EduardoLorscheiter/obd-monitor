@@ -38,18 +38,18 @@ public class ShiftLightView extends View {
     private static final int LED_COUNT = 60;
 
     /**
-     * Altura reservada para a escala de RPM em relação a altura total da View.
+     * Altura reservada para a escala de RPM em relação à altura total da View.
      */
     private static final float RPM_SCALE_HEIGHT_FACTOR = 0.18f;
 
     /**
-     * Proporção mínima e máxima dos LEDs em relação a altura total disponível para os LEDs.
+     * Proporção mínima e máxima dos LEDs em relação à altura total disponível para os LEDs.
      */
     private static final float MIN_LED_HEIGHT_FACTOR = 0.05f;
     private static final float MAX_LED_HEIGHT_FACTOR = 0.95f;
 
     /**
-     * Espaçamento entre os LEDs, em pixels.
+     * Espaçamento entre os LEDs, em píxeis.
      */
     private static final float LED_SPACING = 2f;
 
@@ -91,7 +91,7 @@ public class ShiftLightView extends View {
     private static final float RPM_SCALE_TEXT_SIZE = 34f;
 
     /**
-     * Espaçamento entre o valor do RPM e a unidade, em pixels.
+     * Espaçamento entre o valor do RPM e a unidade, em píxeis.
      */
     private static final float RPM_UNIT_SPACING = 8f;
 
@@ -281,29 +281,29 @@ public class ShiftLightView extends View {
     /**
      * Retorna a cor correspondente à posição de um LED na barra.
      *
-     * <p>A cor é obtida através de interpolação linear entre cores adjacentes, produzindo uma
-     * transição suave entre verde, verde-limão, amarelo, laranja e vermelho. Dessa forma, evita-se
-     * mudanças abruptas de cor, proporcionando um efeito visual semelhante às Shift Lights
-     * utilizadas em ECUs automotivas.</p>
+     * <p>A cor é obtida por interpolação linear entre cores adjacentes, produzindo uma transição
+     * suave entre verde, verde-limão, amarelo, laranja e vermelho. Dessa forma, evitam-se mudanças
+     * abruptas de cor, proporcionando um efeito visual semelhante às Shift Lights utilizadas em
+     * ECUs automotivas.</p>
      *
      * @param percent Posição do LED na barra, variando entre 0.0 e 1.0.
      * @return Cor interpolada correspondente à posição informada.
      */
     private int getLedColor(float percent) {
         if (percent < LED_PERCENT_GREEN_LIME) {
-            // Progressão: Verde -> Verde limão
+            // Progressão: Verde → Verde limão
             float t = percent / LED_PERCENT_GREEN_LIME;
             return (int) argbEvaluator.evaluate(t, ledGreen, ledLime);
         } else if (percent < LED_PERCENT_LIME_YELLOW) {
-            // Progressão: Verde limão -> Amarelo
+            // Progressão: Verde limão → Amarelo
             float t = (percent - LED_PERCENT_GREEN_LIME) / (LED_PERCENT_LIME_YELLOW - LED_PERCENT_GREEN_LIME);
             return (int) argbEvaluator.evaluate(t, ledLime, ledYellow);
         } else if (percent < LED_PERCENT_YELLOW_ORANGE) {
-            // Progressão: Amarelo -> Laranja
+            // Progressão: Amarelo → Laranja
             float t = (percent - LED_PERCENT_LIME_YELLOW) / (LED_PERCENT_YELLOW_ORANGE - LED_PERCENT_LIME_YELLOW);
             return (int) argbEvaluator.evaluate(t, ledYellow, ledOrange);
         } else {
-            // Progressão: Laranja -> Vermelho
+            // Progressão: Laranja → Vermelho
             float t = (percent - LED_PERCENT_YELLOW_ORANGE) / (1f - LED_PERCENT_YELLOW_ORANGE);
             return (int) argbEvaluator.evaluate(t, ledOrange, ledRed);
         }
@@ -337,7 +337,7 @@ public class ShiftLightView extends View {
             return;
 
         // Calcula a altura disponível para desenhar os LEDs da Shift Light
-        // Obs.: Será a altura total do componente reduzida da altura da escala do RPM
+        // Obs.: Será a altura total da componente reduzida da altura da escala do RPM
         float rpmScaleHeight = height * RPM_SCALE_HEIGHT_FACTOR;
         float ledsHeight = height - rpmScaleHeight;
 

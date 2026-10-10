@@ -61,12 +61,12 @@ public class ToastUtils {
             // Obtém o fundo padrão do Toast (normalmente um drawable arredondado)
             Drawable background = toastView.getBackground();
 
-            // Define a cor de fundo de acordo com o tema atual
+            // Define a cor de fundo conforme o tema atual
             int backgroundColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorSurface);
             background.setColorFilter(new BlendModeColorFilter(backgroundColor, BlendMode.SRC_IN));
             toastView.setBackground(background);
 
-            // Define a cor do texto de acordo com o tema atual
+            // Define a cor do texto conforme o tema atual
             TextView toastText = toastView.findViewById(android.R.id.message);
             int textColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorOnSurface);
             toastText.setTextColor(textColor);

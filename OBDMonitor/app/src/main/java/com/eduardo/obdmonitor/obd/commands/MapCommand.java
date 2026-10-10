@@ -31,7 +31,7 @@ public class MapCommand extends ObdCommand<Integer> {
      * Converte a resposta do PID de pressão absoluta do coletor de admissão (MAP).
      *
      * <p>O PID {@code 0x0B} retorna um único byte (A), cujo valor representa diretamente a pressão
-     * em quilopascal.</p>
+     * em quilo pascal.</p>
      *
      * <pre>
      * Pressão (kPa) = A
