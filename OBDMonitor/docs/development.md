@@ -23,6 +23,7 @@ Use este guia ao adicionar comportamento ao OBD Monitor. Comece identificando o 
 
 - Toda Activity nova deve herdar de `com.eduardo.obdmonitor.ui.BaseActivity`. A classe base gerencia comportamentos comuns do aplicativo, inclusive o som de interação.
 - Todo botão deve tocar o som de clique do aplicativo ao ser acionado. Registre sua ação com `setClickSoundListener(view, action)`, fornecido por `BaseActivity`; evite instalar um `setOnClickListener` diretamente em botões. A regra inclui botões de imagem, botões Material e controles customizados com função de botão.
+- Todo componente novo que use cor deve referenciar um recurso declarado em `app/src/main/res/values/colors.xml`. Se a cor ainda não existir, declare-a nesse arquivo e use sua referência nomeada (`@color/...` em XML ou `R.color...` em Java), sem inserir hexadecimal diretamente no componente.
 - Use `strings.xml` para texto visível, incluindo mensagens de erro.
 - Reutilize estilos, cores e componentes visuais existentes quando adequados.
 - Pense em estados de carregamento, indisponibilidade e erro, além do estado conectado com dados.
