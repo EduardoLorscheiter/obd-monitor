@@ -48,7 +48,11 @@ public class ToastUtils {
      * @param text     Texto que será exibido na mensagem.
      */
     public static void showToast(Activity activity, String text) {
-        // Cancela o Toast anterior caso esteja sendo exibido
+        // Se o texto for nulo ou vazio, não faz nada.
+        if (text == null || text.isEmpty())
+            return;
+
+        // Cancela o Toast anterior caso esteja sendo exibido.
         if (currentToast != null)
             currentToast.cancel();
 
@@ -56,26 +60,26 @@ public class ToastUtils {
         Toast toast = Toast.makeText(activity, text, Toast.LENGTH_LONG);
         @SuppressWarnings("deprecation") View toastView = toast.getView();
 
-        // Se definiu o toast
+        // Se definiu o toast.
         if (toastView != null) {
-            // Obtém o fundo padrão do Toast (normalmente um drawable arredondado)
+            // Obtém o fundo padrão do Toast (normalmente um drawable arredondado).
             Drawable background = toastView.getBackground();
 
-            // Define a cor de fundo conforme o tema atual
+            // Define a cor de fundo conforme o tema atual.
             int backgroundColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorSurface);
             background.setColorFilter(new BlendModeColorFilter(backgroundColor, BlendMode.SRC_IN));
             toastView.setBackground(background);
 
-            // Define a cor do texto conforme o tema atual
+            // Define a cor do texto conforme o tema atual.
             TextView toastText = toastView.findViewById(android.R.id.message);
             int textColor = ViewUtils.getThemeAttrColor(activity, R.attr.colorOnSurface);
             toastText.setTextColor(textColor);
         }
 
-        // Exibe o Toast
+        // Exibe o Toast.
         toast.show();
 
-        // Guarda a referência do Toast atual para possível cancelamento futuro
+        // Guarda a referência do Toast atual para possível cancelamento futuro.
         currentToast = toast;
     }
 }

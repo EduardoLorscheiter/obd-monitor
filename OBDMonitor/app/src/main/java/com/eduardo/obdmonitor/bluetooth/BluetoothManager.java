@@ -72,6 +72,31 @@ public class BluetoothManager implements BluetoothConnectionListener {
     private Device connectingDevice;
 
     /**
+     * Tentativa associada ao dispositivo atualmente em conexão.
+     */
+    private long connectingAttemptId = -1;
+
+    /**
+     * Tentativa associada ao dispositivo conectado.
+     */
+    private long activeConnectionAttemptId = -1;
+
+    /**
+     * Evita que toques repetidos reiniciem imediatamente uma conexão que acabou de falhar.
+     */
+    private String lastFailedDeviceAddress;
+
+    /**
+     * Instante em que ocorreu a falha mais recente de conexão com o dispositivo.
+     */
+    private long lastConnectionFailureAt;
+
+    /**
+     * Intervalo mínimo antes de permitir uma nova tentativa para o mesmo dispositivo.
+     */
+    private static final long FAILED_CONNECTION_RETRY_DELAY_MS = 2000;
+
+    /**
      * Dispositivo atualmente conectado.
      *
      * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
@@ -271,10 +296,27 @@ public class BluetoothManager implements BluetoothConnectionListener {
      *
      * @param device Dispositivo Bluetooth alvo da conexão.
      */
-    public void connect(Device device) {
+    public synchronized void connect(Device device) {
+        if (device == null || device.getMacAddress() == null)
+            return;
+
         // Se o dispositivo solicitado já está conectado, não faz nada.
         if (connectedDevice != null &&
                 connectedDevice.getMacAddress().equals(device.getMacAddress())) {
+            return;
+        }
+
+        // Cliques repetidos no dispositivo que já está conectando não devem cancelar e reiniciar
+        // o socket. Reiniciar a tentativa pode provocar uma falha real no adaptador/Android.
+        if (connectingDevice != null &&
+                connectingDevice.getMacAddress().equals(device.getMacAddress())) {
+            return;
+        }
+
+        // Evita repetir imediatamente uma tentativa que acabou de falhar no adaptador.
+        if (device.getMacAddress().equals(lastFailedDeviceAddress) &&
+                System.currentTimeMillis() - lastConnectionFailureAt <
+                        FAILED_CONNECTION_RETRY_DELAY_MS) {
             return;
         }
 
@@ -295,17 +337,17 @@ public class BluetoothManager implements BluetoothConnectionListener {
         // Se já existe uma conexão estabelecida, encerra essa conexão antes de iniciar uma nova.
         if (connectedDevice != null &&
                 !connectedDevice.getMacAddress().equals(device.getMacAddress())) {
-
+            Device previousDevice = connectedDevice;
+            connectedDevice = null;
+            activeConnectionAttemptId = -1;
             connection.disconnect();
-            connectedDevice.setStatusDisconnected();
+            previousDevice.setStatusDisconnected();
 
             for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
-                        connectedDevice,
-                        context.getString(R.string.device_disconnected, connectedDevice.getName())
+                        previousDevice,
+                        context.getString(R.string.device_disconnected, previousDevice.getName())
                 );
-
-            connectedDevice = null;
         }
 
         // A camada de conexão substitui qualquer tentativa anterior quando connect() é chamado.
@@ -314,24 +356,26 @@ public class BluetoothManager implements BluetoothConnectionListener {
 
             Device previousDevice = connectingDevice;
             connectingDevice = null;
+            connectingAttemptId = -1;
 
             previousDevice.setStatusDisconnected();
             for (BluetoothManagerListener listener : listeners)
                 listener.onBluetoothManagerDisconnected(
                         previousDevice,
-                        context.getString(R.string.device_disconnected, previousDevice.getName())
+                        ""
                 );
         }
 
         // Define o novo dispositivo como alvo da tentativa.
         connectingDevice = device;
+        lastFailedDeviceAddress = null;
 
         device.setStatusConnecting();
 
         for (BluetoothManagerListener listener : listeners)
             listener.onBluetoothManagerConnecting(device);
 
-        connection.connect(bluetoothDevice);
+        connectingAttemptId = connection.connect(bluetoothDevice);
     }
 
     /**
@@ -339,7 +383,7 @@ public class BluetoothManager implements BluetoothConnectionListener {
      *
      * <p>Caso não exista uma conexão ativa, nenhuma ação é realizada.</p>
      */
-    public void disconnect() {
+    public synchronized void disconnect() {
         if (connectingDevice != null) {
             connection.disconnect();
 
@@ -406,15 +450,25 @@ public class BluetoothManager implements BluetoothConnectionListener {
         return connection.sendCommand(command);
     }
 
+    /**
+     * Atualiza o estado para conectado quando a tentativa correspondente é concluída.
+     *
+     * <p>O identificador da tentativa descarta callbacks atrasados de conexões que já foram
+     * substituídas ou canceladas.</p>
+     *
+     * @param attemptId Identificador da tentativa que estabeleceu a conexão.
+     */
     @Override
-    public void onBluetoothConnectionConnected() {
-        if (connectingDevice == null)
+    public synchronized void onBluetoothConnectionConnected(long attemptId) {
+        if (connectingDevice == null || attemptId != connectingAttemptId)
             return;
 
         connectionGeneration.incrementAndGet();
 
         Device device = connectingDevice;
         connectingDevice = null;
+        connectingAttemptId = -1;
+        activeConnectionAttemptId = attemptId;
         connectedDevice = device;
         device.setStatusConnected();
 
@@ -425,13 +479,22 @@ public class BluetoothManager implements BluetoothConnectionListener {
             );
     }
 
+    /**
+     * Limpa o estado da conexão quando a tentativa ativa é encerrada.
+     *
+     * <p>Callbacks de tentativas antigas são ignorados para não desconectar um dispositivo
+     * conectado posteriormente.</p>
+     *
+     * @param attemptId Identificador da tentativa que foi encerrada.
+     */
     @Override
-    public void onBluetoothConnectionDisconnected() {
-        if (connectedDevice == null)
+    public synchronized void onBluetoothConnectionDisconnected(long attemptId) {
+        if (connectedDevice == null || attemptId != activeConnectionAttemptId)
             return;
 
         Device device = connectedDevice;
         connectedDevice = null;
+        activeConnectionAttemptId = -1;
         device.setStatusDisconnected();
 
         for (BluetoothManagerListener listener : listeners)
@@ -441,13 +504,22 @@ public class BluetoothManager implements BluetoothConnectionListener {
             );
     }
 
+    /**
+     * Limpa o estado da tentativa atual e encaminha sua falha aos listeners registrados.
+     *
+     * @param attemptId Identificador da tentativa que falhou.
+     * @param message   Mensagem descritiva do erro de conexão.
+     */
     @Override
-    public void onBluetoothConnectionError(String message) {
-        if (connectingDevice == null)
+    public synchronized void onBluetoothConnectionError(long attemptId, String message) {
+        if (connectingDevice == null || attemptId != connectingAttemptId)
             return;
 
         Device device = connectingDevice;
         connectingDevice = null;
+        connectingAttemptId = -1;
+        lastFailedDeviceAddress = device.getMacAddress();
+        lastConnectionFailureAt = System.currentTimeMillis();
         device.setStatusDisconnected();
 
         for (BluetoothManagerListener listener : listeners)

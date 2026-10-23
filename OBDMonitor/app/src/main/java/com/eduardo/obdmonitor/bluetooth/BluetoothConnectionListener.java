@@ -17,17 +17,18 @@ public interface BluetoothConnectionListener {
     /**
      * Chamado quando um dispositivo Bluetooth é conectado.
      */
-    void onBluetoothConnectionConnected();
+    void onBluetoothConnectionConnected(long connectionId);
 
     /**
      * Chamado quando um dispositivo Bluetooth é desconectado.
      */
-    void onBluetoothConnectionDisconnected();
+    void onBluetoothConnectionDisconnected(long connectionId);
 
     /**
      * Chamado quando ocorre um erro relacionado ao Bluetooth.
      *
-     * @param message Mensagem descritiva do erro.
+     * @param connectionId Identificador da tentativa que gerou o erro.
+     * @param message      Mensagem descritiva do erro.
      */
-    void onBluetoothConnectionError(String message);
+    void onBluetoothConnectionError(long connectionId, String message);
 }

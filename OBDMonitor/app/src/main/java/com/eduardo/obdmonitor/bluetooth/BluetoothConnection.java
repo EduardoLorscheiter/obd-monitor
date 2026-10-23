@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BluetoothConnection {
     /**
@@ -31,9 +33,39 @@ public class BluetoothConnection {
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     /**
+     * Nome da thread de conexão.
+     */
+    private static final String THREAD_CONNECTION = "Bluetooth-Connection";
+
+    /**
      * Tempo máximo de espera pela resposta do dispositivo, em milissegundos.
      */
     private static final long RESPONSE_TIMEOUT_MS = 5000;
+
+    /**
+     * Valor inicial do identificador de tentativa, antes da primeira conexão.
+     */
+    private static final long INITIAL_CONNECTION_ID = 0L;
+
+    /**
+     * Número máximo de tentativas para estabelecer a conexão Bluetooth.
+     */
+    private static final int MAX_CONNECTION_ATTEMPTS = 2;
+
+    /**
+     * Espera após o cancelamento de uma tentativa, para liberar os recursos RFCOMM.
+     */
+    private static final long CANCELLATION_RECOVERY_DELAY_MS = 750;
+
+    /**
+     * Espera entre tentativas de conexão RFCOMM.
+     */
+    private static final long CONNECTION_RETRY_DELAY_MS = 1000;
+
+    /**
+     * Valor retornado por {@link InputStream#read()} quando o fluxo chega ao fim.
+     */
+    private static final int END_OF_STREAM = -1;
 
     /**
      * Contexto da aplicação utilizado para acessar recursos.
@@ -44,6 +76,13 @@ public class BluetoothConnection {
      * Listener utilizado para reportar eventos da conexão.
      */
     private final BluetoothConnectionListener listener;
+
+    /**
+     * Executa conexões em série para não sobrepor sockets RFCOMM durante uma troca rápida.
+     */
+    private final ExecutorService connectionExecutor = Executors.newSingleThreadExecutor(
+            runnable -> new Thread(runnable, THREAD_CONNECTION)
+    );
 
     /**
      * Socket utilizado para estabelecer a comunicação Bluetooth.
@@ -89,6 +128,11 @@ public class BluetoothConnection {
     private volatile long connectionId;
 
     /**
+     * Indica que a próxima conexão substitui uma tentativa cancelada e pode exigir recuperação.
+     */
+    private boolean recoverNextConnectionAfterCancellation;
+
+    /**
      * Cria uma conexão Bluetooth.
      *
      * @param context  Contexto da aplicação utilizado para acessar recursos.
@@ -97,116 +141,223 @@ public class BluetoothConnection {
     protected BluetoothConnection(Context context, BluetoothConnectionListener listener) {
         this.context = context;
         this.listener = listener;
-        this.connectionId = 0;
+        this.connectionId = INITIAL_CONNECTION_ID;
     }
 
     /**
-     * Inicia uma tentativa de conexão com o dispositivo Bluetooth.
+     * Inicia uma tentativa assíncrona de conexão RFCOMM com um dispositivo Bluetooth.
      *
-     * <p>A conexão é realizada em uma thread separada para evitar o bloqueio da thread principal.
-     * Cada tentativa recebe um identificador exclusivo, permitindo que uma tentativa anterior seja
-     * invalidada caso uma nova conexão, seja solicitada.</p>
+     * <p>O estado da tentativa é atualizado sob o bloqueio deste objeto, mas a abertura do socket
+     * é executada no executor de conexão para não bloquear a thread chamadora. O método retorna
+     * antes de a conexão terminar; o resultado é informado por
+     * {@link BluetoothConnectionListener#onBluetoothConnectionConnected(long)} ou
+     * {@link BluetoothConnectionListener#onBluetoothConnectionError(long, String)}.</p>
      *
-     * <p>Uma tentativa anterior é cancelada antes de iniciar a nova, garantindo prioridade à
-     * solicitação mais recente.</p>
+     * <p>Uma nova solicitação cancela e invalida uma tentativa ainda em andamento. Se já houver
+     * uma conexão ativa, seus fluxos e socket são fechados antes de iniciar a substituição. Cada
+     * solicitação recebe um identificador próprio, usado para descartar resultados atrasados de
+     * tentativas canceladas ou substituídas.</p>
      *
-     * @param bluetoothDevice Dispositivo Bluetooth remoto (físico).
+     * <p>Após uma falha de conexão, é feita uma segunda tentativa após uma pausa curta. Uma
+     * tentativa que substitui outra cancelada também aguarda a liberação dos recursos RFCOMM antes
+     * de começar.</p>
+     *
+     * @param bluetoothDevice Dispositivo Bluetooth remoto ao qual estabelecer a conexão.
+     * @return Identificador da solicitação, disponível para correlacionar os callbacks assíncronos
+     * com esta tentativa.
      */
-    protected synchronized void connect(BluetoothDevice bluetoothDevice) {
+    protected synchronized long connect(BluetoothDevice bluetoothDevice) {
         // Se houver uma tentativa de conexão está em andamento.
         // Obs.: Uma nova solicitação sempre substitui uma tentativa anterior.
         if (connecting)
             cancelConnection();
 
-        // Se houver uma conexão estabelecida.
-        // Obs.: Não substitui uma conexão já estabelecida sem que o gerenciador a encerre primeiro.
-        if (connected)
-            return;
+        // Registra se a nova tentativa precisa aguardar a liberação dos recursos RFCOMM devido ao
+        // cancelamento de uma tentativa anterior.
+        // Obs.: A indicação é consumida nesta solicitação para não ser reutilizada indevidamente.
+        boolean recoverAfterCancellation = recoverNextConnectionAfterCancellation;
+        recoverNextConnectionAfterCancellation = false;
 
-        // Gera um novo identificador para a tentativa atual.
+        // Pode ocorrer de o socket já ter sido encerrado enquanto o callback de sucesso
+        // ainda aguarda para ser processado pelo gerenciador.
+        // Nesse intervalo, uma nova solicitação deve substituir os recursos anteriores,
+        // em vez de manter a conexão antiga como se estivesse disponível para reutilização.
+        if (connected) {
+            // Fecha os fluxos e os sockets anteriores, limpando suas referências.
+            // O fechamento não gera notificações de erro porque faz parte da substituição
+            // intencional da conexão.
+            connected = false;
+            input = closeResource(input, false);
+            output = closeResource(output, false);
+            socket = closeResource(socket, false);
+            pendingSocket = closeResource(pendingSocket, false);
+        }
+
+        // Cria um novo identificador para a solicitação.
+        // Ele permite reconhecer e descartar resultados pertencentes a tentativas antigas.
         long currentConnectionId = ++connectionId;
 
-        // Indica que uma tentativa de conexão está em andamento.
+        // Marca a conexão como em andamento antes de agendar a tarefa.
+        // Isso impede que outra operação considere o gerenciador disponível para uma nova tentativa
+        // enquanto esta solicitação aguarda sua execução.
         connecting = true;
 
-        new Thread(() -> {
-            // Recursos locais utilizados exclusivamente por esta tentativa de conexão.
-            BluetoothSocket localSocket = null;
-            InputStream localInput = null;
-            OutputStream localOutput = null;
-
-            try {
-                // Cria um socket RFCOMM associado ao serviço SPP do dispositivo remoto.
-                // Obs.: A conexão será estabelecida na chamada connect(), executada nesta thread
-                // para evitar bloquear a thread principal da aplicação.
-                localSocket = bluetoothDevice.createRfcommSocketToServiceRecord(SERIAL_UUID);
-                synchronized (this) {
-                    // Verifica se a tentativa ainda é válida antes de registrar o socket.
-                    // Obs.: Caso tenha sido cancelada enquanto o socket era criado, fecha o recurso
-                    // e encerra esta thread sem iniciar a conexão.
-                    if (currentConnectionId != connectionId || !connecting) {
-                        closeResource(localSocket, false);
-                        return;
-                    }
-                    // Registra o socket antes de iniciar a conexão para permitir que
-                    // cancelConnection() tente interromper a operação connect() em andamento.
-                    pendingSocket = localSocket;
-                }
-                localSocket.connect();
-
-                // Obtém os fluxos de comunicação do socket.
-                localInput = localSocket.getInputStream();
-                localOutput = localSocket.getOutputStream();
-
-                synchronized (this) {
-                    // Verifica se a tentativa ainda é válida antes de assumir os recursos.
-                    // Obs.: Caso tenha sido cancelada ou substituída por outra tentativa, os
-                    // recursos recém-criados são fechados sem gerar notificações de erro.
-                    if (currentConnectionId != connectionId || !connecting) {
-                        closeResource(localInput, false);
-                        closeResource(localOutput, false);
-                        closeResource(localSocket, false);
-                        return;
-                    }
-
-                    // A tentativa ainda é válida. Transfere os recursos locais para a instância,
-                    // que passa a ser responsável por utilizá-los e encerrá-los.
-                    // A remoção de pendingSocket indica que o socket deixou de ser pendente.
-                    socket = localSocket;
-                    pendingSocket = null;
-                    input = localInput;
-                    output = localOutput;
-
-                    // Atualiza o estado somente após a conexão e a obtenção dos fluxos terem sido
-                    // concluídas com sucesso.
-                    connected = true;
-                    connecting = false;
-                }
-
-                listener.onBluetoothConnectionConnected();
-            } catch (IOException e) {
-                // Fecha os recursos criados por esta tentativa sem gerar erro de fechamento.
-                closeResource(localInput, false);
-                closeResource(localOutput, false);
-                closeResource(localSocket, false);
-
-                synchronized (this) {
-                    // Uma tentativa cancelada ou substituída pode lançar IOException porque seu
-                    // socket foi fechado. Nesse caso, o erro não pertence à tentativa atual e não
-                    // deve ser reportado ao listener.
-                    if (currentConnectionId != connectionId)
-                        return;
-
-                    // A tentativa atual falhou. Limpa seu estado antes de notificar o gerenciador
-                    // sobre o erro de conexão.
-                    connected = false;
-                    connecting = false;
-                    pendingSocket = null;
-                }
-
-                notifyError(BluetoothConnectionError.CONNECTION_FAILED);
+        // Executa o estabelecimento da conexão em uma thread dedicada, mantendo a thread chamadora
+        // livre para continuar o processamento da aplicação.
+        connectionExecutor.execute(() -> {
+            // Antes de iniciar qualquer operação de conexão, verifica se esta tarefa ainda
+            // corresponde à solicitação atual.
+            // Obs.: Uma tarefa pode ter permanecido na fila enquanto outra solicitação a
+            // substituía.
+            synchronized (this) {
+                if (currentConnectionId != connectionId || !connecting)
+                    return;
             }
-        }, "Bluetooth-Connection").start();
+
+            // Se a tentativa anterior foi cancelada, aguarda um intervalo adicional para permitir
+            // que o Android libere os recursos RFCOMM utilizados anteriormente.
+            // Obs.: A espera é interrompida logicamente se esta solicitação deixar de ser válida.
+            if (recoverAfterCancellation && !waitBeforeRetry(
+                    currentConnectionId,
+                    CANCELLATION_RECOVERY_DELAY_MS
+            ))
+                return;
+
+            // Executa as tentativas de conexão.
+            // Obs.: Cada tentativa utiliza recursos locais, que só serão publicados como recursos
+            // ativos depois que a conexão e a obtenção dos fluxos forem concluídas.
+            for (int attemptNumber = 1; attemptNumber <= MAX_CONNECTION_ATTEMPTS; attemptNumber++) {
+                BluetoothSocket localSocket = null;
+                InputStream localInput = null;
+                OutputStream localOutput = null;
+
+                try {
+                    // Cria um socket RFCOMM associado ao serviço Serial Port Profile (SPP).
+                    // Obs.: O socket ainda não está conectado neste ponto.
+                    localSocket = bluetoothDevice.createRfcommSocketToServiceRecord(SERIAL_UUID);
+
+                    // Registra o socket pendente para permitir que outra operação o feche caso a
+                    // tentativa seja cancelada enquanto connect() estiver bloqueado.
+                    // A validação também evita iniciar uma tentativa que já foi substituída.
+                    synchronized (this) {
+                        if (currentConnectionId != connectionId || !connecting) {
+                            closeResource(localSocket, false);
+                            return;
+                        }
+                        pendingSocket = localSocket;
+                    }
+
+                    // Estabelece a conexão RFCOMM.
+                    // Obs.: Esta operação pode bloquear até conectar ou ocorrer uma falha.
+                    localSocket.connect();
+
+                    // Obtém os fluxos utilizados para enviar comandos ao dispositivo e receber as
+                    // respectivas respostas.
+                    localInput = localSocket.getInputStream();
+                    localOutput = localSocket.getOutputStream();
+
+                    // Confirma que a tentativa ainda é válida antes de publicar os recursos.
+                    // Obs.: Se outra solicitação tiver substituído esta conexão durante a operação,
+                    // os recursos recém-criados serão fechados e não serão reutilizados.
+                    synchronized (this) {
+                        if (currentConnectionId != connectionId || !connecting) {
+                            closeResource(localInput, false);
+                            closeResource(localOutput, false);
+                            closeResource(localSocket, false);
+                            return;
+                        }
+
+                        // Transfere os recursos locais para os atributos da conexão.
+                        // A partir deste ponto, eles passam a representar a sessão ativa.
+                        socket = localSocket;
+                        pendingSocket = null;
+                        input = localInput;
+                        output = localOutput;
+
+                        // Atualiza o estado interno após a conexão e a obtenção dos fluxos terem
+                        // sido concluídas com sucesso.
+                        connected = true;
+                        connecting = false;
+                    }
+
+                    // Informa ao listener que a conexão foi estabelecida.
+                    // Obs.: O identificador permite ao gerenciador validar se o evento ainda
+                    // pertence à tentativa que ele considera atual.
+                    listener.onBluetoothConnectionConnected(currentConnectionId);
+                    return;
+                } catch (IOException e) {
+                    // Libera os recursos criados pela tentativa que falhou.
+                    // Obs.: Os recursos locais podem não ter sido transferidos para os atributos
+                    // da conexão, portanto devem ser tratados independentemente.
+                    closeResource(localInput, false);
+                    closeResource(localOutput, false);
+                    closeResource(localSocket, false);
+
+                    // Verifica se a tentativa continua válida antes de atualizar o estado ou
+                    // decidir se deve executar uma nova tentativa.
+                    synchronized (this) {
+                        if (currentConnectionId != connectionId || !connecting)
+                            return;
+
+                        // A tentativa atual não possui mais um socket pendente válido.
+                        pendingSocket = null;
+
+                        // Somente a falha da última tentativa encerra o estado de conexão
+                        // em andamento. Antes disso, ainda poderá ocorrer uma nova tentativa.
+                        if (attemptNumber == MAX_CONNECTION_ATTEMPTS) {
+                            connected = false;
+                            connecting = false;
+                        }
+                    }
+
+                    // Se ainda houver uma tentativa disponível, aguarda antes de recriar o socket.
+                    // Isso dá ao sistema tempo para liberar os recursos RFCOMM da operação
+                    // anterior.
+                    if (attemptNumber < MAX_CONNECTION_ATTEMPTS) {
+                        // Reconstrói o socket após uma pausa curta; o Android pode ainda
+                        // estar liberando recursos RFCOMM da tentativa anterior.
+                        if (!waitBeforeRetry(currentConnectionId, CONNECTION_RETRY_DELAY_MS))
+                            return;
+                        continue;
+                    }
+
+                    // Todas as tentativas falharam.
+                    // Informa o erro ao listener somente se esta ainda for a tentativa válida.
+                    listener.onBluetoothConnectionError(
+                            currentConnectionId,
+                            BluetoothConnectionError.CONNECTION_FAILED.getMessage(context)
+                    );
+                }
+            }
+        });
+
+        // Retorna imediatamente o identificador da solicitação.
+        // O resultado efetivo será comunicado posteriormente pelos callbacks do listener.
+        return currentConnectionId;
+    }
+
+    /**
+     * Aguarda a liberação do RFCOMM e abandona a espera se outra seleção substituir a tentativa.
+     *
+     * <p>Se a thread for interrompida, restaura seu estado de interrupção e encerra a espera.</p>
+     *
+     * @param attemptId Identificador da tentativa que deve continuar válida.
+     * @param delayMs   Tempo de espera antes de verificar novamente a tentativa.
+     * @return {@code true} se a tentativa ainda for atual e estiver em andamento, {@code false}
+     * caso contrário.
+     */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean waitBeforeRetry(long attemptId, long delayMs) {
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+
+        synchronized (this) {
+            return attemptId == connectionId && connecting;
+        }
     }
 
     /**
@@ -232,7 +383,7 @@ public class BluetoothConnection {
         socket = closeResource(socket, true);
         pendingSocket = closeResource(pendingSocket, false);
 
-        listener.onBluetoothConnectionDisconnected();
+        listener.onBluetoothConnectionDisconnected(connectionId);
     }
 
     /**
@@ -254,6 +405,7 @@ public class BluetoothConnection {
         // Invalida a tentativa atual. Quando a thread de conexão verificar connectionId,
         // reconhecerá que não deve mais concluir essa tentativa.
         connectionId++;
+        recoverNextConnectionAfterCancellation = true;
 
         // O cancelamento é intencional, portanto falhas ao fechar esses recursos não devem ser
         // reportadas como erros de comunicação ao usuário.
@@ -355,7 +507,7 @@ public class BluetoothConnection {
             int data = input.read();
 
             // Encerra a leitura caso o fluxo tenha sido fechado.
-            if (data == -1)
+            if (data == END_OF_STREAM)
                 break;
 
             char character = (char) data;
@@ -377,6 +529,6 @@ public class BluetoothConnection {
      */
     private void notifyError(BluetoothConnectionError error) {
         if (listener != null)
-            listener.onBluetoothConnectionError(error.getMessage(context));
+            listener.onBluetoothConnectionError(connectionId, error.getMessage(context));
     }
 }
