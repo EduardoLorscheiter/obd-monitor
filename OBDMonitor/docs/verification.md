@@ -1,10 +1,19 @@
 # Verificação e testes
 
-O módulo declara JUnit para testes locais e AndroidX Test/Espresso para testes instrumentados. A cobertura atual do repositório é limitada; confirme os testes existentes antes de assumir que um fluxo está coberto.
+Este documento é a fonte única dos comandos e limites de verificação. Consulte [desenvolvimento](development.md) para as regras de implementação e [comportamento atual](current-behavior.md) para os fluxos existentes que uma alteração pode afetar.
 
-## Comandos
+## Cobertura atual observada
 
-No Windows, com Android SDK configurado:
+- `app/src/test/.../SupportedPidsCommandTest.java` verifica leitura da máscara básica e identificação do PID `0x20` com bit ligado ou desligado.
+- `ExampleUnitTest` é apenas o teste de soma gerado pelo modelo; não cobre comportamento do aplicativo.
+- `app/src/androidTest/.../ExampleInstrumentedTest.java` verifica o package name do contexto Android; não valida Bluetooth ou telas.
+- Não há cobertura automatizada identificada para as fórmulas dos demais PIDs, `ObdScheduler`, ciclo Bluetooth/ELM327 ou apresentação de estados indisponíveis.
+
+Confirme os testes presentes no checkout antes de assumir que essa lista continua atualizada.
+
+## Comandos no Windows
+
+Com Android SDK configurado:
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest
@@ -12,17 +21,16 @@ No Windows, com Android SDK configurado:
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
-O teste instrumentado requer dispositivo/emulador conectado. Execute verificações relacionadas à mudança e informe claramente qualquer comando não executado ou bloqueado por ambiente.
+O último comando requer dispositivo ou emulador conectado. Execute apenas as verificações pertinentes ao escopo solicitado e informe os comandos executados e seus resultados. Se o ambiente bloquear uma checagem, identifique a limitação; não a descreva como sucesso.
 
-## O que cobrir
+## Escolha de verificação
 
-- **Parser OBD:** respostas válidas, limites de bytes, entrada nula/curta, caracteres inválidos, cabeçalho inesperado e resposta negativa/não suportada.
-- **Agendador:** suporte do PID, prioridade, prontidão por intervalo e atualização do horário de execução.
-- **Estado de conexão:** sucesso, falha, encerramento, timeout, cancelamento e reconexão quando aplicável.
-- **Interface:** estados de permissão e conexão, ausência de dados e atualização/limpeza de listeners conforme ciclo de vida.
+| Área alterada                                   | Verificação adequada                                                                                                                                                    |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Fórmula, parsing ou máscara de PID              | Testes unitários determinísticos para resposta válida, limites, tamanho, caracteres inválidos, cabeçalho errado e não suporte.                                          |
+| Scheduler                                       | Testes para suporte, prontidão por intervalo, ordenação por prioridade e atualização do horário de execução.                                                            |
+| Transporte Bluetooth/ELM327                     | Testes isolados para estados, falha, fechamento, cancelamento e callbacks; compilação Android para integração. Testes unitários não devem depender de adaptador físico. |
+| Activity, recursos, permissões ou ciclo de vida | Compilação Android e testes instrumentados pertinentes; valide estados de permissão/conexão em dispositivo ou emulador quando necessário.                               |
+| Alteração apenas documental                     | Revise os Markdown e seus links; não é necessário executar testes de aplicação.                                                                                         |
 
-Prefira testes unitários determinísticos para fórmulas e regras de agendamento. Para dependências de Bluetooth, isole o comportamento testável e não dependa de um adaptador físico em testes unitários.
-
-## Critério de relato
-
-Relate o comando executado e seu resultado. Diferencie falha de código de limitação ambiental, como falta de SDK, emulador ou dispositivo. Não trate compilação como prova de correção de parsing ou comportamento Bluetooth.
+Compilação não comprova fórmulas OBD nem o comportamento real de um adaptador. Relate limites de SDK, emulador ou dispositivo que afetarem a checagem.

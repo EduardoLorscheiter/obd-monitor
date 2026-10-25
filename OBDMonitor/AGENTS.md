@@ -1,34 +1,11 @@
 # Orientações para agentes
 
-## Contexto do projeto
+Este arquivo é o ponto de entrada para agentes que trabalham neste repositório. Leia os documentos abaixo na ordem pertinente; cada assunto tem uma fonte normativa própria.
 
-OBD Monitor é um aplicativo Android nativo para leitura de dados veiculares por OBD-II, com adaptador ELM327 via Bluetooth. O código de produção está em `app/src/main/java/com/eduardo/obdmonitor`; recursos Android ficam em `app/src/main/res`.
+1. [Arquitetura](docs/architecture.md) para localizar os componentes e entender suas relações.
+2. [Comportamento atual](docs/current-behavior.md) para conhecer os fluxos existentes e as limitações confirmadas no código.
+3. [Desenvolvimento](docs/development.md) para todas as regras de implementação, convenções e extensões do aplicativo.
+4. [Verificação](docs/verification.md) para escolher e relatar verificações.
+5. [Skill obd-monitor](.agents/skills/obd-monitor/SKILL.md) quando a tarefa envolver diretamente este aplicativo.
 
-Antes de implementar uma mudança, leia [a visão geral](docs/architecture.md) e a skill [obd-monitor](.agents/skills/obd-monitor/SKILL.md). Consulte também os guias específicos de implementação e verificação quando forem pertinentes.
-
-## Regras de implementação
-
-- Preserve Java como linguagem de produção e compatibilidade Java 11, salvo decisão explícita de migração.
-- Siga os pacotes existentes: `bluetooth`, `elm327`, `model`, `obd.commands`, `obd.scheduler`, `ui`, `utils` e `view`. Evite criar camadas ou dependências sem necessidade concreta.
-- Toda nova `Activity` deve estender `BaseActivity` (`com.eduardo.obdmonitor.ui.BaseActivity`), nunca diretamente `AppCompatActivity` ou outra classe base, para preservar os comportamentos comuns do aplicativo.
-- Todo botão e controle que funcione como botão deve reproduzir o som de clique configurado. Em Activities, conecte a ação por `setClickSoundListener(view, action)` herdado de `BaseActivity`; não substitua esse listener por `setOnClickListener` sem som. Isso inclui `Button`, `MaterialButton`, `ImageButton` e elementos customizados clicáveis que atuem como botões.
-- Todo componente novo que use cor deve referenciar um recurso declarado em `app/src/main/res/values/colors.xml`. Se a cor necessária ainda não existir, declare-a nesse arquivo e use o recurso (`@color/...` em XML ou `R.color...` em Java); não coloque valores hexadecimais diretamente no componente.
-- Mantenha responsabilidades separadas: transporte Bluetooth, protocolo ELM327, interpretação OBD-II, agendamento e apresentação não devem ser acoplados sem motivo.
-- Trate falhas de conexão, respostas incompletas/malformadas, permissões e ciclo de vida Android como situações normais que precisam de comportamento definido.
-- Preserve compatibilidade com o `minSdk` e `targetSdk` configurados em `app/build.gradle.kts`; confira requisitos atuais de permissões Android antes de alterar fluxos Bluetooth.
-- Não registre dados sensíveis nem esconda erros com valores que pareçam medições válidas. Preserve o último valor válido somente quando essa for a semântica apropriada e deixe estados indisponíveis explícitos.
-- Atualize documentação com mudanças de arquitetura, comandos/PIDs, permissões ou fluxos de usuário.
-
-## Convenções
-
-- Use nomes claros e consistentes com o domínio automotivo e com os pacotes atuais.
-- Siga as regras de JavaDoc e cabeçalho de classes descritas em [docs/development.md](docs/development.md).
-- Recursos visuais e textos devem seguir os recursos Android existentes; evite strings de interface hardcoded no Java.
-- Ao criar componentes visuais, centralize todas as cores em `colors.xml` e referencie os recursos nomeados em layouts, drawables, estilos e código.
-- Ao criar ou alterar telas, confira cada controle acionável e garanta que todos os botões usem o comportamento sonoro comum.
-- Respeite o estilo local do arquivo alterado, incluindo documentação Java já usada nas classes do domínio.
-- Mantenha mudanças focadas e não edite arquivos gerados em `build/` ou `app/build/`.
-
-## Verificação
-
-Escolha verificações proporcionais ao código alterado. Para lógica Java, priorize testes unitários; para integração com Android, valide compilação e os testes relevantes. Não afirme que algo foi verificado sem executar a verificação e observar o resultado. Consulte [verificação e testes](docs/verification.md) para comandos e limites conhecidos.
+O código é a fonte de verdade sobre o comportamento executado. As regras para confirmar fatos e manter a documentação estão em [desenvolvimento](docs/development.md).

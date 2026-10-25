@@ -1,56 +1,65 @@
-# Guia de implementação
+# Guia de desenvolvimento
 
-Use este guia ao adicionar comportamento ao OBD Monitor. Comece identificando o ponto de extensão existente e mantenha a mudança alinhada aos limites descritos em [arquitetura](architecture.md).
+Este é o documento normativo único para convenções e regras de implementação do repositório. Consulte [arquitetura](architecture.md) para limites e organização dos componentes, e [comportamento atual](current-behavior.md) para os fluxos que precisam ser preservados ou alterados deliberadamente. Use [verificação](verification.md) para escolher as checagens.
 
-## Documentação Java e cabeçalho de classe
+## Linguagem e estrutura
 
-- Toda classe Java deve começar com um cabeçalho no formato abaixo. Atualize o nome do arquivo e da classe, a data (`DD/MM/AAAA`) e o resumo para corresponder ao arquivo; mantenha o autor e a versão inicial conforme o padrão do projeto.
-- Todo método e construtor declarado deve possuir JavaDoc, incluindo métodos privados e sobrescritos. Descreva o comportamento e documente parâmetros, retorno e exceções quando aplicável.
+- Preserve Java como linguagem de produção e a compatibilidade Java configurada em `app/build.gradle.kts`, salvo decisão explícita de migração.
+- Siga os pacotes existentes: `bluetooth`, `elm327`, `model`, `obd.commands`, `obd.scheduler`, `ui`, `utils` e `view`. Crie outra camada ou dependência somente quando houver necessidade concreta.
+- Mantenha transporte, protocolo ELM327, interpretação OBD-II, agendamento e apresentação separados conforme [arquitetura](architecture.md).
+- Use o catálogo `gradle/libs.versions.toml` para versões de dependências que possam ser administradas por ele. Explique a necessidade e confira compatibilidade com SDK e Java configurados.
+- Não edite arquivos gerados em `build/` ou `app/build/`.
+
+## JavaDoc e cabeçalho de classe
+
+Toda classe Java deve começar com um cabeçalho no formato abaixo. Atualize arquivo, classe, data (`DD/MM/AAAA`) e resumo; mantenha autor e versão inicial conforme o padrão do projeto. Todo método e construtor declarado deve ter JavaDoc, incluindo métodos privados e sobrescritos. Documente comportamento, parâmetros, retorno e exceções quando aplicável.
 
 ```java
 /*
  **=================================================================================================
- **  @file    DialogUtils.java
+ **  @file    FileName.java
  **  @author  Eduardo Lorscheiter
- **  @class   DialogUtils
- **  @date    24/10/2026
+ **  @class   FileName
+ **  @date    DD/MM/AAAA
  **  @version 1.0
  **  @brief   Exibe diálogos informativos com o tema visual do aplicativo.
  **=================================================================================================
  */
 ```
 
-## Adicionar um comando OBD-II
+Respeite o estilo e o nível de documentação usado no arquivo e pacote alterados.
 
-1. Inspecione `obd/commands`, `ObdCommand` e o caminho que consome os comandos antes de definir uma nova API.
-2. Confirme o serviço, PID, tamanho de resposta, codificação, fórmula, unidade e comportamento de resposta negativa usando uma fonte técnica adequada.
-3. Implemente o parsing em uma classe coesa. Valide `null`, cabeçalho/serviço e comprimento antes de converter bytes; não deixe uma resposta inválida virar uma medição plausível.
-4. Defina explicitamente a semântica para resposta inválida: erro/indisponibilidade ou último valor válido, conforme o contrato existente. Não misture os dois silenciosamente.
-5. Se o PID entrar no painel ou agendador, integre-o nos pontos existentes e escolha prioridade/intervalo com base no custo e na frequência útil da leitura.
-6. Cubra parsing válido, limites, resposta incorreta, resposta curta e PID não suportado.
+## Activities, controles e recursos visuais
+
+- Toda Activity nova deve estender `com.eduardo.obdmonitor.ui.BaseActivity`, para manter os comportamentos comuns e a integração dos gerenciadores.
+- Todo botão ou controle que atua como botão precisa reproduzir o som de clique do aplicativo. Em Activities, registre a ação por `setClickSoundListener(view, action)` herdado de `BaseActivity`. A regra inclui `Button`, `MaterialButton`, `ImageButton` e controles customizados clicáveis com função de botão.
+- Todo componente novo que use cor deve referenciar um recurso declarado em `app/src/main/res/values/colors.xml`. Se a cor não existir, declare-a ali e use `@color/...` em XML ou `R.color...` em Java; não coloque valores hexadecimais diretamente no componente.
+- Texto visível deve vir de `strings.xml`, incluindo mensagens de erro. Mantenha recursos existentes de tema, cor, layout e strings.
+- Ao criar ou alterar uma tela, trate estados de carregamento, indisponibilidade e erro, além do estado conectado. Evite manter Activity ou View além do ciclo de vida e remova callbacks/listeners quando necessário.
 
 ## Bluetooth e ELM327
 
-- Mantenha transporte, ciclo de conexão e protocolo ELM327 em seus componentes próprios.
-- Considere timeouts, encerramento do socket, cancelamento e reconexão; callbacks podem chegar quando uma tela já não está ativa.
-- Não faça trabalho de rede ou parsing pesado na thread principal.
-- Trate permissões negadas, Bluetooth desligado, dispositivo indisponível e falha de pareamento como estados distintos quando a interface precisar orientar a pessoa.
-- Normalize respostas em um ponto claro, preservando informação suficiente para detectar erros e cabeçalhos inesperados.
+Antes de alterar comunicação, consulte o fluxo real em [comportamento atual](current-behavior.md) e os limites de [arquitetura](architecture.md).
 
-## Interface e recursos
+- Preserve as responsabilidades distintas de transporte Bluetooth e protocolo ELM327.
+- Defina comportamento para falhas de conexão, resposta vazia ou incompleta, timeout, cancelamento, reconexão, permissões negadas e ciclo de vida Android.
+- Não faça I/O de Bluetooth nem parsing pesado na thread principal.
+- Antes de alterar permissões ou descoberta/conexão, confira os requisitos atuais por versão Android. Alinhe manifesto, verificação de permissão, solicitação em runtime e tratamento de recusa; declarar uma permissão no manifesto não substitui o fluxo em runtime.
+- Normalize respostas em um ponto claro, preservando dados suficientes para detectar cabeçalhos e erros inesperados.
 
-- Toda Activity nova deve herdar de `com.eduardo.obdmonitor.ui.BaseActivity`. A classe base gerencia comportamentos comuns do aplicativo, inclusive o som de interação.
-- Todo botão deve tocar o som de clique do aplicativo ao ser acionado. Registre sua ação com `setClickSoundListener(view, action)`, fornecido por `BaseActivity`; evite instalar um `setOnClickListener` diretamente em botões. A regra inclui botões de imagem, botões Material e controles customizados com função de botão.
-- Todo componente novo que use cor deve referenciar um recurso declarado em `app/src/main/res/values/colors.xml`. Se a cor ainda não existir, declare-a nesse arquivo e use sua referência nomeada (`@color/...` em XML ou `R.color...` em Java), sem inserir hexadecimal diretamente no componente.
-- Use `strings.xml` para texto visível, incluindo mensagens de erro.
-- Reutilize estilos, cores e componentes visuais existentes quando adequados.
-- Pense em estados de carregamento, indisponibilidade e erro, além do estado conectado com dados.
-- Evite manter referências a Activity/View depois do ciclo de vida; cancele atualizações e listeners quando apropriado.
+## Comandos OBD-II e parsing
+
+1. Inspecione `obd/commands`, `ObdCommand` e os consumidores antes de definir uma API ou semântica nova.
+2. Confirme serviço, PID, blocos de suporte, tamanho, codificação, fórmula, unidade e resposta negativa em fonte técnica adequada.
+3. Valide resposta e tamanho antes de converter bytes. Resposta incorreta não pode virar uma medição plausível por acidente.
+4. Defina explicitamente se erro significa indisponibilidade ou preservação do último valor válido; mantenha a mesma semântica nos comandos, gerenciador, listeners e UI.
+5. Ao adicionar PID ao painel, integre suporte, scheduler, listener e view. Escolha prioridade e intervalo conscientemente e documente o comportamento alterado.
+6. Cubra entradas válidas, limites, resposta curta ou incorreta e PID não suportado com testes proporcionais; veja [verificação](verification.md).
 
 ## Configurações e persistência
 
-Inspecione `SettingsUtils` e os chamadores antes de alterar armazenamento ou chaves. Mantenha padrões seguros, valide valores lidos e trate configurações antigas ou ausentes sem falha.
+Inspecione `SettingsUtils`, as chaves e os chamadores antes de alterar persistência. Valide valores lidos, mantenha padrões explícitos e trate preferências ausentes ou antigas. Documente mudanças nos valores e no fluxo em [comportamento atual](current-behavior.md).
 
-## Mudanças de dependências e plataforma
+## Atualização da documentação
 
-Use o catálogo `gradle/libs.versions.toml` quando a dependência puder ser gerida por ele. Explique o motivo da dependência e confira compatibilidade com SDK/Java configurados. Alterações de permissões Android precisam refletir manifesto e fluxo em runtime.
+Se uma mudança alterar fluxo de usuário, comportamento de conexão, PID/fórmula/unidade, permissões, configuração ou arquitetura, atualize o documento que descreve esse assunto. Os demais Markdown devem referenciar a fonte em vez de repetir o conteúdo. Para identificar o dono de cada assunto, use [orientações para agentes](../AGENTS.md) e os links no início dos documentos.
