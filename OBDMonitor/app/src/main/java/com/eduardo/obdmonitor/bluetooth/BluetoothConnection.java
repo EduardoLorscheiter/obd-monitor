@@ -148,8 +148,8 @@ public class BluetoothConnection {
      * Inicia uma tentativa assíncrona de conexão RFCOMM com um dispositivo Bluetooth.
      *
      * <p>O estado da tentativa é atualizado sob o bloqueio deste objeto, mas a abertura do socket
-     * é executada no executor de conexão para não bloquear a thread chamadora. O método retorna
-     * antes de a conexão terminar; o resultado é informado por
+     * é executada no executor de conexão para não bloquear a thread chamadora. Retorna antes de a
+     * conexão terminar; o resultado é informado por
      * {@link BluetoothConnectionListener#onBluetoothConnectionConnected(long)} ou
      * {@link BluetoothConnectionListener#onBluetoothConnectionError(long, String)}.</p>
      *
@@ -284,6 +284,27 @@ public class BluetoothConnection {
                     // Obs.: O identificador permite ao gerenciador validar se o evento ainda
                     // pertence à tentativa que ele considera atual.
                     listener.onBluetoothConnectionConnected(currentConnectionId);
+                    return;
+                } catch (SecurityException e) {
+                    // Permissões Bluetooth podem ser revogadas enquanto a tentativa está em
+                    // andamento. Isso não deve encerrar o processo nem disparar uma repetição.
+                    closeResource(localInput, false);
+                    closeResource(localOutput, false);
+                    closeResource(localSocket, false);
+
+                    synchronized (this) {
+                        if (currentConnectionId != connectionId || !connecting)
+                            return;
+
+                        pendingSocket = null;
+                        connected = false;
+                        connecting = false;
+                    }
+
+                    listener.onBluetoothConnectionError(
+                            currentConnectionId,
+                            BluetoothConnectionError.CONNECTION_FAILED.getMessage(context)
+                    );
                     return;
                 } catch (IOException e) {
                     // Libera os recursos criados pela tentativa que falhou.
@@ -466,7 +487,7 @@ public class BluetoothConnection {
                 return null;
             }
             return response;
-        } catch (IOException e) {
+        } catch (SecurityException | IOException e) {
             notifyError(BluetoothConnectionError.COMMUNICATION_ERROR);
             disconnect();
             return null;

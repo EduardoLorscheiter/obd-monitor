@@ -36,12 +36,14 @@
     <string name="bluetooth_is_not_supported">Bluetooth não suportado!</string>
     <string name="bluetooth_permission_not_granted">Permissão Bluetooth não concedida!</string>
     <string name="no_paired_bluetooth_devices_found">Nenhum dispositivo Bluetooth pareado encontrado!</string>
+    <string name="turn_off_bluetooth_in_android_settings">Desligue o Bluetooth pelas configurações do Android!</string>
     <!-- ======================================================================================= -->
     <!-- OBD-II -->
     <!-- ======================================================================================= -->
     <string name="invalid_elm327_device">O dispositivo não respondeu como um ELM327!</string>
+    <string name="elm327_at_command_failed">O adaptador não confirmou o comando %1$s.</string>
+    <string name="elm327_ecu_pids_unavailable">O ELM327 respondeu, mas a ECU não retornou uma resposta válida para a consulta OBD 0100.</string>
     <string name="obd_monitoring_interrupted">Monitoramento do OBD-II interrompido!</string>
-    <string name="turn_off_bluetooth_in_android_settings">Desligue o Bluetooth pelas configurações do Android!</string>
     <string name="obd_connection_success">Conectado com sucesso ao dispositivo OBD-II!</string>
     <string name="obd_connection_failed">Não foi possível conectar ao dispositivo OBD-II!</string>
     <!-- ======================================================================================= -->

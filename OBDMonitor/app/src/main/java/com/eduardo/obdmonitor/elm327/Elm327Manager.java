@@ -37,6 +37,11 @@ import java.util.concurrent.Executors;
 
 public class Elm327Manager {
     /**
+     * Nome da thread de monitoramento dos dados da ECU.
+     */
+    private static final String THREAD_OBD_MONITOR = "OBD-Monitor";
+
+    /**
      * Tempo de espera após o envio do comando de reset ao ELM327, em milissegundos.
      */
     private static final int ELM327_RESET_DELAY_MS = 1000;
@@ -90,6 +95,11 @@ public class Elm327Manager {
      * Indica que a inicialização da comunicação está em andamento.
      */
     private boolean initializing;
+
+    /**
+     * Mensagem da última etapa do handshake que falhou.
+     */
+    private volatile String initializationFailureMessage;
 
     /**
      * Evita agendar inicializações duplicadas quando Activities retomam uma conexão existente.
@@ -285,6 +295,8 @@ public class Elm327Manager {
         if (!prepareConnection())
             return;
 
+        initializationFailureMessage = null;
+
         try {
             if (initializeElm327())
                 completeConnection(device);
@@ -411,11 +423,25 @@ public class Elm327Manager {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean sendCommandOk(String command) {
         String response = executeElm327Command(command);
-        if (response == null)
+        if (response == null) {
+            initializationFailureMessage = applicationContext.getString(
+                    R.string.elm327_at_command_failed,
+                    command
+            );
             return false;
+        }
 
-        return response.contains(applicationContext.getString(R.string.elm327)) ||
+        boolean commandAccepted =
+                response.contains(applicationContext.getString(R.string.elm327)) ||
                 response.contains(applicationContext.getString(R.string.ok));
+
+        if (!commandAccepted)
+            initializationFailureMessage = applicationContext.getString(
+                    R.string.elm327_at_command_failed,
+                    command
+            );
+
+        return commandAccepted;
     }
 
     /**
@@ -431,17 +457,20 @@ public class Elm327Manager {
      */
     private boolean discoverSupportedPids() {
         // Consulta os PIDs básicos suportados pela ECU
-        Long basePids = basePidsCommand.parse(
-                executeElm327Command(basePidsCommand.getRequest())
-        );
+        String response = executeElm327Command(basePidsCommand.getRequest());
+        Long basePids = basePidsCommand.parse(response);
 
-        if (basePids == null)
+        if (basePids == null) {
+            initializationFailureMessage = applicationContext.getString(
+                    R.string.elm327_ecu_pids_unavailable
+            );
             return false;
+        }
 
         // Consulta os PIDs estendidos, caso a ECU informe suporte ao PID 0x20
         Long extendedPids = null;
 
-        if (basePidsCommand.isPidSupported(basePids, extendedPidsCommand.getRequest())) {
+        if (basePidsCommand.isPidSupported(basePids, extendedPidsCommand.getPid())) {
             extendedPids = extendedPidsCommand.parse(
                     executeElm327Command(extendedPidsCommand.getRequest())
             );
@@ -514,7 +543,11 @@ public class Elm327Manager {
 
         for (Elm327ConnectionListener listener : connectionListeners)
             listener.onElm327Error(
-                    Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext)
+                    initializationFailureMessage != null
+                            ? initializationFailureMessage
+                            : Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(
+                                    applicationContext
+                            )
             );
     }
 
@@ -554,12 +587,34 @@ public class Elm327Manager {
                 connect(device);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+            } catch (SecurityException e) {
+                // A permissão pode ser revogada entre a validação e o acesso ao Bluetooth.
+                handleUnexpectedConnectionFailure(
+                        applicationContext.getString(R.string.bluetooth_permission_not_granted)
+                );
+            } catch (RuntimeException e) {
+                // Encerra a sessão sem deixar uma exceção inesperada derrubar o processo.
+                handleUnexpectedConnectionFailure(
+                        Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(applicationContext)
+                );
             } finally {
                 synchronized (Elm327Manager.this) {
                     connectionInitializationScheduled = false;
                 }
             }
         });
+    }
+
+    /**
+     * Limpa a sessão após uma falha inesperada durante a inicialização do adaptador.
+     */
+    private void handleUnexpectedConnectionFailure(String errorMessage) {
+        bluetoothManager.disconnect();
+        resetConnectionState();
+        notifyConnectionState();
+
+        for (Elm327ConnectionListener listener : connectionListeners)
+            listener.onElm327Error(errorMessage);
     }
 
     /**
@@ -619,7 +674,7 @@ public class Elm327Manager {
             } finally {
                 monitoringThread = null;
             }
-        }, "OBD-Monitor");
+        }, THREAD_OBD_MONITOR);
         monitoringThread.start();
     }
 

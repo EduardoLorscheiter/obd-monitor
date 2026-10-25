@@ -269,7 +269,13 @@ public class BluetoothManager implements BluetoothConnectionListener {
         if (bluetoothAdapter == null)
             return;
 
-        Set<BluetoothDevice> bondedBluetoothDevices = bluetoothAdapter.getBondedDevices();
+        Set<BluetoothDevice> bondedBluetoothDevices;
+        try {
+            bondedBluetoothDevices = bluetoothAdapter.getBondedDevices();
+        } catch (SecurityException e) {
+            notifyError(BluetoothManagerError.BLUETOOTH_PERMISSION_NOT_GRANTED);
+            return;
+        }
 
         if (bondedBluetoothDevices.isEmpty()) {
             notifyError(BluetoothManagerError.NO_BONDED_DEVICES);
@@ -325,14 +331,24 @@ public class BluetoothManager implements BluetoothConnectionListener {
         if (bluetoothAdapter == null)
             return;
 
-        BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
+        BluetoothDevice bluetoothDevice;
+        try {
+            bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.getMacAddress());
+            cancelDiscovery(bluetoothAdapter);
+        } catch (SecurityException e) {
+            device.setStatusDisconnected();
+            for (BluetoothManagerListener listener : listeners)
+                listener.onBluetoothManagerError(
+                        device,
+                        BluetoothManagerError.BLUETOOTH_PERMISSION_NOT_GRANTED.getMessage(context)
+                );
+            return;
+        }
 
         if (bluetoothDevice == null) {
             notifyError(BluetoothManagerError.DEVICE_NOT_FOUND);
             return;
         }
-
-        cancelDiscovery(bluetoothAdapter);
 
         // Se já existe uma conexão estabelecida, encerra essa conexão antes de iniciar uma nova.
         if (connectedDevice != null &&

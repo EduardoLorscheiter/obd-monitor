@@ -193,22 +193,34 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onElm327BluetoothStatusChanged(boolean bluetoothConnected) {
-        ViewUtils.setStatusIndicator(viewBluetooth, bluetoothConnected);
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed())
+                ViewUtils.setStatusIndicator(viewBluetooth, bluetoothConnected);
+        });
     }
 
     @Override
     public void onElm327EcuStatusChanged(boolean ecuConnected) {
-        ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed())
+                ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
+        });
     }
 
     @Override
     public void onElm327ProtocolChanged(String protocol) {
-        txtProtocol.setText(protocol == null ? getString(R.string.__) : protocol);
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed())
+                txtProtocol.setText(protocol == null ? getString(R.string.__) : protocol);
+        });
     }
 
     @Override
     public void onElm327Error(String message) {
-        ToastUtils.showToast(this, message);
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed())
+                ToastUtils.showToast(this, message);
+        });
     }
 
     @Override

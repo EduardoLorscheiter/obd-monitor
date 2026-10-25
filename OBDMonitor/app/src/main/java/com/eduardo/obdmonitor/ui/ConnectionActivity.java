@@ -290,7 +290,10 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         cardParams.setMargins(0, 0, 0, spacing);
         cardView.setLayoutParams(cardParams);
         cardView.setRadius(20);
-        int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorPrimaryContainer);
+        int color = ViewUtils.getThemeAttrColor(
+                this,
+                com.google.android.material.R.attr.colorPrimaryContainer
+        );
         cardView.setCardBackgroundColor(color);
         cardView.setClipChildren(true);
         cardView.setClipToPadding(true);
@@ -322,7 +325,10 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         tvName.setText(name);
         tvName.setTextSize(16);
         tvName.setTypeface(null, Typeface.BOLD);
-        int color = ViewUtils.getThemeAttrColor(this, com.google.android.material.R.attr.colorOnSurface);
+        int color = ViewUtils.getThemeAttrColor(
+                this,
+                com.google.android.material.R.attr.colorOnSurface
+        );
         tvName.setTextColor(color);
         return tvName;
     }
