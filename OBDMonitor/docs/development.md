@@ -2,6 +2,24 @@
 
 Use este guia ao adicionar comportamento ao OBD Monitor. Comece identificando o ponto de extensão existente e mantenha a mudança alinhada aos limites descritos em [arquitetura](architecture.md).
 
+## Documentação Java e cabeçalho de classe
+
+- Toda classe Java deve começar com um cabeçalho no formato abaixo. Atualize o nome do arquivo e da classe, a data (`DD/MM/AAAA`) e o resumo para corresponder ao arquivo; mantenha o autor e a versão inicial conforme o padrão do projeto.
+- Todo método e construtor declarado deve possuir JavaDoc, incluindo métodos privados e sobrescritos. Descreva o comportamento e documente parâmetros, retorno e exceções quando aplicável.
+
+```java
+/*
+ **=================================================================================================
+ **  @file    DialogUtils.java
+ **  @author  Eduardo Lorscheiter
+ **  @class   DialogUtils
+ **  @date    24/10/2026
+ **  @version 1.0
+ **  @brief   Exibe diálogos informativos com o tema visual do aplicativo.
+ **=================================================================================================
+ */
+```
+
 ## Adicionar um comando OBD-II
 
 1. Inspecione `obd/commands`, `ObdCommand` e o caminho que consome os comandos antes de definir uma nova API.

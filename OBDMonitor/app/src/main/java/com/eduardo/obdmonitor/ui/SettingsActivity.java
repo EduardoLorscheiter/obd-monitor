@@ -15,9 +15,11 @@ import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.view.View;
 
+import com.eduardo.obdmonitor.utils.DialogUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -33,14 +35,17 @@ public class SettingsActivity extends BaseActivity {
     /**
      * Componentes da janela da Activity.
      */
-    private ImageButton btnBack;
+    private ImageButton btnBack, btnSave;
     private Spinner spinnerTheme;
     private Spinner spinnerLanguage;
     private TextInputLayout layoutMaxRpm;
     private TextInputEditText editMaxRpm;
     private TextInputLayout layoutBlinkStartRpm;
     private TextInputEditText editBlinkStartRpm;
-    private MaterialButton btnSave;
+    private MaterialButtonToggleGroup groupSettingsCategory;
+    private View cardAppearance;
+    private View cardVehicle;
+    private View cardAlerts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +70,11 @@ public class SettingsActivity extends BaseActivity {
      */
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
+        btnSave = findViewById(R.id.btnSave);
+        groupSettingsCategory = findViewById(R.id.groupSettingsCategory);
+        cardAppearance = findViewById(R.id.cardAppearance);
+        cardVehicle = findViewById(R.id.cardVehicle);
+        cardAlerts = findViewById(R.id.cardAlerts);
         spinnerTheme = findViewById(R.id.spinnerTheme);
         ViewUtils.configureSpinner(this, spinnerTheme, R.array.theme_options);
         spinnerLanguage = findViewById(R.id.spinnerLanguage);
@@ -86,7 +96,6 @@ public class SettingsActivity extends BaseActivity {
                 R.string.rpm_blink_start_range,
                 SettingsUtils.MIN_BLINK_START_RPM
         ));
-        btnSave = findViewById(R.id.btnSave);
         spinnerTheme.setSelection(Math.max(SettingsUtils.THEME_SYSTEM,
                 Math.min(SettingsUtils.getThemeMode(this), SettingsUtils.THEME_DARK)));
         spinnerLanguage.setSelection(Math.max(0, Math.min(SettingsUtils.getLanguageIndex(this), 1)));
@@ -98,6 +107,24 @@ public class SettingsActivity extends BaseActivity {
     private void setListeners() {
         setClickSoundListener(btnBack, v -> finish());
         setClickSoundListener(btnSave, v -> saveSettings());
+        setClickSoundListener(findViewById(R.id.btnAppearance), v -> { });
+        setClickSoundListener(findViewById(R.id.btnVehicle), v -> { });
+        setClickSoundListener(findViewById(R.id.btnAlerts), v -> { });
+        setClickSoundListener(findViewById(R.id.btnVehicleMaxRpmHelp), v ->
+                DialogUtils.show(this, R.string.vehicle_max_rpm_title,
+                        R.string.vehicle_max_rpm_description));
+        setClickSoundListener(findViewById(R.id.btnBlinkRpmHelp), v ->
+                DialogUtils.show(this, R.string.rpm_blink_start_title,
+                        R.string.rpm_blink_start_description));
+        groupSettingsCategory.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            cardAppearance.setVisibility(checkedId == R.id.btnAppearance
+                    ? View.VISIBLE : View.GONE);
+            cardVehicle.setVisibility(checkedId == R.id.btnVehicle
+                    ? View.VISIBLE : View.GONE);
+            cardAlerts.setVisibility(checkedId == R.id.btnAlerts
+                    ? View.VISIBLE : View.GONE);
+        });
     }
 
     /**
@@ -106,12 +133,14 @@ public class SettingsActivity extends BaseActivity {
     private void saveSettings() {
         int maxRpm = parseRpm(editMaxRpm);
         if (maxRpm < SettingsUtils.MIN_MAX_RPM || maxRpm > SettingsUtils.MAX_MAX_RPM) {
+            groupSettingsCategory.check(R.id.btnVehicle);
             showMaxRpmError();
             return;
         }
 
         int blinkStartRpm = parseRpm(editBlinkStartRpm);
         if (blinkStartRpm < SettingsUtils.MIN_BLINK_START_RPM || blinkStartRpm > maxRpm) {
+            groupSettingsCategory.check(R.id.btnAlerts);
             showBlinkStartRpmError(maxRpm);
             return;
         }

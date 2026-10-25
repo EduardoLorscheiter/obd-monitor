@@ -13,12 +13,17 @@
     <style name="ButtonComponent">
         <item name="android:layout_width">48dp</item>
         <item name="android:layout_height">48dp</item>
-        <item name="android:background">@drawable/button_background</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
     </style>
 
     <style name="SettingsButtonComponent" parent="ButtonComponent">
         <item name="android:src">@drawable/ic_button_settings</item>
         <item name="android:contentDescription">@string/settings</item>
+    </style>
+
+    <style name="SaveButtonComponent" parent="ButtonComponent">
+        <item name="android:src">@drawable/ic_button_save</item>
+        <item name="android:contentDescription">@string/save</item>
     </style>
 
     <style name="ConnectionButtonComponent" parent="ButtonComponent">
@@ -29,6 +34,12 @@
     <style name="BackButtonComponent" parent="ButtonComponent">
         <item name="android:src">@drawable/ic_button_back</item>
         <item name="android:contentDescription">@string/back</item>
+    </style>
+
+    <style name="HelpButtonComponent" parent="ButtonComponent">
+        <item name="android:src">@drawable/ic_button_help</item>
+        <item name="android:contentDescription">@string/help</item>
+        <item name="android:scaleType">fitCenter</item>
     </style>
 
     <style name="SeparatorComponent">
@@ -43,11 +54,10 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">10dp</item>
-        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="cardBackgroundColor">?attr/colorPrimaryContainer</item>
         <item name="cardCornerRadius">12dp</item>
         <item name="cardElevation">0dp</item>
-        <item name="strokeColor">?attr/colorOutline</item>
-        <item name="strokeWidth">1dp</item>
+        <item name="strokeWidth">0dp</item>
     </style>
 
     <style name="SettingsBaseComponent">
@@ -81,7 +91,7 @@
         <item name="android:background">@drawable/spinner_background</item>
         <item name="android:dropDownVerticalOffset">5dp</item>
         <item name="android:minHeight">50dp</item>
-        <item name="android:popupBackground">?attr/colorSurface</item>
+        <item name="android:popupBackground">?attr/colorPrimaryContainer</item>
         <item name="android:spinnerMode">dropdown</item>
     </style>
 

@@ -20,7 +20,7 @@ O fluxo conceitual é: seleção/conexão do adaptador Bluetooth, inicializaçã
 | `obd.commands`  | Comandos OBD-II tipados por PID e parsing de resposta.                       |
 | `obd.scheduler` | Tarefas PID, prioridade e seleção das consultas prontas.                     |
 | `ui`            | Atividades Android: splash, conexão, painel, configurações e base comum.     |
-| `utils`         | Utilitários de interface e configurações.                                    |
+| `utils`         | Utilitários de interface, configurações e diálogos reutilizáveis.            |
 | `view`          | Componentes visuais customizados para métricas do painel.                    |
 
 Recursos como layouts, strings, temas e drawables ficam em `app/src/main/res`; permissões e atividades ficam no manifesto do módulo.

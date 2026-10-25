@@ -53,10 +53,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:layout_marginBottom="20dp"
                 android:text="@string/real_time_vehicle_monitoring"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="14sp"
-                android:layout_marginBottom="20dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -65,10 +65,10 @@
                 android:id="@+id/txtVersion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
                 android:text="@null"
                 android:textColor="#707070"
                 android:textSize="12sp"
-                android:layout_marginBottom="20dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 

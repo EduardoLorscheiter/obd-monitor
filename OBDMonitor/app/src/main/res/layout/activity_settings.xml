@@ -19,7 +19,8 @@
         android:scaleType="fitCenter"
         android:src="@drawable/ic_button_settings"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="ImageContrastCheck,VisualLintBounds" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerSettings"
@@ -53,8 +54,15 @@
                 android:textSize="28sp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnSave"
                 app:layout_constraintStart_toEndOf="@id/btnBack"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btnSave"
+                style="@style/SaveButtonComponent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -80,12 +88,50 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/groupSettingsCategory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:checkedButton="@id/btnAppearance"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAppearance"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/appearance"
+                        tools:ignore="TextContrastCheck" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVehicle"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/vehicle" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAlerts"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/alerts" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardAppearance"
                     style="@style/SettingsCard"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
+                    app:layout_constraintTop_toBottomOf="@id/groupSettingsCategory">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -110,7 +156,7 @@
                         <TextView
                             android:id="@+id/txtTheme"
                             style="@style/SettingsLabel"
-                            android:layout_marginTop="20dp"
+                            android:layout_marginTop="10dp"
                             android:text="@string/theme"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
@@ -145,6 +191,7 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardVehicle"
                     style="@style/SettingsCard"
+                    android:visibility="gone"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/cardAppearance">
@@ -172,30 +219,35 @@
                         <TextView
                             android:id="@+id/txtRpmSettingTitle"
                             style="@style/SettingsLabel"
-                            android:layout_marginTop="20dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:text="@string/vehicle_max_rpm_title"
-                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintBottom_toBottomOf="@id/btnVehicleMaxRpmHelp"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/vehicleSeparator" />
+                            app:layout_constraintTop_toTopOf="@id/btnVehicleMaxRpmHelp" />
 
-                        <TextView
-                            android:id="@+id/txtRpmSettingDescription"
-                            style="@style/SettingsDescription"
-                            android:layout_marginTop="6dp"
-                            android:text="@string/vehicle_max_rpm_description"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtRpmSettingTitle" />
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/btnVehicleMaxRpmHelp"
+                            style="@style/HelpButtonComponent"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="10dp"
+                            android:padding="2dp"
+                            android:translationY="1dp"
+                            app:layout_constraintStart_toEndOf="@id/txtRpmSettingTitle"
+                            app:layout_constraintTop_toBottomOf="@id/vehicleSeparator" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutMaxRpm"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
                             android:hint="@string/vehicle_max_rpm_hint"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtRpmSettingDescription">
+                            app:layout_constraintTop_toBottomOf="@id/btnVehicleMaxRpmHelp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/editMaxRpm"
@@ -210,34 +262,69 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/layoutMaxRpm" />
 
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAlerts"
+                    style="@style/SettingsCard"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/cardVehicle">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/txtAlertsTitle"
+                            style="@style/SettingsSectionTitle"
+                            android:text="@string/alerts"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <View
+                            android:id="@+id/alertsSeparator"
+                            style="@style/SeparatorComponent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/txtAlertsTitle" />
+
                         <TextView
                             android:id="@+id/txtBlinkRpmTitle"
                             style="@style/SettingsLabel"
-                            android:layout_marginTop="24dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:text="@string/rpm_blink_start_title"
-                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintBottom_toBottomOf="@id/btnBlinkRpmHelp"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtRpmRange" />
+                            app:layout_constraintTop_toTopOf="@id/btnBlinkRpmHelp" />
 
-                        <TextView
-                            android:id="@+id/txtBlinkRpmStartTitle"
-                            style="@style/SettingsDescription"
-                            android:layout_marginTop="6dp"
-                            android:layout_marginBottom="20dp"
-                            android:text="@string/rpm_blink_start_description"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtBlinkRpmTitle" />
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/btnBlinkRpmHelp"
+                            style="@style/HelpButtonComponent"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="10dp"
+                            android:padding="2dp"
+                            android:translationY="1dp"
+                            app:layout_constraintStart_toEndOf="@id/txtBlinkRpmTitle"
+                            app:layout_constraintTop_toBottomOf="@id/alertsSeparator" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutBlinkStartRpm"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
                             android:hint="@string/rpm_blink_start_hint"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtBlinkRpmStartTitle">
+                            app:layout_constraintTop_toBottomOf="@id/btnBlinkRpmHelp">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/editBlinkStartRpm"
@@ -251,35 +338,6 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/layoutBlinkStartRpm" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardSave"
-                    style="@style/SettingsCard"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/cardVehicle">
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSave"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/save"
-                            android:textColor="@color/white"
-                            android:textStyle="bold"
-                            app:backgroundTint="?attr/colorSecondary"
-                            app:cornerRadius="10dp"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>

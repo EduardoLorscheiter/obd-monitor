@@ -58,11 +58,13 @@
     <!-- ======================================================================================= -->
     <!-- Acessibilidade -->
     <!-- ======================================================================================= -->
+    <string name="help">Ajuda</string>
     <string name="settings">Configurações</string>
     <string name="connection">Conexão</string>
     <string name="back">Voltar</string>
     <string name="appearance">Aparência</string>
     <string name="vehicle">Veículo</string>
+    <string name="alerts">Alertas</string>
     <string name="theme">Tema</string>
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>

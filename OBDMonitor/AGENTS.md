@@ -22,6 +22,7 @@ Antes de implementar uma mudança, leia [a visão geral](docs/architecture.md) e
 ## Convenções
 
 - Use nomes claros e consistentes com o domínio automotivo e com os pacotes atuais.
+- Siga as regras de JavaDoc e cabeçalho de classes descritas em [docs/development.md](docs/development.md).
 - Recursos visuais e textos devem seguir os recursos Android existentes; evite strings de interface hardcoded no Java.
 - Ao criar componentes visuais, centralize todas as cores em `colors.xml` e referencie os recursos nomeados em layouts, drawables, estilos e código.
 - Ao criar ou alterar telas, confira cada controle acionável e garanta que todos os botões usem o comportamento sonoro comum.
