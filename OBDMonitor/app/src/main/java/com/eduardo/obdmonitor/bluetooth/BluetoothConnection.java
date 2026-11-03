@@ -21,6 +21,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -187,10 +189,10 @@ public class BluetoothConnection {
             // O fechamento não gera notificações de erro porque faz parte da substituição
             // intencional da conexão.
             connected = false;
-            input = closeResource(input, false);
-            output = closeResource(output, false);
-            socket = closeResource(socket, false);
-            pendingSocket = closeResource(pendingSocket, false);
+            input = closeResource(input, null);
+            output = closeResource(output, null);
+            socket = closeResource(socket, null);
+            pendingSocket = closeResource(pendingSocket, null);
         }
 
         // Cria um novo identificador para a solicitação.
@@ -241,7 +243,7 @@ public class BluetoothConnection {
                     // A validação também evita iniciar uma tentativa que já foi substituída.
                     synchronized (this) {
                         if (currentConnectionId != connectionId || !connecting) {
-                            closeResource(localSocket, false);
+                            closeResource(localSocket, null);
                             return;
                         }
                         pendingSocket = localSocket;
@@ -261,9 +263,9 @@ public class BluetoothConnection {
                     // os recursos recém-criados serão fechados e não serão reutilizados.
                     synchronized (this) {
                         if (currentConnectionId != connectionId || !connecting) {
-                            closeResource(localInput, false);
-                            closeResource(localOutput, false);
-                            closeResource(localSocket, false);
+                            closeResource(localInput, null);
+                            closeResource(localOutput, null);
+                            closeResource(localSocket, null);
                             return;
                         }
 
@@ -288,9 +290,9 @@ public class BluetoothConnection {
                 } catch (SecurityException e) {
                     // Permissões Bluetooth podem ser revogadas enquanto a tentativa está em
                     // andamento. Isso não deve encerrar o processo nem disparar uma repetição.
-                    closeResource(localInput, false);
-                    closeResource(localOutput, false);
-                    closeResource(localSocket, false);
+                    closeResource(localInput, null);
+                    closeResource(localOutput, null);
+                    closeResource(localSocket, null);
 
                     synchronized (this) {
                         if (currentConnectionId != connectionId || !connecting)
@@ -310,9 +312,9 @@ public class BluetoothConnection {
                     // Libera os recursos criados pela tentativa que falhou.
                     // Obs.: Os recursos locais podem não ter sido transferidos para os atributos
                     // da conexão, portanto devem ser tratados independentemente.
-                    closeResource(localInput, false);
-                    closeResource(localOutput, false);
-                    closeResource(localSocket, false);
+                    closeResource(localInput, null);
+                    closeResource(localOutput, null);
+                    closeResource(localSocket, null);
 
                     // Verifica se a tentativa continua válida antes de atualizar o estado ou
                     // decidir se deve executar uma nova tentativa.
@@ -384,27 +386,37 @@ public class BluetoothConnection {
     /**
      * Encerra a conexão Bluetooth ativa e libera todos os recursos utilizados.
      *
-     * <p>Após o encerramento dos recursos, o listener é notificado sobre a desconexão.</p>
+     * <p>Fecha os recursos sob o lock do transporte, mas publica erros e desconexão somente após
+     * liberá-lo. Isso evita inverter a ordem de locks com o gerenciador Bluetooth. Todos os eventos
+     * conservam o identificador da sessão encerrada, mesmo se outra conexão começar no
+     * intervalo.</p>
      *
      * <p>Caso não exista uma conexão ativa, nenhuma ação é realizada.</p>
      */
-    protected synchronized void disconnect() {
-        if (connecting) {
-            cancelConnection();
-            return;
+    protected void disconnect() {
+        long disconnectedConnectionId;
+        List<BluetoothConnectionError> closeErrors = new ArrayList<>();
+        synchronized (this) {
+            if (connecting) {
+                cancelConnection();
+                return;
+            }
+
+            if (!connected)
+                return;
+
+            connected = false;
+            disconnectedConnectionId = connectionId;
+
+            input = closeResource(input, closeErrors);
+            output = closeResource(output, closeErrors);
+            socket = closeResource(socket, closeErrors);
+            pendingSocket = closeResource(pendingSocket, null);
         }
 
-        if (!connected)
-            return;
-
-        connected = false;
-
-        input = closeResource(input, true);
-        output = closeResource(output, true);
-        socket = closeResource(socket, true);
-        pendingSocket = closeResource(pendingSocket, false);
-
-        listener.onBluetoothConnectionDisconnected(connectionId);
+        for (BluetoothConnectionError error : closeErrors)
+            listener.onBluetoothConnectionError(disconnectedConnectionId, error.getMessage(context));
+        listener.onBluetoothConnectionDisconnected(disconnectedConnectionId);
     }
 
     /**
@@ -430,10 +442,10 @@ public class BluetoothConnection {
 
         // O cancelamento é intencional, portanto falhas ao fechar esses recursos não devem ser
         // reportadas como erros de comunicação ao usuário.
-        input = closeResource(input, false);
-        output = closeResource(output, false);
-        socket = closeResource(socket, false);
-        pendingSocket = closeResource(pendingSocket, false);
+        input = closeResource(input, null);
+        output = closeResource(output, null);
+        socket = closeResource(socket, null);
+        pendingSocket = closeResource(pendingSocket, null);
     }
 
     /**
@@ -445,21 +457,20 @@ public class BluetoothConnection {
      * <p>Fecha um recurso e retorna null para permitir limpar a referência armazenada pelo chamador
      * em uma única atribuição.</p>
      *
-     * <p>Exemplo: input = closeResource(input, true).</p>
+     * <p>Não chama listeners. Falhas podem ser acumuladas para publicação fora de um lock.</p>
      *
-     * @param <T>         Tipo do recurso que implementa {@link Closeable}.
-     * @param resource    Recurso a ser fechado.
-     * @param notifyError {@code true} para notificar o listener caso ocorra erro durante o
-     *                    fechamento do recurso, ou {@code false} para ignorar esse erro.
+     * @param <T>      Tipo do recurso que implementa {@link Closeable}.
+     * @param resource Recurso a ser fechado.
+     * @param errors   Lista que recebe falhas de fechamento, ou {@code null} para ignorá-las.
      * @return {@code null}, permitindo limpar a referência ao recurso após o fechamento.
      */
-    private <T extends Closeable> T closeResource(T resource, boolean notifyError) {
+    private <T extends Closeable> T closeResource(T resource, List<BluetoothConnectionError> errors) {
         if (resource != null) {
             try {
                 resource.close();
             } catch (IOException e) {
-                if (notifyError)
-                    notifyError(BluetoothConnectionError.RESOURCE_CLOSE_FAILED);
+                if (errors != null)
+                    errors.add(BluetoothConnectionError.RESOURCE_CLOSE_FAILED);
             }
         }
 

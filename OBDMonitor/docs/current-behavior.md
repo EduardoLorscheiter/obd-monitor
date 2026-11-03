@@ -11,7 +11,7 @@ Registro dos fluxos observados no código de produção. A arquitetura dos compo
 
 ## Bluetooth e conexão com o ELM327
 
-1. A tela de conexão apresenta o estado do Bluetooth. Se o rádio estiver desligado, o controle solicita ao Android que o habilite. O aplicativo não o desliga pela própria tela; o controle exibe uma mensagem orientando a pessoa a usar as configurações do Android.
+1. A tela de conexão solicita as permissões Bluetooth necessárias quando ainda não foram concedidas. Com acesso autorizado, apresenta o estado do Bluetooth. Se o rádio estiver desligado, o controle solicita ao Android que o habilite. O aplicativo não o desliga pela própria tela; o controle exibe uma mensagem orientando a pessoa a usar as configurações do Android.
 2. Quando o Bluetooth está ligado, a tela carrega a lista de dispositivos **já pareados** no Android. Não há busca de dispositivos nem pareamento dentro do aplicativo; pareie o adaptador nas configurações do sistema antes de selecioná-lo.
 3. Selecionar um dispositivo inicia uma conexão Bluetooth clássico RFCOMM usando o perfil serial SPP. Uma conexão existente com outro dispositivo é encerrada antes da nova tentativa. Tentativas repetidas para o mesmo dispositivo já conectado ou em conexão são ignoradas.
 4. Depois da conexão Bluetooth, `BaseActivity` inicia a inicialização ELM327 em segundo plano. A `ConnectionActivity` define `RESULT_OK` quando o `Elm327Manager` conclui a inicialização OBD, mas continua aberta. Ao sair dela com Voltar, o painel recebe esse resultado e exibe uma mensagem de sucesso.
@@ -19,9 +19,17 @@ Registro dos fluxos observados no código de produção. A arquitetura dos compo
 
 A conexão RFCOMM tenta conectar até duas vezes, com intervalo de um segundo entre tentativas. Uma tentativa substituída é cancelada e pode aguardar 750 ms para liberar recursos. Cada comando termina quando chega o prompt `>` do ELM327 ou quando se esgota o prazo de leitura configurado de cinco segundos. A leitura usa `InputStream.read()` bloqueante sem configurar timeout no socket; se nenhum byte chegar, o prazo não garante que a chamada bloqueada retorne exatamente em cinco segundos. Falhas de comunicação notificam erro e encerram a conexão.
 
+No encerramento de uma sessão, o transporte protege o fechamento e a limpeza dos recursos com seu lock, acumula eventuais erros e só então libera o lock e publica os callbacks. Os eventos conservam o identificador da sessão encerrada. Assim, um callback que aguarda o gerenciador não mantém o lock do transporte e não bloqueia uma desconexão concorrente solicitada pelo gerenciador.
+
 ### Permissões Bluetooth observadas
 
-O manifesto declara `BLUETOOTH`, `BLUETOOTH_ADMIN`, `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` e permissões de localização legadas. No Android 12 (API 31) ou posterior, `BluetoothManager` verifica `BLUETOOTH_CONNECT`. O código atual não solicita a permissão em runtime: se ela não estiver concedida, a operação informa erro de permissão. Não há fluxo próprio para pedir permissão de localização ou `BLUETOOTH_SCAN`, e a tela lista pareados em vez de fazer descoberta. Ao alterar esse fluxo, considere separadamente versões Android e os requisitos vigentes.
+- No Android 10 e 11 (APIs 29–30), o fluxo de dispositivos pareados usa `BLUETOOTH` e `BLUETOOTH_ADMIN`, declaradas com `maxSdkVersion="30"`. Não há solicitação em runtime nem permissão de localização, pois o aplicativo não faz descoberta de dispositivos.
+- No Android 12 (API 31) ou posterior, `BluetoothPermissions` centraliza a exigência de `BLUETOOTH_CONNECT` e `BLUETOOTH_SCAN`. A primeira permite acessar os pareados e conectar; a segunda é necessária para chamar `cancelDiscovery()` antes da conexão, mesmo sem iniciar uma busca. O manifesto declara `neverForLocation` para `BLUETOOTH_SCAN`.
+- A tela de conexão solicita essas permissões pelo contrato `RequestMultiplePermissions`. Enquanto falta acesso, apresenta “Permissão necessária”, mantém o controle do rádio desabilitado e oculta os dispositivos. Após a concessão, consulta o estado do rádio e carrega os pareados automaticamente.
+- Uma recusa mantém a tela disponível e apresenta uma ação para tentar novamente. Se o Android não permitir outro diálogo, a ação abre as configurações do aplicativo, por iniciativa do usuário. Ao retornar, o estado é consultado novamente. Uma recriação da Activity preserva a indicação de solicitação em andamento para evitar diálogos duplicados.
+- As demais telas não solicitam permissões. A sincronização inicial evita consultar o adaptador sem acesso, e o gerenciador continua validando as duas permissões antes das operações e tratando revogação durante chamadas ao sistema.
+
+Requisitos conferidos na [documentação de permissões Bluetooth](https://developer.android.com/develop/connectivity/bluetooth/bt-permissions) e na [referência de `cancelDiscovery()`](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter#cancelDiscovery()).
 
 ## Inicialização ELM327 e OBD
 

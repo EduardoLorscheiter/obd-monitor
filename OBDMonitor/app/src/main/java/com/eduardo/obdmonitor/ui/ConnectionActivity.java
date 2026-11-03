@@ -15,8 +15,12 @@
 
 package com.eduardo.obdmonitor.ui;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -25,18 +29,25 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.bluetooth.BluetoothPermissions;
 import com.eduardo.obdmonitor.model.Device;
 import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.utils.ToastUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,13 +55,29 @@ import java.util.List;
 
 public class ConnectionActivity extends BaseActivity implements Elm327ConnectionListener {
     /**
+     * Chaves usadas para preservar uma solicitação durante a recriação da Activity.
+     */
+    private static final String STATE_PERMISSION_REQUESTED = "bluetooth_permission_requested";
+    private static final String STATE_PERMISSION_IN_PROGRESS = "bluetooth_permission_in_progress";
+
+    /**
      * Componentes da janela da Activity.
      */
     private ImageButton btnBack;
-    private TextView txtBluetoothStatus;
+    private TextView txtBluetoothStatus, txtBluetoothPermission;
     private SwitchCompat switchBluetooth;
+    private View containerBluetoothPermission;
+    private MaterialButton btnBluetoothPermission;
     private ConstraintLayout containerBluetooth;
     private LinearLayout containerDevices, containerBondedDevices;
+
+    /**
+     * Solicitação de acesso Bluetooth e estado do diálogo de permissões do Android.
+     */
+    private ActivityResultLauncher<String[]> bluetoothPermissionLauncher;
+    private ActivityResultLauncher<Intent> permissionSettingsLauncher;
+    private boolean permissionRequested;
+    private boolean permissionRequestInProgress;
 
     /**
      * Lista de dispositivos do tipo Bluetooth pareados.
@@ -75,7 +102,114 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         });
 
         initViews();
+        setupBluetoothPermissions(savedInstanceState);
         setListeners();
+    }
+
+    /**
+     * Solicita acesso ao abrir a tela pela primeira vez, após registrar os listeners comuns.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!BluetoothPermissions.areGranted(this) && !permissionRequested)
+            requestBluetoothAccess();
+    }
+
+    /**
+     * Preserva o estado para não duplicar o diálogo após uma recriação da tela.
+     *
+     * @param outState Estado que será restaurado pelo Android.
+     */
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putBoolean(STATE_PERMISSION_REQUESTED, permissionRequested);
+        outState.putBoolean(STATE_PERMISSION_IN_PROGRESS, permissionRequestInProgress);
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Registra o resultado da solicitação e restaura uma eventual solicitação em andamento.
+     *
+     * @param savedInstanceState Estado anterior da Activity, ou {@code null} na primeira abertura.
+     */
+    private void setupBluetoothPermissions(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            permissionRequested = savedInstanceState.getBoolean(
+                    STATE_PERMISSION_REQUESTED
+            );
+            permissionRequestInProgress = savedInstanceState.getBoolean(
+                    STATE_PERMISSION_IN_PROGRESS
+            );
+        }
+
+        bluetoothPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                    permissionRequestInProgress = false;
+                    if (!isFinishing() && !isDestroyed())
+                        synchronizeConnectionState();
+                });
+        permissionSettingsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (!isFinishing() && !isDestroyed())
+                        synchronizeConnectionState();
+                });
+    }
+
+    /**
+     * Solicita as permissões ou abre as configurações quando o Android não permite outro diálogo.
+     */
+    private void requestBluetoothAccess() {
+        if (permissionRequestInProgress)
+            return;
+
+        if (BluetoothPermissions.areGranted(this)) {
+            synchronizeConnectionState();
+        } else if (shouldOpenPermissionSettings()) {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName()));
+            permissionSettingsLauncher.launch(intent);
+        } else {
+            permissionRequested = true;
+            permissionRequestInProgress = true;
+            showBluetoothPermissionRequired();
+            bluetoothPermissionLauncher.launch(BluetoothPermissions.getRequiredPermissions());
+        }
+    }
+
+    /**
+     * Identifica uma recusa para a qual o sistema já não apresenta a solicitação de permissão.
+     *
+     * @return {@code true} quando alguma permissão recusada precisa ser alterada nas configurações.
+     */
+    private boolean shouldOpenPermissionSettings() {
+        if (!permissionRequested)
+            return false;
+
+        for (String permission : BluetoothPermissions.getRequiredPermissions()) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
+                    && !ActivityCompat.shouldShowRequestPermissionRationale(this, permission))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Apresenta a falta de acesso sem confundi-lá com o rádio Bluetooth desligado.
+     */
+    private void showBluetoothPermissionRequired() {
+        updateBluetoothStatus(false);
+        cleanDevices();
+        switchBluetooth.setEnabled(false);
+        txtBluetoothStatus.setText(R.string.bluetooth_permission_required);
+        containerBluetoothPermission.setVisibility(View.VISIBLE);
+        boolean openSettings = !permissionRequestInProgress && shouldOpenPermissionSettings();
+        txtBluetoothPermission.setText(openSettings
+                ? R.string.bluetooth_permission_settings_description
+                : R.string.bluetooth_permission_description);
+        btnBluetoothPermission.setText(openSettings
+                ? R.string.open_app_settings : R.string.allow_bluetooth);
+        btnBluetoothPermission.setEnabled(!permissionRequestInProgress);
     }
 
     /**
@@ -89,6 +223,9 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         txtBluetoothStatus = findViewById(R.id.txtBluetoothStatus);
         switchBluetooth = findViewById(R.id.switchBluetooth);
         ViewUtils.applySwitchColors(this, switchBluetooth);
+        containerBluetoothPermission = findViewById(R.id.containerBluetoothPermission);
+        txtBluetoothPermission = findViewById(R.id.txtBluetoothPermission);
+        btnBluetoothPermission = findViewById(R.id.btnBluetoothPermission);
         containerBluetooth = findViewById(R.id.containerBluetooth);
         containerDevices = findViewById(R.id.containerDevices);
         containerBondedDevices = findViewById(R.id.containerBondedDevices);
@@ -99,6 +236,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
      */
     private void setListeners() {
         setClickSoundListener(btnBack, v -> finish());
+        setClickSoundListener(btnBluetoothPermission, v -> requestBluetoothAccess());
 
         switchBluetooth.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!buttonView.isPressed())
@@ -123,12 +261,24 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
 
     @Override
     protected void onBluetoothEnabled() {
+        if (!BluetoothPermissions.areGranted(this)) {
+            showBluetoothPermissionRequired();
+            return;
+        }
+        containerBluetoothPermission.setVisibility(View.GONE);
+        switchBluetooth.setEnabled(true);
         updateBluetoothStatus(true);
         loadDevices();
     }
 
     @Override
     protected void onBluetoothDisabled() {
+        if (!BluetoothPermissions.areGranted(this)) {
+            showBluetoothPermissionRequired();
+            return;
+        }
+        containerBluetoothPermission.setVisibility(View.GONE);
+        switchBluetooth.setEnabled(true);
         updateBluetoothStatus(false);
         cleanDevices();
     }
@@ -157,6 +307,10 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
 
     @Override
     protected void onBluetoothError(Device device, String message) {
+        if (!BluetoothPermissions.areGranted(this)) {
+            showBluetoothPermissionRequired();
+            return;
+        }
         updateStatus(device);
         ToastUtils.showToast(this, message);
     }
@@ -253,14 +407,14 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         // Cria o CardView do dispositivo Bluetooth
         CardView cardView = getCardView();
 
-        // Cria o LinearLayout vertical do dispositivo Bluetooth para nome e status
+        // Cria o LinearLayout vertical do dispositivo Bluetooth para nome e posição
         LinearLayout verticalLayout = getVerticalLayout();
 
         // Cria o TextView do nome do dispositivo Bluetooth
         TextView tvName = getTvName(device.getName());
         verticalLayout.addView(tvName);
 
-        // Cria o TextView do status do dispositivo Bluetooth
+        // Cria o TextView da posição do dispositivo Bluetooth
         TextView tvStatus = getTvStatus(device.getStatus());
         verticalLayout.addView(tvStatus);
 
@@ -269,7 +423,7 @@ public class ConnectionActivity extends BaseActivity implements Elm327Connection
         // Adiciona verticalLayout ao cardView
         cardView.addView(verticalLayout);
 
-        // Adiciona cardView ao container dos dispositivos Bluetooth visíveis
+        // Adiciona cardView ao container dos dispositivos com Bluetooth visíveis
         container.addView(cardView);
 
         setClickSoundListener(cardView, v -> bluetoothManager.connect(device));

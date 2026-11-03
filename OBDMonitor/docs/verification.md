@@ -5,9 +5,11 @@ Este documento é a fonte única dos comandos e limites de verificação. Consul
 ## Cobertura atual observada
 
 - `app/src/test/.../SupportedPidsCommandTest.java` verifica leitura da máscara básica e identificação do PID `0x20` com bit ligado ou desligado.
+- `app/src/test/.../BluetoothPermissionsTest.java` verifica as permissões do fluxo de pareados nas APIs 29, 30, 31 e 36.
+- `app/src/test/.../BluetoothConnectionTest.java` cobre desconexão fora do lock do transporte, concorrência com o lock do gerenciador, fechamento único dos fluxos, acúmulo de erros sem callbacks e cancelamento de tentativa pendente. Os testes usam recursos em memória, sem adaptador físico.
 - `ExampleUnitTest` é apenas o teste de soma gerado pelo modelo; não cobre comportamento do aplicativo.
 - `app/src/androidTest/.../ExampleInstrumentedTest.java` verifica o package name do contexto Android; não valida Bluetooth ou telas.
-- Não há cobertura automatizada identificada para as fórmulas dos demais PIDs, `ObdScheduler`, ciclo Bluetooth/ELM327 ou apresentação de estados indisponíveis.
+- Não há cobertura automatizada identificada para as fórmulas dos demais PIDs, `ObdScheduler`, inicialização ELM327 ou apresentação de estados indisponíveis. A solicitação de permissões e o funcionamento real do Bluetooth ainda precisam de validação em Android.
 
 Confirme os testes presentes no checkout antes de assumir que essa lista continua atualizada.
 
@@ -18,6 +20,7 @@ Com Android SDK configurado:
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest
 .\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:lintDebug
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
@@ -34,3 +37,10 @@ O último comando requer dispositivo ou emulador conectado. Execute apenas as ve
 | Alteração apenas documental                     | Revise os Markdown e seus links; não é necessário executar testes de aplicação.                                                                                         |
 
 Compilação não comprova fórmulas OBD nem o comportamento real de um adaptador. Relate limites de SDK, emulador ou dispositivo que afetarem a checagem.
+
+## Validação manual das permissões Bluetooth
+
+- Nas APIs 29–30, abrir a tela de conexão e verificar a listagem de pareados e o pedido de ativação do rádio, sem solicitar localização.
+- Na API 31 ou posterior, instalar sem permissões concedidas e abrir a tela de conexão. Conferir a solicitação de dispositivos próximos e o carregamento dos pareados após conceder acesso.
+- Recusar o acesso e conferir a mensagem, a lista oculta e a possibilidade de tentar novamente. Após uma recusa permanente, usar a ação de configurações, conceder acesso e retornar à tela.
+- Recriar a Activity durante uma solicitação e verificar que o diálogo não é duplicado. Revogar o acesso nas configurações do Android e reabrir a tela para conferir o estado sem permissão.

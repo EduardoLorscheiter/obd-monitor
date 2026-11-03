@@ -35,6 +35,11 @@
     <string name="bluetooth_is_not_available">Bluetooth não disponível!</string>
     <string name="bluetooth_is_not_supported">Bluetooth não suportado!</string>
     <string name="bluetooth_permission_not_granted">Permissão Bluetooth não concedida!</string>
+    <string name="bluetooth_permission_required">Permissão necessária</string>
+    <string name="bluetooth_permission_description">Permita o acesso a dispositivos próximos para listar os adaptadores pareados e conectar ao veículo.</string>
+    <string name="bluetooth_permission_settings_description">Para conectar, autorize o acesso a dispositivos próximos nas configurações deste aplicativo.</string>
+    <string name="allow_bluetooth">Permitir Bluetooth</string>
+    <string name="open_app_settings">Abrir configurações</string>
     <string name="no_paired_bluetooth_devices_found">Nenhum dispositivo Bluetooth pareado encontrado!</string>
     <string name="turn_off_bluetooth_in_android_settings">Desligue o Bluetooth pelas configurações do Android!</string>
     <!-- ======================================================================================= -->

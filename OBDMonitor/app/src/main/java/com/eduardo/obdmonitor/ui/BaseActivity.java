@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.eduardo.obdmonitor.bluetooth.BluetoothManager;
 import com.eduardo.obdmonitor.bluetooth.BluetoothManagerListener;
+import com.eduardo.obdmonitor.bluetooth.BluetoothPermissions;
 import com.eduardo.obdmonitor.elm327.Elm327ConnectionListener;
 import com.eduardo.obdmonitor.elm327.Elm327DataListener;
 import com.eduardo.obdmonitor.elm327.Elm327Manager;
@@ -149,7 +150,12 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
      * <p>Notifica a Activity sobre o estado atual do Bluetooth e retoma a conexão com o ELM327
      * quando já existe um dispositivo Bluetooth conectado.</p>
      */
-    private void synchronizeConnectionState() {
+    protected final void synchronizeConnectionState() {
+        if (!BluetoothPermissions.areGranted(this)) {
+            onBluetoothManagerDisabled();
+            return;
+        }
+
         if (!bluetoothManager.isBluetoothEnabled()) {
             onBluetoothManagerDisabled();
             return;
