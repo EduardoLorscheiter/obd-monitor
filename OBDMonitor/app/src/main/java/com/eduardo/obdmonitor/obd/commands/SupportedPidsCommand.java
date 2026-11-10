@@ -27,6 +27,13 @@ public class SupportedPidsCommand extends ObdCommand<Long> {
     public static final String SUPPORTED_PIDS_20_PID = "20";
 
     /**
+     * PID {@code 0x40} - PIDs suportados pela ECU no intervalo de {@code 0x41} a {@code 0x60}.
+     *
+     * <p>Resposta: {@code 41 00 AA BB CC DD}</p>
+     */
+    public static final String SUPPORTED_PIDS_40_PID = "40";
+
+    /**
      * Quantidade de PIDs representados por cada máscara de suporte.
      */
     public static final int PIDS_PER_RESPONSE = 32;

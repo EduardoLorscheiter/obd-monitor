@@ -40,7 +40,8 @@ Após conectar, `Elm327Manager` envia esta sequência ao adaptador:
 3. `ATSP0` para seleção automática do protocolo; aguarda 5.000 ms.
 4. Consulta `0100`, que precisa produzir uma resposta válida para a sessão ser considerada pronta.
 5. Se a máscara de `0100` anunciar suporte ao PID `0x20`, consulta `0120` para o bloco `0x21`–`0x40`.
-6. Lê o protocolo identificado com `ATDP` e começa o monitoramento.
+6. Se `0120` anunciar suporte ao PID `0x40`, consulta `0140` para identificar suporte ao PID de tensão `0x42`.
+7. Lê o protocolo identificado com `ATDP` e começa o monitoramento.
 
 Uma resposta AT é aceita quando contém a identificação ELM327 ou `OK`. Falha de inicialização ou ausência de resposta válida a `0100` resulta em erro, não em uma sessão OBD pronta. Os comandos terminam com carriage return; a resposta é normalizada para maiúsculas, sem prompt, quebras de linha ou espaços excedentes.
 
@@ -48,30 +49,30 @@ Uma resposta AT é aceita quando contém a identificação ELM327 ou `OK`. Falha
 
 As consultas de leitura usam o Serviço 01. Os intervalos são mínimos entre execuções elegíveis; tarefas prontas são ordenadas por prioridade (HIGH antes de MEDIUM, depois LOW). O ciclo de monitoramento volta a verificar tarefas a cada 10 ms. Os intervalos e prioridades são os configurados atualmente em `Elm327Manager`.
 
-| Dado do painel                          |  PID | Conversão do dado `A` (e `B`, quando indicado) | Intervalo | Prioridade |
-|-----------------------------------------|-----:|------------------------------------------------|----------:|------------|
-| Rotação                                 | `0C` | `((A × 256) + B) / 4` RPM                      |    100 ms | HIGH       |
-| Velocidade                              | `0D` | `A` km/h                                       |    100 ms | HIGH       |
-| Borboleta                               | `11` | `(A × 100) / 255` %                            |    300 ms | MEDIUM     |
-| MAP                                     | `0B` | `A` kPa                                        |    300 ms | MEDIUM     |
-| Temperatura do motor                    | `05` | `A - 40` °C                                    |  1.000 ms | LOW        |
-| Temperatura de admissão                 | `0F` | `A - 40` °C                                    |  1.000 ms | LOW        |
-| Tensão (tarefa declarada, hoje inativa) | `42` | `((A × 256) + B) / 1000` V                     |  2.000 ms | LOW        |
-| Combustível                             | `2F` | `(A × 100) / 255` %                            |  2.000 ms | LOW        |
+| Dado do painel                            |           PID | Conversão do dado `A` (e `B`, quando indicado)                    | Intervalo | Prioridade |
+|-------------------------------------------|--------------:|-------------------------------------------------------------------|----------:|------------|
+| Rotação                                   |          `0C` | `((A × 256) + B) / 4` RPM                                         |    100 ms | HIGH       |
+| Velocidade                                |          `0D` | `A` km/h                                                          |    100 ms | HIGH       |
+| Borboleta                                 |          `11` | `(A × 100) / 255` %                                               |    300 ms | MEDIUM     |
+| MAP                                       |          `0B` | `A` kPa                                                           |    300 ms | MEDIUM     |
+| Temperatura do motor                      |          `05` | `A - 40` °C                                                       |  1.000 ms | LOW        |
+| Temperatura de admissão                   |          `0F` | `A - 40` °C                                                       |  1.000 ms | LOW        |
+| Tensão da ECU ou alimentação do adaptador | `42` / `ATRV` | `((A × 256) + B) / 1000` V para o PID; decimal em volts para ATRV |  2.000 ms | LOW        |
+| Combustível                               |          `2F` | `(A × 100) / 255` %                                               |  2.000 ms | LOW        |
 
 As tarefas de `0x05`, `0x0B`, `0x0C`, `0x0D` e `0x0F`/`0x11` usam a máscara retornada por `0100`. Combustível `0x2F` usa a máscara de `0120`; portanto, só é marcado suportado se `0100` anunciar `0x20` e a consulta seguinte anunciar `0x2F`. Tarefa não suportada não é consultada.
 
-**Comportamento especial da tensão:** o código declara o PID `0x42`, mas só obtém máscaras até `0x40` e configura a tarefa `0x42` com a máscara base de `0100`. Assim, o PID `0x42` nunca é marcado suportado e o scheduler não agenda essa tarefa. A função de leitura contém um fallback `ATRV`, mas ele é inalcançável enquanto a tarefa continuar sem suporte. Na implementação atual, o cartão “Bateria” permanece no valor inicial `0.0`; nenhum comando de leitura de tensão é executado. Se o fallback for tornado alcançável, `ATRV` mede a tensão de alimentação do próprio adaptador ELM327, não uma leitura confirmada da ECU. Para habilitar o PID seria necessário consultar e interpretar também o bloco iniciado por `0140` e configurar o suporte com essa máscara.
+**Comportamento especial da tensão:** a tarefa é habilitada após a descoberta OBD mesmo sem suporte ao PID `0x42`. Quando `0140` anuncia esse PID, a leitura tenta primeiro a ECU; sem suporte ou com resposta inválida, usa `ATRV`. O suporte ao PID e a habilitação da tarefa são estados separados. Respostas inválidas do PID não reutilizam valores anteriores. Se ambas as fontes falharem, o callback recebe `Double.NaN` e o cartão exibe `--` em cor neutra. Zero em resposta válida continua sendo uma medição válida. `ATRV` mede a alimentação do adaptador, enquanto `0142` informa a tensão da ECU. Formatos conferidos no [datasheet ELM327](https://www.elmelectronics.com/wp-content/uploads/2017/01/ELM327DS.pdf) e na [tabela de PIDs da CSS Electronics](https://www.csselectronics.com/pages/obd2-pid-table-on-board-diagnostics-j1979).
 
 ### Parsing e significado de valores
 
-`ObdCommand` procura o cabeçalho de resposta `41` seguido do PID e exige o comprimento configurado antes de converter os bytes hexadecimais. Cada comando guarda o último valor convertido; as respostas ausentes, curtas ou com hexadecimal inválido retornam esse valor anterior. Os comandos de medição inicializam esse valor em zero. `Elm327Manager` ainda publica o número retornado ao listener, e o layout também inicia as métricas numéricas em zero.
+`ObdCommand` procura o cabeçalho de resposta `41` seguido do PID e exige o comprimento configurado antes de converter os bytes hexadecimais. Os comandos de medição, exceto tensão, guardam o último valor convertido e retornam esse valor anterior para respostas ausentes, curtas ou com hexadecimal inválido. Esses comandos e seus widgets iniciam em zero. Tensão usa a semântica de indisponibilidade descrita acima e seu cartão inicia em `--`.
 
-Consequentemente, o estado exibido atualmente **não distingue** uma leitura real igual a zero de uma resposta inválida anterior à primeira leitura válida, nem identifica quando um valor preservado ficou antigo. Uma tarefa marcada não suportada simplesmente não atualiza o widget; seu valor inicial permanece. Se a função de leitura da tensão chegar a executar seu fallback `ATRV`, ele retorna `0.0` se não houver resposta ou se a conversão falhar. No fluxo atual, porém, a tarefa de tensão não chega a ser agendada. Não trate esses zeros como uma indicação explícita de dado indisponível. Se essa semântica mudar, ajuste em conjunto comandos, callbacks, estado de suporte e apresentação.
+Consequentemente, nas demais métricas o estado exibido **não distingue** uma leitura real igual a zero de uma resposta inválida anterior à primeira leitura válida, nem identifica quando um valor preservado ficou antigo. Uma tarefa marcada não suportada simplesmente não atualiza o widget; seu valor inicial permanece. Não trate esses zeros como uma indicação explícita de dado indisponível.
 
 ## Painel
 
-O painel apresenta rotação, velocidade, borboleta, MAP, temperaturas do motor e da admissão, tensão e nível de combustível. O indicador de rotação limita o valor visual ao intervalo entre zero e o RPM máximo configurado. O alerta visual pisca quando a leitura alcança ou ultrapassa o RPM inicial do alerta.
+O painel apresenta rotação, velocidade, borboleta, MAP, temperaturas do motor e da admissão, tensão e nível de combustível. O indicador de rotação limita o valor visual ao intervalo entre zero e o RPM máximo configurado. O alerta visual pisca quando a leitura alcança ou ultrapassa o RPM inicial do alerta e a Activity está retomada. Ao pausar ou destruir a tela, o animador é cancelado, seus listeners são removidos e o overlay volta à transparência zero. Callbacks atrasados não reiniciam o alerta enquanto a tela estiver inativa; ao retomar, o último RPM recebido é reavaliado.
 
 As cores dos valores são classificações visuais codificadas na `DashboardActivity` quando o callback de cada métrica é recebido:
 
@@ -79,7 +80,7 @@ As cores dos valores são classificações visuais codificadas na `DashboardActi
 - Temperatura de admissão: abaixo de 20 °C frio; até 40 °C normal; até 60 °C aviso; acima disso quente.
 - Tensão exibida: abaixo de 11,8 V baixa; de 11,8 V a menos de 12,6 V aviso; até 14,7 V normal; acima disso alta.
 
-No fluxo atual, o callback de tensão não chega a ser recebido porque a tarefa `0x42` não é agendada; por isso, o cartão de bateria mantém o valor inicial e sua faixa de cor não é aplicada. As demais faixas só mudam a apresentação, não constituem diagnóstico mecânico. O painel é mantido ligado enquanto visível.
+As faixas de cor só mudam a apresentação, não constituem diagnóstico mecânico. A faixa de tensão se aplica à fonte que forneceu a leitura válida; a indicação indisponível usa cor neutra. O painel é mantido ligado enquanto visível.
 
 ## Configurações
 

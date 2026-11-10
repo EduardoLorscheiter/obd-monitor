@@ -151,7 +151,7 @@
                     app:metricIcon="@drawable/ic_dashboard_lightning_charge"
                     app:metricTitle="@string/battery"
                     app:metricUnit="V"
-                    app:metricValue="0.0" />
+                    app:metricValue="@string/__" />
 
                 <com.eduardo.obdmonitor.view.FuelLevelView
                     android:id="@+id/fuelLevel"

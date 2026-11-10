@@ -75,6 +75,11 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      */
     private ValueAnimator blinkAnimator;
 
+    /**
+     * Impede que callbacks atrasados iniciem animações após a saída do painel.
+     */
+    private boolean dashboardResumed;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +121,36 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
         cardIntake = findViewById(R.id.cardIntake);
         cardBattery = findViewById(R.id.cardBattery);
         fuelLevel = findViewById(R.id.fuelLevel);
+    }
+
+    /**
+     * Retoma o alerta somente quando o painel volta a ficar ativo.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        dashboardResumed = true;
+        updateRevLimiter(currentRpm);
+    }
+
+    /**
+     * Interrompe a animação ao sair do painel.
+     */
+    @Override
+    protected void onPause() {
+        dashboardResumed = false;
+        stopRevLimiterBlink();
+        super.onPause();
+    }
+
+    /**
+     * Libera os callbacks do animador durante o encerramento definitivo da Activity.
+     */
+    @Override
+    protected void onDestroy() {
+        dashboardResumed = false;
+        stopRevLimiterBlink();
+        super.onDestroy();
     }
 
     /**
@@ -283,6 +318,11 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     public void onObdControlModuleVoltageChanged(double voltage) {
         runOnUiThread(() -> {
             cardBattery.setValue(String.format(Locale.US, "%.1f", voltage));
+            if (!Double.isFinite(voltage)) {
+                cardBattery.setValue(getString(R.string.__));
+                cardBattery.setValueColor(R.color.ios_grey);
+                return;
+            }
             if (voltage < 11.8) {
                 cardBattery.setValueColor(R.color.battery_low);
             } else if (voltage < 12.6) {
@@ -309,7 +349,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * @param rpm Rotação atual do motor em RPM.
      */
     private void updateRevLimiter(int rpm) {
-        if (rpm >= blinkStartRpm)
+        if (dashboardResumed && !isFinishing() && !isDestroyed() && rpm >= blinkStartRpm)
             startRevLimiterBlink();
         else
             stopRevLimiterBlink();
@@ -346,8 +386,12 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * completamente o efeito de piscar da interface.</p>
      */
     private void stopRevLimiterBlink() {
-        if (blinkAnimator != null)
+        if (blinkAnimator != null) {
             blinkAnimator.cancel();
+            blinkAnimator.removeAllUpdateListeners();
+            blinkAnimator.removeAllListeners();
+            blinkAnimator = null;
+        }
 
         viewLimiter.setAlpha(0f);
     }

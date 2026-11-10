@@ -162,6 +162,11 @@ public class Elm327Manager {
             new SupportedPidsCommand(SupportedPidsCommand.SUPPORTED_PIDS_20_PID);
 
     /**
+     * Suporte ao PID 42, distinto da habilitação da tarefa que também pode consultar ATRV.
+     */
+    private volatile boolean voltagePidSupported;
+
+    /**
      * Tarefas responsáveis pelo agendamento individual da leitura dos PIDs OBD-II.
      */
     private final PidTask rpmTask =
@@ -433,7 +438,7 @@ public class Elm327Manager {
 
         boolean commandAccepted =
                 response.contains(applicationContext.getString(R.string.elm327)) ||
-                response.contains(applicationContext.getString(R.string.ok));
+                        response.contains(applicationContext.getString(R.string.ok));
 
         if (!commandAccepted)
             initializationFailureMessage = applicationContext.getString(
@@ -477,6 +482,17 @@ public class Elm327Manager {
         }
 
         // Atualiza o suporte das tarefas conforme os PIDs identificados
+        SupportedPidsCommand voltagePidsCommand =
+                new SupportedPidsCommand(SupportedPidsCommand.SUPPORTED_PIDS_40_PID);
+
+        Long voltagePids = null;
+        if (extendedPidsCommand.isPidSupported(extendedPids, voltagePidsCommand.getPid()))
+            voltagePids = voltagePidsCommand.parse(
+                    executeElm327Command(voltagePidsCommand.getRequest()));
+
+        voltagePidSupported = voltagePidsCommand.isPidSupported(
+                voltagePids, voltageTask.getCommand().getPid());
+
         configurePidTasks(basePids, extendedPids);
 
         return true;
@@ -496,7 +512,8 @@ public class Elm327Manager {
         mapTask.updateSupport(basePidsCommand, basePids);
         coolantTask.updateSupport(basePidsCommand, basePids);
         intakeTask.updateSupport(basePidsCommand, basePids);
-        voltageTask.updateSupport(basePidsCommand, basePids);
+        // ATRV mantém a tarefa elegível mesmo quando a ECU não oferece o PID 42.
+        voltageTask.setSupported(true);
         fuelTask.updateSupport(extendedPidsCommand, extendedPids);
     }
 
@@ -546,8 +563,8 @@ public class Elm327Manager {
                     initializationFailureMessage != null
                             ? initializationFailureMessage
                             : Elm327ManagerError.INVALID_ELM327_DEVICE.getMessage(
-                                    applicationContext
-                            )
+                            applicationContext
+                    )
             );
     }
 
@@ -805,17 +822,12 @@ public class Elm327Manager {
      */
     private double readControlModuleVoltage() {
         // Primeira tentativa: se a tarefa suporta a leitura pelo PID OBD-II
-        if (voltageTask.isSupported()) {
+        if (voltagePidSupported) {
             String response = executeElm327Command(voltageTask.getCommand().getRequest());
 
-            if (response != null) {
-                try {
-                    double voltage = (Double) voltageTask.getCommand().parse(response);
-                    if (voltage > 0.0)
-                        return voltage;
-                } catch (Exception ignored) {
-                }
-            }
+            double voltage = (Double) voltageTask.getCommand().parse(response);
+            if (Double.isFinite(voltage))
+                return voltage;
         }
 
         // Segunda tentativa: caso não tenha suporte na tarefa, faz a leitura direta pelo ELM327
@@ -828,19 +840,12 @@ public class Elm327Manager {
      * <p>O comando {@code AT RV} é enviado ao adaptador ELM327, que retorna o valor da tensão em
      * volts. A resposta é convertida para {@code double} após a remoção da unidade de medida.</p>
      *
-     * @return Tensão de alimentação do ELM327 em volts (V) ou {@code 0.0} caso não seja possível
-     * obter ou converter uma resposta válida.
+     * @return Tensão de alimentação do ELM327 em volts (V) ou {@link Double#NaN} caso não seja
+     * possível obter ou converter uma resposta válida.
      */
     private double readElm327Voltage() {
         String response = executeElm327Command(Elm327Commands.READ_VOLTAGE);
-        if (response == null)
-            return 0.0;
-
-        try {
-            return Double.parseDouble(response.replace("V", "").trim());
-        } catch (NumberFormatException e) {
-            return 0.0;
-        }
+        return Elm327Commands.parseVoltage(response);
     }
 
     /**
@@ -921,6 +926,7 @@ public class Elm327Manager {
      * Reinicia o suporte das tarefas de leitura dos PIDs OBD-II.
      */
     private void clearTaskSupport() {
+        voltagePidSupported = false;
         rpmTask.setSupported(false);
         speedTask.setSupported(false);
         throttleTask.setSupported(false);

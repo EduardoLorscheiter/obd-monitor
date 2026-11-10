@@ -58,7 +58,8 @@ public interface Elm327DataListener {
     /**
      * Chamado quando receber um novo valor de tensão de alimentação do módulo de controle (ECU).
      *
-     * @param voltage Tensão de alimentação do módulo de controle (ECU), em Volts (V).
+     * @param voltage Tensão em volts da ECU ou, como alternativa, da alimentação do adaptador.
+     *                {@link Double#NaN} indica que nenhuma das fontes retornou leitura válida.
      */
     void onObdControlModuleVoltageChanged(double voltage);
 

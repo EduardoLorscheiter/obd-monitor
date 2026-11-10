@@ -7,9 +7,11 @@ Este documento é a fonte única dos comandos e limites de verificação. Consul
 - `app/src/test/.../SupportedPidsCommandTest.java` verifica leitura da máscara básica e identificação do PID `0x20` com bit ligado ou desligado.
 - `app/src/test/.../BluetoothPermissionsTest.java` verifica as permissões do fluxo de pareados nas APIs 29, 30, 31 e 36.
 - `app/src/test/.../BluetoothConnectionTest.java` cobre desconexão fora do lock do transporte, concorrência com o lock do gerenciador, fechamento único dos fluxos, acúmulo de erros sem callbacks e cancelamento de tentativa pendente. Os testes usam recursos em memória, sem adaptador físico.
+- `VoltageCommandTest` cobre fórmula, limites, respostas inválidas após leitura válida e o bloco de suporte `0140`. `Elm327VoltageTest` cobre parsing e indisponibilidade de `ATRV`.
+- Nos testes instrumentados, `VoltageMonitoringTest` verifica descoberta, agendamento e leitura alternativa com transporte em memória. `DashboardActivityTest` verifica tensão indisponível e liberação/retomada do alerta ao navegar entre painel e configurações.
 - `ExampleUnitTest` é apenas o teste de soma gerado pelo modelo; não cobre comportamento do aplicativo.
 - `app/src/androidTest/.../ExampleInstrumentedTest.java` verifica o package name do contexto Android; não valida Bluetooth ou telas.
-- Não há cobertura automatizada identificada para as fórmulas dos demais PIDs, `ObdScheduler`, inicialização ELM327 ou apresentação de estados indisponíveis. A solicitação de permissões e o funcionamento real do Bluetooth ainda precisam de validação em Android.
+- Não há cobertura automatizada identificada para as fórmulas dos demais PIDs, `ObdScheduler`, inicialização ELM327 completa ou apresentação de estados indisponíveis nas demais métricas. A solicitação de permissões e o funcionamento real do Bluetooth ainda precisam de validação em Android.
 
 Confirme os testes presentes no checkout antes de assumir que essa lista continua atualizada.
 

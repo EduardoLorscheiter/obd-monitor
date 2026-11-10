@@ -24,7 +24,7 @@ public class VoltageCommand extends ObdCommand<Double> {
      * Cria um comando para consulta da tensão de alimentação do módulo de controle (ECU).
      */
     public VoltageCommand() {
-        super(VOLTAGE_PID, 2, 0.0);
+        super(VOLTAGE_PID, 2, Double.NaN);
     }
 
     /**
@@ -37,16 +37,19 @@ public class VoltageCommand extends ObdCommand<Double> {
      * </pre>
      *
      * @param response Resposta normalizada recebida do ELM327.
-     * @return Tensão de alimentação do módulo de controle (ECU) em Volts (V) ou o último valor
-     * válido quando a resposta for inválida.
+     * @return Tensão atual em volts ou {@link Double#NaN} para permitir a leitura alternativa
+     * quando esta resposta for inválida, mesmo após uma leitura anterior válida.
      */
     @Override
     public Double parse(String response) {
+        setLastValue(Double.NaN);
         String data = getPidData(response);
         if (data == null)
             return getLastValue();
 
         try {
+            if (!data.matches("[0-9A-F]{4}"))
+                return Double.NaN;
             int a = hexToInt(data.substring(0, 2));
             int b = hexToInt(data.substring(2, 4));
             double voltage = ((a * 256) + b) / 1000.0;

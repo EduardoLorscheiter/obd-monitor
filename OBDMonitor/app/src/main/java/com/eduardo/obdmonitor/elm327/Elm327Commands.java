@@ -60,4 +60,16 @@ public final class Elm327Commands {
      * <p>O valor retornado corresponde à tensão medida na alimentação do próprio ELM327.</p>
      */
     public static final String READ_VOLTAGE = "ATRV";
+
+    /**
+     * Converte a tensão medida pelo adaptador, sem preservar valores antigos.
+     *
+     * @param response Resposta normalizada do ATRV, por exemplo {@code 12.6V}.
+     * @return Tensão em volts ou {@link Double#NaN} para resposta ausente ou inválida.
+     */
+    public static double parseVoltage(String response) {
+        if (response == null || !response.trim().matches("[0-9]{1,2}\\.[0-9]\\s*V"))
+            return Double.NaN;
+        return Double.parseDouble(response.trim().replace("V", "").trim());
+    }
 }
