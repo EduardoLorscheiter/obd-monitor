@@ -27,6 +27,8 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.utils.DialogUtils;
+import com.eduardo.obdmonitor.utils.ViewUtils;
 
 public class MetricView extends LinearLayout {
     /**
@@ -40,20 +42,38 @@ public class MetricView extends LinearLayout {
     private String initialValue;
 
     /**
-     * Cor inicial do valor, restaurada junto com a medição.
+     * Cor inicial do valor, restaurada com a medição.
      */
     private ColorStateList initialValueColor;
 
+    /**
+     * Cria um cartão com o layout padrão.
+     *
+     * @param context Contexto utilizado pelo componente.
+     */
     public MetricView(Context context) {
         super(context);
         init(context, null);
     }
 
+    /**
+     * Cria um cartão com título, unidade, ícone e explicação definidos no XML.
+     *
+     * @param context Contexto utilizado pelo componente.
+     * @param attrs   Atributos personalizados do cartão.
+     */
     public MetricView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
+    /**
+     * Cria um cartão com atributos XML e um estilo padrão.
+     *
+     * @param context      Contexto utilizado pelo componente.
+     * @param attrs        Atributos personalizados do cartão.
+     * @param defStyleAttr Atributo que define o estilo padrão.
+     */
     public MetricView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
@@ -85,6 +105,8 @@ public class MetricView extends LinearLayout {
                 Drawable icon = attributes.getDrawable(R.styleable.MetricView_metricIcon);
                 String title = attributes.getString(R.styleable.MetricView_metricTitle);
                 String unit = attributes.getString(R.styleable.MetricView_metricUnit);
+                CharSequence description = attributes.getText(
+                        R.styleable.MetricView_metricDescription);
 
                 if (icon != null)
                     imgIcon.setImageDrawable(icon);
@@ -92,6 +114,12 @@ public class MetricView extends LinearLayout {
                     txtTitle.setText(title);
                 if (unit != null)
                     txtUnit.setText(unit);
+                if (description != null && description.length() > 0) {
+                    setFocusable(true);
+                    setScreenReaderFocusable(true);
+                    ViewUtils.setClickSoundListener(this, view ->
+                            DialogUtils.show(getContext(), txtTitle.getText(), description));
+                }
             }
         }
         initialValue = txtValue.getText().toString();

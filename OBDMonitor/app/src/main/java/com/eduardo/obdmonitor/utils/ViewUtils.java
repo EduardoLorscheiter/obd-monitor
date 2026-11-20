@@ -13,6 +13,7 @@
 package com.eduardo.obdmonitor.utils;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.ColorStateList;
 import android.util.TypedValue;
 import android.view.View;
@@ -23,12 +24,37 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.ui.BaseActivity;
 
 public class ViewUtils {
     /**
      * Classe utilitária. Não permite instanciação.
      */
     private ViewUtils() {
+    }
+
+    /**
+     * Registra uma ação usando o som da Activity, inclusive em componentes com contexto temático.
+     * Fora de uma {@link BaseActivity}, registra somente a ação de clique.
+     *
+     * @param view   Componente que receberá o listener.
+     * @param action Ação executada ao clicar no componente.
+     */
+    public static void setClickSoundListener(View view, View.OnClickListener action) {
+        view.setOnClickListener(clickedView -> {
+            Context context = clickedView.getContext();
+            while (context instanceof ContextWrapper) {
+                if (context instanceof BaseActivity) {
+                    ((BaseActivity) context).playClickSound();
+                    break;
+                }
+                Context baseContext = ((ContextWrapper) context).getBaseContext();
+                if (baseContext == context)
+                    break;
+                context = baseContext;
+            }
+            action.onClick(clickedView);
+        });
     }
 
     /**

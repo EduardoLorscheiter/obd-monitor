@@ -29,6 +29,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.utils.DialogUtils;
 import com.eduardo.obdmonitor.utils.ViewUtils;
 
 public class ShiftLightView extends View {
@@ -159,16 +160,34 @@ public class ShiftLightView extends View {
      */
     private int rpm = 0;
 
+    /**
+     * Cria o indicador de rotação com ajuda ao toque.
+     *
+     * @param context Contexto utilizado pelo componente.
+     */
     public ShiftLightView(Context context) {
         super(context);
         init();
     }
 
+    /**
+     * Cria o indicador a partir dos atributos do layout.
+     *
+     * @param context Contexto utilizado pelo componente.
+     * @param attrs   Atributos definidos no XML.
+     */
     public ShiftLightView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
+    /**
+     * Cria o indicador com atributos XML e um estilo padrão.
+     *
+     * @param context      Contexto utilizado pelo componente.
+     * @param attrs        Atributos definidos no XML.
+     * @param defStyleAttr Atributo que define o estilo padrão.
+     */
     public ShiftLightView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
@@ -230,6 +249,10 @@ public class ShiftLightView extends View {
         initPaints();
         loadColors();
         updateLayoutMetrics(getWidth(), getHeight());
+        setFocusable(true);
+        setContentDescription(getContext().getText(R.string.metric_rpm_title));
+        ViewUtils.setClickSoundListener(this, view -> DialogUtils.show(
+                getContext(), R.string.metric_rpm_title, R.string.metric_rpm_description));
     }
 
     /**

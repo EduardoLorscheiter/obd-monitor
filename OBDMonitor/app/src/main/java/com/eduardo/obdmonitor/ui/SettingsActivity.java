@@ -105,15 +105,18 @@ public class SettingsActivity extends BaseActivity {
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        setClickSoundListener(btnBack, v -> finish());
-        setClickSoundListener(btnSave, v -> saveSettings());
-        setClickSoundListener(findViewById(R.id.btnAppearance), v -> { });
-        setClickSoundListener(findViewById(R.id.btnVehicle), v -> { });
-        setClickSoundListener(findViewById(R.id.btnAlerts), v -> { });
-        setClickSoundListener(findViewById(R.id.btnVehicleMaxRpmHelp), v ->
+        ViewUtils.setClickSoundListener(btnBack, v -> finish());
+        ViewUtils.setClickSoundListener(btnSave, v -> saveSettings());
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnAppearance), v -> {
+        });
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnVehicle), v -> {
+        });
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnAlerts), v -> {
+        });
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnVehicleMaxRpmHelp), v ->
                 DialogUtils.show(this, R.string.vehicle_max_rpm_title,
                         R.string.vehicle_max_rpm_description));
-        setClickSoundListener(findViewById(R.id.btnBlinkRpmHelp), v ->
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnBlinkRpmHelp), v ->
                 DialogUtils.show(this, R.string.rpm_blink_start_title,
                         R.string.rpm_blink_start_description));
         groupSettingsCategory.addOnButtonCheckedListener((group, checkedId, isChecked) -> {

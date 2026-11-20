@@ -17,7 +17,6 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.os.Bundle;
-import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -227,18 +226,11 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     }
 
     /**
-     * Configura um listener de clique que reproduz o som da interface antes de executar a ação
-     * associada à View.
-     *
-     * @param view   View que receberá o listener de clique.
-     * @param action Ação executada quando a View é clicada.
+     * Reproduz o som de clique quando o áudio está carregado e seus recursos estão disponíveis.
      */
-    protected void setClickSoundListener(View view, View.OnClickListener action) {
-        view.setOnClickListener(clickedView -> {
-            if (clickSoundLoaded && clickSoundPool != null)
-                clickSoundPool.play(clickSoundId, 1f, 1f, 1, 0, 1f);
-            action.onClick(clickedView);
-        });
+    public void playClickSound() {
+        if (clickSoundLoaded && clickSoundPool != null)
+            clickSoundPool.play(clickSoundId, 1f, 1f, 1, 0, 1f);
     }
 
     /**

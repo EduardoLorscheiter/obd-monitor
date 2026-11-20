@@ -62,6 +62,16 @@
     <string name="intake_t">T. Admissão</string>
     <string name="throttle">Borboleta</string>
     <string name="map">MAP</string>
+    <string name="metric_rpm_title">Rotação do motor</string>
+    <string name="metric_fuel_title">Nível de combustível</string>
+    <string name="metric_speed_description">Indica a velocidade do veículo informada pela central eletrônica, em quilômetros por hora (km/h).</string>
+    <string name="metric_throttle_description">Indica o percentual de abertura da borboleta, que controla a passagem de ar para o motor. O valor representa a posição informada pela central eletrônica.</string>
+    <string name="metric_map_description">Indica a pressão absoluta do ar no coletor de admissão, em quilopascais (kPa). Essa leitura acompanha as variações de pressão na entrada de ar do motor.</string>
+    <string name="metric_coolant_description">Indica a temperatura do líquido de arrefecimento do motor, em graus Celsius (°C). As cores do cartão destacam as faixas de temperatura usadas pelo aplicativo.</string>
+    <string name="metric_intake_description">Indica a temperatura do ar admitido pelo motor, em graus Celsius (°C). As cores do cartão destacam as faixas de temperatura usadas pelo aplicativo.</string>
+    <string name="metric_battery_description">Indica a tensão elétrica, em volts (V), informada pela central eletrônica ou pela alimentação do adaptador OBD. A leitura ajuda a acompanhar a tensão do sistema, mas não mede a carga restante da bateria.</string>
+    <string name="metric_rpm_description">Indica quantas rotações o motor realiza por minuto (rpm). Os LEDs acendem conforme a rotação aumenta. A escala máxima e a rotação que inicia o alerta piscante podem ser ajustadas nas configurações.</string>
+    <string name="metric_fuel_description">Indica o nível de combustível informado pelo veículo, em percentual (%). O preenchimento do indicador acompanha esse valor; ele não representa uma quantidade em litros.</string>
     <!-- ======================================================================================= -->
     <!-- Acessibilidade -->
     <!-- ======================================================================================= -->

@@ -50,7 +50,7 @@ Respeite o estilo e o nível de documentação usado no arquivo e pacote alterad
 ## Activities, controles e recursos visuais
 
 - Toda Activity nova deve estender `com.eduardo.obdmonitor.ui.BaseActivity`, para manter os comportamentos comuns e a integração dos gerenciadores.
-- Todo botão ou controle que atua como botão precisa reproduzir o som de clique do aplicativo. Em Activities, registre a ação por `setClickSoundListener(view, action)` herdado de `BaseActivity`. A regra inclui `Button`, `MaterialButton`, `ImageButton` e controles customizados clicáveis com função de botão.
+- Todo botão ou controle que atua como botão precisa reproduzir o som de clique do aplicativo. Registre a ação por `ViewUtils.setClickSoundListener(view, action)` em Activities, diálogos e Views customizadas. A regra inclui `Button`, `MaterialButton`, `ImageButton` e controles customizados clicáveis com função de botão.
 - Todo componente novo que use cor deve referenciar um recurso declarado em `app/src/main/res/values/colors.xml`. Se a cor não existir, declare-a ali e use `@color/...` em XML ou `R.color...` em Java; não coloque valores hexadecimais diretamente no componente.
 - Texto visível deve vir de `strings.xml`, incluindo mensagens de erro. Mantenha as traduções em `values/strings.xml` e `values-en/strings.xml` consistentes e preserve os recursos de tema, cor e layout.
 - Ao criar ou alterar uma tela, trate estados de carregamento, indisponibilidade e erro, além do estado conectado. Evite manter Activity ou View além do ciclo de vida e remova callbacks/listeners quando necessário.

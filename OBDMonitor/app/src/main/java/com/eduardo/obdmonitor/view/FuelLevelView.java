@@ -27,6 +27,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.eduardo.obdmonitor.R;
+import com.eduardo.obdmonitor.utils.DialogUtils;
+import com.eduardo.obdmonitor.utils.ViewUtils;
 
 public class FuelLevelView extends View {
     /**
@@ -54,16 +56,34 @@ public class FuelLevelView extends View {
      */
     private final RectF fuelRect = new RectF();
 
+    /**
+     * Cria o indicador de combustível com ajuda ao toque.
+     *
+     * @param context Contexto utilizado pelo componente.
+     */
     public FuelLevelView(Context context) {
         super(context);
         init();
     }
 
+    /**
+     * Cria o indicador a partir dos atributos do layout.
+     *
+     * @param context Contexto utilizado pelo componente.
+     * @param attrs   Atributos definidos no XML.
+     */
     public FuelLevelView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
+    /**
+     * Cria o indicador com atributos XML e um estilo padrão.
+     *
+     * @param context      Contexto utilizado pelo componente.
+     * @param attrs        Atributos definidos no XML.
+     * @param defStyleAttr Atributo que define o estilo padrão.
+     */
     public FuelLevelView(
             Context context,
             @Nullable AttributeSet attrs,
@@ -89,6 +109,10 @@ public class FuelLevelView extends View {
         );
 
         setBackgroundResource(R.drawable.metric_card_background);
+        setFocusable(true);
+        setContentDescription(getContext().getText(R.string.metric_fuel_title));
+        ViewUtils.setClickSoundListener(this, view -> DialogUtils.show(
+                getContext(), R.string.metric_fuel_title, R.string.metric_fuel_description));
     }
 
     /**

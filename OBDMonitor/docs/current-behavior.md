@@ -112,6 +112,8 @@ Implementação: [ObdCommand](../app/src/main/java/com/eduardo/obdmonitor/obd/co
 
 O painel apresenta as medições da tabela de PIDs, os indicadores Bluetooth/ECU e o protocolo. Inicialmente e após a notificação de ECU desconectada, os cartões e o protocolo mostram `--`, RPM e combustível ficam em zero e as cores dos cartões voltam ao padrão.
 
+Tocar em qualquer uma das oito medições abre uma explicação sobre seu significado e unidade, mesmo sem conexão com o veículo. Os cartões, o indicador de RPM e o nível de combustível apresentam essa ajuda por meio de `DialogUtils`, com textos em português e inglês. Os diálogos de ajuda do painel e das configurações usam a mesma paleta de cinza dos cartões, com texto claro e botão de confirmação.
+
 O indicador de RPM limita o valor numérico e visual entre zero e o máximo configurado. O alerta pisca quando a ECU está conectada, o painel está retomado e o RPM recebido alcança o início do alerta. Ao pausar ou destruir a tela, a animação é cancelada, os listeners são removidos e o overlay volta à transparência zero. Ao retomar, o último RPM recebido é reavaliado.
 
 As faixas abaixo são classificações visuais fixas; não constituem diagnóstico mecânico.

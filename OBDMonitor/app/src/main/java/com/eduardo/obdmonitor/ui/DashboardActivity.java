@@ -61,10 +61,6 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<Intent> connectionLauncher;
 
-    /**
-     * Limite de rotação definido para o veículo.
-     */
-    private int maxRpm = SettingsUtils.DEFAULT_MAX_RPM;
     private int blinkStartRpm;
     private int currentRpm;
     private int appliedLanguageIndex;
@@ -162,12 +158,12 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * Configura os eventos dos componentes da interface.
      */
     private void setListeners() {
-        setClickSoundListener(btnSettings, v -> {
+        ViewUtils.setClickSoundListener(btnSettings, v -> {
             Intent intent = new Intent(DashboardActivity.this, SettingsActivity.class);
             settingsLauncher.launch(intent);
         });
 
-        setClickSoundListener(btnConnection, v -> {
+        ViewUtils.setClickSoundListener(btnConnection, v -> {
             Intent intent = new Intent(DashboardActivity.this, ConnectionActivity.class);
             connectionLauncher.launch(intent);
         });
@@ -219,7 +215,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * monitoramento do RPM.
      */
     private void applyMaxRpmSetting() {
-        maxRpm = SettingsUtils.getMaxRpm(this);
+        int maxRpm = SettingsUtils.getMaxRpm(this);
         blinkStartRpm = SettingsUtils.getBlinkStartRpm(this);
         shiftLight.setMaxRpm(maxRpm);
         shiftLight.setRpm(currentRpm);

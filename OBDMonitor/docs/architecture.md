@@ -57,4 +57,6 @@ As setas representam chamadas ou entrega de eventos. O transporte devolve respos
 
 Na sincronização inicial, a classe base verifica permissão e rádio, retoma uma sessão Bluetooth existente ou encaminha a ausência de transporte ao gerenciador ELM327. A retirada de listeners não encerra por si só a sessão. A perda de transporte interrompe o monitoramento e limpa os estados de conexão e o suporte das tarefas. Consulte as particularidades dos valores preservados em [comportamento atual](current-behavior.md), tópico **"Validade e indisponibilidade dos dados"**.
 
-`BaseActivity` também aplica configurações ao criar o contexto e gerência os recursos de som de clique. A persistência fica em `SettingsUtils`, usando `SharedPreferences`. Consulte as opções e os efeitos na interface em [comportamento atual](current-behavior.md), tópico **"Configurações"**.
+`ViewUtils` centraliza o registro dos listeners de clique com som e delega a reprodução a `BaseActivity.playClickSound()`. Os recursos de áudio pertencem à Activity: são preparados em `onCreate` e liberados em `onDestroy`.
+
+`BaseActivity` também aplica configurações ao criar o contexto. A persistência fica em `SettingsUtils`, usando `SharedPreferences`. Consulte as opções e os efeitos na interface em [comportamento atual](current-behavior.md), tópico **"Configurações"**.

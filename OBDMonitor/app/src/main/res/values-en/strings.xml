@@ -53,6 +53,16 @@
     <string name="intake_t">Intake T.</string>
     <string name="throttle">Throttle</string>
     <string name="map">MAP</string>
+    <string name="metric_rpm_title">Engine speed</string>
+    <string name="metric_fuel_title">Fuel level</string>
+    <string name="metric_speed_description">Shows the vehicle speed reported by the control module, in kilometers per hour (km/h).</string>
+    <string name="metric_throttle_description">Shows the opening percentage of the throttle valve, which controls airflow into the engine. The value represents the position reported by the control module.</string>
+    <string name="metric_map_description">Shows the absolute air pressure in the intake manifold, in kilopascals (kPa). This reading tracks pressure changes at the engine air intake.</string>
+    <string name="metric_coolant_description">Shows the engine coolant temperature, in degrees Celsius (°C). The card colors highlight the temperature ranges used by the app.</string>
+    <string name="metric_intake_description">Shows the temperature of the air entering the engine, in degrees Celsius (°C). The card colors highlight the temperature ranges used by the app.</string>
+    <string name="metric_battery_description">Shows the electrical voltage, in volts (V), reported by the control module or measured at the OBD adapter power supply. The reading helps track system voltage but does not measure the remaining battery charge.</string>
+    <string name="metric_rpm_description">Shows how many revolutions the engine makes per minute (rpm). The LEDs light up as engine speed increases. The maximum scale and the engine speed that triggers the blinking warning can be adjusted in settings.</string>
+    <string name="metric_fuel_description">Shows the fuel level reported by the vehicle, as a percentage (%). The indicator fill follows this value; it does not represent a quantity in liters.</string>
     <!-- ======================================================================================= -->
     <!-- Acessibilidade -->
     <!-- ======================================================================================= -->

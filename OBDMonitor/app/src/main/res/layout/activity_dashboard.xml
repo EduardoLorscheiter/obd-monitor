@@ -103,6 +103,7 @@
                     android:id="@+id/cardSpeed"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_speed_description"
                     app:metricIcon="@drawable/ic_dashboard_speedometer"
                     app:metricTitle="@string/speed"
                     app:metricUnit="km/h" />
@@ -111,6 +112,7 @@
                     android:id="@+id/cardThrottle"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_throttle_description"
                     app:metricIcon="@drawable/ic_dashboard_throttle"
                     app:metricTitle="@string/throttle"
                     app:metricUnit="%" />
@@ -119,6 +121,7 @@
                     android:id="@+id/cardMap"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_map_description"
                     app:metricIcon="@drawable/ic_dashboard_pressure_gauge"
                     app:metricTitle="@string/map"
                     app:metricUnit="kPa" />
@@ -127,6 +130,7 @@
                     android:id="@+id/cardCoolant"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_coolant_description"
                     app:metricIcon="@drawable/ic_dashboard_thermometer"
                     app:metricTitle="@string/engine_t"
                     app:metricUnit="°C" />
@@ -135,6 +139,7 @@
                     android:id="@+id/cardIntake"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_intake_description"
                     app:metricIcon="@drawable/ic_dashboard_thermometer"
                     app:metricTitle="@string/intake_t"
                     app:metricUnit="°C" />
@@ -143,6 +148,7 @@
                     android:id="@+id/cardBattery"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
+                    app:metricDescription="@string/metric_battery_description"
                     app:metricIcon="@drawable/ic_dashboard_lightning_charge"
                     app:metricTitle="@string/battery"
                     app:metricUnit="V" />
