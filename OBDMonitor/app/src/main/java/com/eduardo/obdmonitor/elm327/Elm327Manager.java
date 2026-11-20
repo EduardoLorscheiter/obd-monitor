@@ -134,13 +134,17 @@ public class Elm327Manager {
 
     /**
      * Sessão Bluetooth para a qual as máscaras de PIDs foram consultadas.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
      */
     private volatile long initializedConnectionGeneration = -1;
 
     /**
      * Thread responsável pela execução contínua do ciclo de monitoramento.
+     *
+     * <p>O modificador 'volatile' garante a visibilidade da variável entre threads.</p>
      */
-    private Thread monitoringThread;
+    private volatile Thread monitoringThread;
 
     /**
      * Scheduler responsável por controlar a periodicidade e a prioridade das leituras dos PIDs.
@@ -527,14 +531,21 @@ public class Elm327Manager {
      * @param device Dispositivo OBD-II conectado.
      */
     private void completeConnection(Device device) {
-        ecuConnected = true;
-        obdProtocol = readProtocol();
-        initializedConnectionGeneration = bluetoothManager.getConnectionGeneration();
+        String protocol = readProtocol();
 
-        notifyConnectionState();
-        notifyElm327Connected(device);
+        synchronized (this) {
+            if (bluetoothManager.getConnectedDevice() == null)
+                return;
 
-        startMonitoring();
+            ecuConnected = true;
+            obdProtocol = protocol;
+            initializedConnectionGeneration = bluetoothManager.getConnectionGeneration();
+
+            notifyConnectionState();
+            notifyElm327Connected(device);
+
+            startMonitoring();
+        }
     }
 
     /**
@@ -649,15 +660,8 @@ public class Elm327Manager {
      * Encerra o monitoramento dos dados da ECU e finaliza a comunicação com o adaptador OBD-II.
      */
     public void disconnect() {
-        monitoring = false;
-
-        if (monitoringThread != null)
-            monitoringThread.interrupt();
-
         bluetoothManager.disconnect();
-
-        resetConnectionState();
-        notifyConnectionState();
+        handleBluetoothDisconnection();
     }
 
     /**
@@ -676,7 +680,8 @@ public class Elm327Manager {
 
         monitoringThread = new Thread(() -> {
             try {
-                while (monitoring) {
+                while (monitoring && monitoringThread == Thread.currentThread()
+                        && !Thread.currentThread().isInterrupted()) {
                     readVehicleData();
                     sleepMonitoring();
                 }
@@ -689,7 +694,10 @@ public class Elm327Manager {
                         );
                 }
             } finally {
-                monitoringThread = null;
+                synchronized (Elm327Manager.this) {
+                    if (monitoringThread == Thread.currentThread())
+                        monitoringThread = null;
+                }
             }
         }, THREAD_OBD_MONITOR);
         monitoringThread.start();
@@ -871,10 +879,35 @@ public class Elm327Manager {
      */
     private String executeElm327Command(String command) {
         String response = bluetoothManager.sendCommand(command + "\r");
-        if (response == null)
+        if (response == null) {
+            handleBluetoothDisconnection();
             return null;
+        }
 
         return normalizeResponse(response);
+    }
+
+    /**
+     * Encerra o estado OBD após a perda do transporte e notifica as telas.
+     *
+     * <p>Não solicita outra desconexão Bluetooth. Eventos atrasados são ignorados se já houver um
+     * dispositivo conectado, e notificações repetidas não reiniciam a limpeza.</p>
+     */
+    public synchronized void handleBluetoothDisconnection() {
+        if (bluetoothManager.getConnectedDevice() != null)
+            return;
+
+        if (!monitoring && !bluetoothConnected && !ecuConnected && obdProtocol == null)
+            return;
+
+        monitoring = false;
+
+        Thread thread = monitoringThread;
+        if (thread != null)
+            thread.interrupt();
+
+        resetConnectionState();
+        notifyConnectionState();
     }
 
     /**

@@ -105,8 +105,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_speedometer"
                     app:metricTitle="@string/speed"
-                    app:metricUnit="km/h"
-                    app:metricValue="0" />
+                    app:metricUnit="km/h" />
 
                 <com.eduardo.obdmonitor.view.MetricView
                     android:id="@+id/cardThrottle"
@@ -114,8 +113,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_throttle"
                     app:metricTitle="@string/throttle"
-                    app:metricUnit="%"
-                    app:metricValue="0" />
+                    app:metricUnit="%" />
 
                 <com.eduardo.obdmonitor.view.MetricView
                     android:id="@+id/cardMap"
@@ -123,8 +121,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_pressure_gauge"
                     app:metricTitle="@string/map"
-                    app:metricUnit="kPa"
-                    app:metricValue="0" />
+                    app:metricUnit="kPa" />
 
                 <com.eduardo.obdmonitor.view.MetricView
                     android:id="@+id/cardCoolant"
@@ -132,8 +129,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_thermometer"
                     app:metricTitle="@string/engine_t"
-                    app:metricUnit="°C"
-                    app:metricValue="0" />
+                    app:metricUnit="°C" />
 
                 <com.eduardo.obdmonitor.view.MetricView
                     android:id="@+id/cardIntake"
@@ -141,8 +137,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_thermometer"
                     app:metricTitle="@string/intake_t"
-                    app:metricUnit="°C"
-                    app:metricValue="0" />
+                    app:metricUnit="°C" />
 
                 <com.eduardo.obdmonitor.view.MetricView
                     android:id="@+id/cardBattery"
@@ -150,8 +145,7 @@
                     android:layout_height="100dp"
                     app:metricIcon="@drawable/ic_dashboard_lightning_charge"
                     app:metricTitle="@string/battery"
-                    app:metricUnit="V"
-                    app:metricValue="@string/__" />
+                    app:metricUnit="V" />
 
                 <com.eduardo.obdmonitor.view.FuelLevelView
                     android:id="@+id/fuelLevel"

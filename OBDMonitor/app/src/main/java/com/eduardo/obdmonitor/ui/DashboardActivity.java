@@ -80,6 +80,11 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      */
     private boolean dashboardResumed;
 
+    /**
+     * Indica se o painel pode apresentar medições da ECU.
+     */
+    private boolean ecuConnected;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -237,15 +242,39 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     @Override
     public void onElm327EcuStatusChanged(boolean ecuConnected) {
         runOnUiThread(() -> {
-            if (!isFinishing() && !isDestroyed())
-                ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
+            if (isFinishing() || isDestroyed())
+                return;
+
+            this.ecuConnected = ecuConnected;
+
+            ViewUtils.setStatusIndicator(viewEcu, ecuConnected);
+
+            if (!ecuConnected)
+                clearVehicleData();
         });
+    }
+
+    /**
+     * Limpa os valores e interrompe o alerta quando a ECU fica desconectada.
+     */
+    private void clearVehicleData() {
+        currentRpm = 0;
+        shiftLight.setRpm(0);
+        fuelLevel.setFuelLevel(0);
+        stopRevLimiterBlink();
+        txtProtocol.setText(R.string.__);
+        cardSpeed.reset();
+        cardThrottle.reset();
+        cardMap.reset();
+        cardCoolant.reset();
+        cardIntake.reset();
+        cardBattery.reset();
     }
 
     @Override
     public void onElm327ProtocolChanged(String protocol) {
         runOnUiThread(() -> {
-            if (!isFinishing() && !isDestroyed())
+            if (!isFinishing() && !isDestroyed() && (ecuConnected || protocol == null))
                 txtProtocol.setText(protocol == null ? getString(R.string.__) : protocol);
         });
     }
@@ -260,7 +289,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onObdEngineRpmChanged(int rpm) {
-        runOnUiThread(() -> {
+        updateVehicleData(() -> {
             currentRpm = rpm;
             shiftLight.setRpm(rpm);
             updateRevLimiter(rpm);
@@ -269,22 +298,22 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onObdVehicleSpeedChanged(int speed) {
-        runOnUiThread(() -> cardSpeed.setValue(String.valueOf(speed)));
+        updateVehicleData(() -> cardSpeed.setValue(String.valueOf(speed)));
     }
 
     @Override
     public void onObdThrottlePositionChanged(int position) {
-        runOnUiThread(() -> cardThrottle.setValue(String.valueOf(position)));
+        updateVehicleData(() -> cardThrottle.setValue(String.valueOf(position)));
     }
 
     @Override
     public void onObdIntakeManifoldPressureChanged(int pressure) {
-        runOnUiThread(() -> cardMap.setValue(String.valueOf(pressure)));
+        updateVehicleData(() -> cardMap.setValue(String.valueOf(pressure)));
     }
 
     @Override
     public void onObdEngineCoolantTemperatureChanged(int temperature) {
-        runOnUiThread(() -> {
+        updateVehicleData(() -> {
             cardCoolant.setValue(String.valueOf(temperature));
             if (temperature < 60) {
                 cardCoolant.setValueColor(R.color.coolant_cold);
@@ -300,7 +329,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onObdIntakeAirTemperatureChanged(int temperature) {
-        runOnUiThread(() -> {
+        updateVehicleData(() -> {
             cardIntake.setValue(String.valueOf(temperature));
             if (temperature < 20) {
                 cardIntake.setValueColor(R.color.intake_cold);
@@ -316,7 +345,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onObdControlModuleVoltageChanged(double voltage) {
-        runOnUiThread(() -> {
+        updateVehicleData(() -> {
             cardBattery.setValue(String.format(Locale.US, "%.1f", voltage));
             if (!Double.isFinite(voltage)) {
                 cardBattery.setValue(getString(R.string.__));
@@ -337,7 +366,19 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
 
     @Override
     public void onObdFuelLevelChanged(int fuel) {
-        runOnUiThread(() -> fuelLevel.setFuelLevel(fuel));
+        updateVehicleData(() -> fuelLevel.setFuelLevel(fuel));
+    }
+
+    /**
+     * Aplica medições na thread principal quando a ECU está conectada ou durante o tick simulado.
+     *
+     * @param update Atualização visual da medição recebida.
+     */
+    private void updateVehicleData(Runnable update) {
+        runOnUiThread(() -> {
+            if (ecuConnected && !isFinishing() && !isDestroyed())
+                update.run();
+        });
     }
 
     /**
@@ -349,7 +390,8 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
      * @param rpm Rotação atual do motor em RPM.
      */
     private void updateRevLimiter(int rpm) {
-        if (dashboardResumed && !isFinishing() && !isDestroyed() && rpm >= blinkStartRpm)
+        if (ecuConnected && dashboardResumed
+                && !isFinishing() && !isDestroyed() && rpm >= blinkStartRpm)
             startRevLimiterBlink();
         else
             stopRevLimiterBlink();

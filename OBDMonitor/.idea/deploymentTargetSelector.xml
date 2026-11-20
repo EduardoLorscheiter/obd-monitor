@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-11-03T01:00:51.857168Z">
+        <DropdownSelection timestamp="2026-11-20T12:32:05.073276400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=RX8M400R7WK" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\eduar\.android\avd\Pixel_2_API_29.avd" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -49,6 +49,17 @@
       <SelectionState runConfigName="main">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-11-09T22:25:31.266642900Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\eduar\.android\avd\Pixel_2_API_29.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="Elm327DisconnectionTest">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-11-20T12:32:00.209664400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\eduar\.android\avd\Pixel_2_API_29.avd" />

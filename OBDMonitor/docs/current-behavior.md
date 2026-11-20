@@ -21,6 +21,8 @@ A conexão RFCOMM tenta conectar até duas vezes, com intervalo de um segundo en
 
 No encerramento de uma sessão, o transporte protege o fechamento e a limpeza dos recursos com seu lock, acumula eventuais erros e só então libera o lock e publica os callbacks. Os eventos conservam o identificador da sessão encerrada. Assim, um callback que aguarda o gerenciador não mantém o lock do transporte e não bloqueia uma desconexão concorrente solicitada pelo gerenciador.
 
+`BaseActivity` encaminha a perda do transporte ao `Elm327Manager`, que interrompe o monitoramento, redefine o suporte das tarefas e limpa Bluetooth, ECU e protocolo, notificando os listeners ELM327 existentes. Uma falha de leitura com o transporte já desconectado também executa essa limpeza, mesmo sem tela visível. A limpeza não solicita outra desconexão ao transporte e ignora eventos atrasados se já existir um dispositivo conectado. Ao iniciar uma tela sem dispositivo conectado, a sincronização também limpa um estado OBD preservado; desligar o rádio encerra a sessão. Um handshake que termina sem dispositivo conectado não publica uma ECU pronta.
+
 ### Permissões Bluetooth observadas
 
 - No Android 10 e 11 (APIs 29–30), o fluxo de dispositivos pareados usa `BLUETOOTH` e `BLUETOOTH_ADMIN`, declaradas com `maxSdkVersion="30"`. Não há solicitação em runtime nem permissão de localização, pois o aplicativo não faz descoberta de dispositivos.
@@ -66,13 +68,17 @@ As tarefas de `0x05`, `0x0B`, `0x0C`, `0x0D` e `0x0F`/`0x11` usam a máscara ret
 
 ### Parsing e significado de valores
 
-`ObdCommand` procura o cabeçalho de resposta `41` seguido do PID e exige o comprimento configurado antes de converter os bytes hexadecimais. Os comandos de medição, exceto tensão, guardam o último valor convertido e retornam esse valor anterior para respostas ausentes, curtas ou com hexadecimal inválido. Esses comandos e seus widgets iniciam em zero. Tensão usa a semântica de indisponibilidade descrita acima e seu cartão inicia em `--`.
+`ObdCommand` procura o cabeçalho de resposta `41` seguido do PID e exige o comprimento configurado antes de converter os bytes hexadecimais. Os comandos de medição, exceto tensão, guardam o último valor convertido e retornam esse valor anterior para respostas ausentes, curtas ou com hexadecimal inválido. Esses comandos iniciam em zero; sem sessão, o painel limpa os cartões para `--` e mantém RPM e combustível em zero. Tensão usa a semântica de indisponibilidade descrita acima e seu cartão inicia em `--`.
 
 Consequentemente, nas demais métricas o estado exibido **não distingue** uma leitura real igual a zero de uma resposta inválida anterior à primeira leitura válida, nem identifica quando um valor preservado ficou antigo. Uma tarefa marcada não suportada simplesmente não atualiza o widget; seu valor inicial permanece. Não trate esses zeros como uma indicação explícita de dado indisponível.
 
 ## Painel
 
 O painel apresenta rotação, velocidade, borboleta, MAP, temperaturas do motor e da admissão, tensão e nível de combustível. O indicador de rotação limita o valor visual ao intervalo entre zero e o RPM máximo configurado. O alerta visual pisca quando a leitura alcança ou ultrapassa o RPM inicial do alerta e a Activity está retomada. Ao pausar ou destruir a tela, o animador é cancelado, seus listeners são removidos e o overlay volta à transparência zero. Callbacks atrasados não reiniciam o alerta enquanto a tela estiver inativa; ao retomar, o último RPM recebido é reavaliado.
+
+O callback de ECU desconectada restaura o estado original dos cartões com `MetricView.reset()`: valor inicial `--` e a cor padrão do componente. Também limpa o protocolo para `--`, zera RPM e combustível e cancela o alerta de rotação. Callbacks de medições executados enquanto a ECU está desconectada são ignorados, inclusive os que já estavam enfileirados na thread principal. Após uma nova sessão pronta, o painel aceita as medições novamente.
+
+O simulador temporário presente em `DashboardActivity` pode atualizar as métricas e acionar o alerta de RPM sem uma ECU conectada. Essa exceção fica ativa somente durante os callbacks executados pelo simulador na thread principal; os demais callbacks continuam dependendo da conexão com a ECU. O alerta simulado também respeita o RPM inicial configurado e só pisca com o painel retomado.
 
 As cores dos valores são classificações visuais codificadas na `DashboardActivity` quando o callback de cada métrica é recebido:
 

@@ -174,6 +174,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
 
         if (connectedDevice != null)
             elm327Manager.connectAsync(connectedDevice);
+        else
+            elm327Manager.handleBluetoothDisconnection();
     }
 
     /**
@@ -267,7 +269,10 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
      */
     @Override
     public final void onBluetoothManagerDisabled() {
-        runOnUiThread(this::onBluetoothDisabled);
+        runOnUiThread(() -> {
+            elm327Manager.disconnect();
+            onBluetoothDisabled();
+        });
     }
 
     /**
@@ -363,7 +368,10 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
      */
     @Override
     public final void onBluetoothManagerDisconnected(Device device, String message) {
-        runOnUiThread(() -> onBluetoothDisconnected(device, message));
+        runOnUiThread(() -> {
+            elm327Manager.handleBluetoothDisconnection();
+            onBluetoothDisconnected(device, message);
+        });
     }
 
     /**

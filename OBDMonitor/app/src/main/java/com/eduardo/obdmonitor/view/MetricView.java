@@ -3,7 +3,7 @@
  **  @file    MetricView.java
  **  @author  Eduardo Lorscheiter
  **  @class   MetricView
- **  @date    25/07/2026
+ **  @date    20/11/2026
  **  @version 1.0
  **  @brief   Componente gráfico responsável por exibir uma métrica do veículo em formato de cartão.
  **  @details O componente encapsula um layout contendo imagem, título, valor e unidade de medida,
@@ -15,6 +15,7 @@
 package com.eduardo.obdmonitor.view;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -32,6 +33,16 @@ public class MetricView extends LinearLayout {
      * Texto responsável por exibir o valor atual da métrica.
      */
     private TextView txtValue;
+
+    /**
+     * Valor inicial definido no XML da métrica, restaurado ao limpar a medição.
+     */
+    private String initialValue;
+
+    /**
+     * Cor inicial do valor, restaurada junto com a medição.
+     */
+    private ColorStateList initialValueColor;
 
     public MetricView(Context context) {
         super(context);
@@ -73,19 +84,18 @@ public class MetricView extends LinearLayout {
 
                 Drawable icon = attributes.getDrawable(R.styleable.MetricView_metricIcon);
                 String title = attributes.getString(R.styleable.MetricView_metricTitle);
-                String value = attributes.getString(R.styleable.MetricView_metricValue);
                 String unit = attributes.getString(R.styleable.MetricView_metricUnit);
 
                 if (icon != null)
                     imgIcon.setImageDrawable(icon);
                 if (title != null)
                     txtTitle.setText(title);
-                if (value != null)
-                    txtValue.setText(value);
                 if (unit != null)
                     txtUnit.setText(unit);
             }
         }
+        initialValue = txtValue.getText().toString();
+        initialValueColor = txtValue.getTextColors();
     }
 
     /**
@@ -95,6 +105,14 @@ public class MetricView extends LinearLayout {
      */
     public void setValue(String value) {
         txtValue.setText(value);
+    }
+
+    /**
+     * Restaura o estado visual original do cartão: valor e cor da medição.
+     */
+    public void reset() {
+        txtValue.setText(initialValue);
+        txtValue.setTextColor(initialValueColor);
     }
 
     /**
