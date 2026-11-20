@@ -3,7 +3,7 @@
 <!-- markdownlint-disable MD033 -->
 
 <div align="center">
-  <img src="images/OBDMonitorArt.png" alt="Identidade visual do OBD Monitor: veículo, Bluetooth e conector OBD-II" width="320">
+  <img src="images/OBDMonitorArt.png" alt="Identidade visual do OBD Monitor: veículo, Bluetooth e conector OBD-II" width="400">
 
   <p><strong>Aplicativo Android para monitoramento de parâmetros automotivos via OBD-II</strong></p>
 
