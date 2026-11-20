@@ -1,30 +1,20 @@
-# OBD Monitor
+# Documentação do OBD Monitor
 
-Aplicativo Android nativo para monitoramento de dados atuais do veículo via OBD-II, usando um adaptador ELM327 conectado por Bluetooth clássico.
+## Por onde começar
 
-## Projeto
-
-O código Android fica no módulo `app`. A plataforma e os valores de SDK atuais estão descritos em [arquitetura](docs/architecture.md); `app/build.gradle.kts` e `gradle/libs.versions.toml` são as fontes de configuração.
+- **Usar o aplicativo:** consulte [comportamento atual](docs/current-behavior.md), tópico **"Conectar e usar"**.
+- **Abrir o projeto:** consulte [desenvolvimento](docs/development.md), tópico **"Preparar o ambiente"**.
+- **Gerar o APK ou executar testes:** consulte [verificação](docs/verification.md), tópico **"Comandos e resultados"**.
 
 ## Documentação
 
-- [Arquitetura](docs/architecture.md): módulos, dependências entre componentes e mapa do código.
-- [Comportamento atual](docs/current-behavior.md): fluxos de tela, conexão, PIDs, configurações e limitações observadas no código.
-- [Desenvolvimento](docs/development.md): fonte única das convenções e regras para alterações.
-- [Verificação](docs/verification.md): testes existentes, comandos e limites do ambiente.
-- [Orientações para agentes](AGENTS.md): ponto de entrada e roteamento para a documentação do projeto.
-- [Skill obd-monitor](.agents/skills/obd-monitor/SKILL.md): sequência de trabalho para tarefas deste aplicativo; as regras ficam nos documentos referenciados.
+Cada assunto tem uma página de referência. As demais páginas apontam para ela quando precisam do mesmo conteúdo.
 
-## Abrir e compilar
+| Documento                                       | Conteúdo de referência                                                                            |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| [Arquitetura](docs/architecture.md)             | Organização do código, dependências, execução e ciclo de vida.                                    |
+| [Comportamento atual](docs/current-behavior.md) | Uso, conexão, permissões, PIDs, apresentação dos dados, configurações e limitações implementadas. |
+| [Desenvolvimento](docs/development.md)          | Ambiente, convenções de implementação, extensão e manutenção da documentação.                     |
+| [Verificação](docs/verification.md)             | Comandos, artefatos, cobertura automatizada e validação manual.                                   |
 
-Abra o projeto no Android Studio e sincronize com Gradle. Em Windows, gere o APK de debug com:
-
-```powershell
-.\gradlew.bat :app:assembleDebug
-```
-
-É necessário ter um Android SDK compatível com o `compileSdk` configurado. Arquivos locais como `local.properties` não são configuração portátil e não devem ser usados como documentação do ambiente de outra pessoa.
-
-## Escopo funcional
-
-Os fluxos, semântica dos dados e limitações observados estão descritos em [Comportamento atual](docs/current-behavior.md).
+As [orientações para agentes](AGENTS.md) e a [skill obd-monitor](.agents/skills/obd-monitor/SKILL.md) são os pontos de entrada para trabalho assistido neste repositório.

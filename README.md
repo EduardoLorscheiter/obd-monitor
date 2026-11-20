@@ -1,7 +1,7 @@
 # OBD Monitor
 
 <p align="center">
-  <img src="images/OBDMonitorArt.png" width="400">
+  <img src="images/OBDMonitorArt.png" alt="Identidade visual do OBD Monitor" width="400">
 </p>
 
 <p align="center">
@@ -12,4 +12,6 @@
 
 ---
 
-Aplicativo Android para monitoramento em tempo real da ECU do veículo utilizando um adaptador Bluetooth ELM327.
+Aplicativo Android para acompanhar dados atuais do veículo via OBD-II com um adaptador ELM327 por Bluetooth clássico.
+
+Consulte a [documentação do projeto](OBDMonitor/README.md) para usar o aplicativo, preparar o ambiente, entender a arquitetura e executar verificações.

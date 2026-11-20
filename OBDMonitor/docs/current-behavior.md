@@ -1,106 +1,146 @@
 # Comportamento atual
 
-Registro dos fluxos observados no código de produção. A arquitetura dos componentes está em [arquitetura](architecture.md), e as regras para contribuir estão em [desenvolvimento](development.md).
+Referência dos fluxos e parâmetros implementados. Descreve o código do checkout; a disponibilidade das medições depende do veículo e do adaptador. Para localizar componentes, consulte [arquitetura](architecture.md).
 
-## Inicialização e navegação
+## Conectar e usar
 
-- `SplashActivity` apresenta a marca, anima o logo por 750 ms e abre `DashboardActivity` após 1.500 ms. A splash é removida da pilha.
-- As quatro Activities declaradas no manifesto usam orientação paisagem. O painel e a tela de conexão mantêm a tela ligada enquanto estão visíveis.
-- O painel abre as telas de conexão e configurações. Voltar do painel chama `Elm327Manager.disconnect()` e encerra o painel. Voltar da tela de conexão apenas fecha essa tela.
-- Ao iniciar, `BaseActivity` verifica o estado Bluetooth e, se o `BluetoothManager` ainda tiver um dispositivo conectado, pede ao `Elm327Manager` que retome a sessão. Essa retomada evita reinicialização quando a geração da sessão continua ativa.
+1. Conecte ao veículo um adaptador ELM327 compatível com Bluetooth clássico SPP e faça o pareamento nas configurações do Android.
+2. Abra o aplicativo. A splash apresenta a marca e a versão, anima o logo por 750 ms e abre o painel após 1.500 ms, saindo da pilha de navegação.
+3. No painel, abra a tela de conexão. Conceda as permissões solicitadas e, se necessário, use o controle da tela para pedir ao Android que ligue o Bluetooth.
+4. Selecione um dispositivo da lista de **já pareados**. O aplicativo conecta o transporte e inicializa o ELM327 em segundo plano.
+5. Após a inicialização OBD, volte ao painel para acompanhar as leituras. A tela de conexão permanece aberta após o sucesso; ela define `RESULT_OK`, e o painel exibe a mensagem de sucesso ao receber esse resultado.
 
-## Bluetooth e conexão com o ELM327
+O controle Bluetooth não desliga o rádio: orienta a usar as configurações do Android. Não há descoberta nem pareamento dentro do aplicativo. Adaptadores BLE, Wi-Fi e USB não têm transporte implementado.
 
-1. A tela de conexão solicita as permissões Bluetooth necessárias quando ainda não foram concedidas. Com acesso autorizado, apresenta o estado do Bluetooth. Se o rádio estiver desligado, o controle solicita ao Android que o habilite. O aplicativo não o desliga pela própria tela; o controle exibe uma mensagem orientando a pessoa a usar as configurações do Android.
-2. Quando o Bluetooth está ligado, a tela carrega a lista de dispositivos **já pareados** no Android. Não há busca de dispositivos nem pareamento dentro do aplicativo; pareie o adaptador nas configurações do sistema antes de selecioná-lo.
-3. Selecionar um dispositivo inicia uma conexão Bluetooth clássico RFCOMM usando o perfil serial SPP. Uma conexão existente com outro dispositivo é encerrada antes da nova tentativa. Tentativas repetidas para o mesmo dispositivo já conectado ou em conexão são ignoradas.
-4. Depois da conexão Bluetooth, `BaseActivity` inicia a inicialização ELM327 em segundo plano. A `ConnectionActivity` define `RESULT_OK` quando o `Elm327Manager` conclui a inicialização OBD, mas continua aberta. Ao sair dela com Voltar, o painel recebe esse resultado e exibe uma mensagem de sucesso.
-5. Bluetooth, ECU e protocolo são estados distintos no painel. Falhas são encaminhadas por callbacks e exibidas como mensagens breves.
+As quatro telas usam orientação paisagem. Painel e conexão mantêm a tela ligada enquanto visíveis. O painel também abre as configurações. Voltar do painel desconecta a sessão e encerra a tela; voltar da conexão apenas fecha essa tela. A navegação entre telas pode reutilizar a sessão Bluetooth já inicializada, conforme descrito em [arquitetura](architecture.md), tópico **"Sessão e ciclo de vida"**.
 
-A conexão RFCOMM tenta conectar até duas vezes, com intervalo de um segundo entre tentativas. Uma tentativa substituída é cancelada e pode aguardar 750 ms para liberar recursos. Cada comando termina quando chega o prompt `>` do ELM327 ou quando se esgota o prazo de leitura configurado de cinco segundos. A leitura usa `InputStream.read()` bloqueante sem configurar timeout no socket; se nenhum byte chegar, o prazo não garante que a chamada bloqueada retorne exatamente em cinco segundos. Falhas de comunicação notificam erro e encerram a conexão.
+Implementação: [Activities](../app/src/main/java/com/eduardo/obdmonitor/ui) e [manifesto](../app/src/main/AndroidManifest.xml).
 
-No encerramento de uma sessão, o transporte protege o fechamento e a limpeza dos recursos com seu lock, acumula eventuais erros e só então libera o lock e publica os callbacks. Os eventos conservam o identificador da sessão encerrada. Assim, um callback que aguarda o gerenciador não mantém o lock do transporte e não bloqueia uma desconexão concorrente solicitada pelo gerenciador.
+## Permissões Bluetooth
 
-`BaseActivity` encaminha a perda do transporte ao `Elm327Manager`, que interrompe o monitoramento, redefine o suporte das tarefas e limpa Bluetooth, ECU e protocolo, notificando os listeners ELM327 existentes. Uma falha de leitura com o transporte já desconectado também executa essa limpeza, mesmo sem tela visível. A limpeza não solicita outra desconexão ao transporte e ignora eventos atrasados se já existir um dispositivo conectado. Ao iniciar uma tela sem dispositivo conectado, a sincronização também limpa um estado OBD preservado; desligar o rádio encerra a sessão. Um handshake que termina sem dispositivo conectado não publica uma ECU pronta.
+| Android                   | Permissões usadas pelo fluxo de pareados                                                                                                        |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 10 e 11 (APIs 29–30)      | `BLUETOOTH` e `BLUETOOTH_ADMIN`, declaradas com `maxSdkVersion="30"`; sem solicitação em runtime.                                               |
+| 12 ou posterior (API 31+) | `BLUETOOTH_CONNECT` e `BLUETOOTH_SCAN`, solicitadas em runtime como acesso a dispositivos próximos. `SCAN` tem `neverForLocation` no manifesto. |
 
-### Permissões Bluetooth observadas
+Não há permissão de localização. Embora o aplicativo não inicie descoberta, exige `BLUETOOTH_SCAN` para chamar `cancelDiscovery()` antes da conexão. Os requisitos externos estão na [documentação de permissões Bluetooth](https://developer.android.com/develop/connectivity/bluetooth/bt-permissions) e na [referência de `cancelDiscovery()`](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter#cancelDiscovery()).
 
-- No Android 10 e 11 (APIs 29–30), o fluxo de dispositivos pareados usa `BLUETOOTH` e `BLUETOOTH_ADMIN`, declaradas com `maxSdkVersion="30"`. Não há solicitação em runtime nem permissão de localização, pois o aplicativo não faz descoberta de dispositivos.
-- No Android 12 (API 31) ou posterior, `BluetoothPermissions` centraliza a exigência de `BLUETOOTH_CONNECT` e `BLUETOOTH_SCAN`. A primeira permite acessar os pareados e conectar; a segunda é necessária para chamar `cancelDiscovery()` antes da conexão, mesmo sem iniciar uma busca. O manifesto declara `neverForLocation` para `BLUETOOTH_SCAN`.
-- A tela de conexão solicita essas permissões pelo contrato `RequestMultiplePermissions`. Enquanto falta acesso, apresenta “Permissão necessária”, mantém o controle do rádio desabilitado e oculta os dispositivos. Após a concessão, consulta o estado do rádio e carrega os pareados automaticamente.
-- Uma recusa mantém a tela disponível e apresenta uma ação para tentar novamente. Se o Android não permitir outro diálogo, a ação abre as configurações do aplicativo, por iniciativa do usuário. Ao retornar, o estado é consultado novamente. Uma recriação da Activity preserva a indicação de solicitação em andamento para evitar diálogos duplicados.
-- As demais telas não solicitam permissões. A sincronização inicial evita consultar o adaptador sem acesso, e o gerenciador continua validando as duas permissões antes das operações e tratando revogação durante chamadas ao sistema.
+A tela de conexão concentra a solicitação de acesso. Sem permissão, mostra “Permissão necessária”, desabilita o controle do rádio e oculta os dispositivos. Após a concessão, consulta o rádio e carrega os pareados. Uma recusa permite tentar novamente; quando o sistema não permite outro diálogo, a ação abre as configurações do aplicativo. Ao retornar, o acesso é reavaliado. Uma recriação da tela preserva a indicação de solicitação em andamento para evitar pedidos duplicados.
 
-Requisitos conferidos na [documentação de permissões Bluetooth](https://developer.android.com/develop/connectivity/bluetooth/bt-permissions) e na [referência de `cancelDiscovery()`](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter#cancelDiscovery()).
+As demais telas não abrem diálogos de permissão. A sincronização inicial evita acesso ao adaptador sem autorização, e o gerenciador trata a revogação durante operações.
 
-## Inicialização ELM327 e OBD
+Implementação: [BluetoothPermissions](../app/src/main/java/com/eduardo/obdmonitor/bluetooth/BluetoothPermissions.java) e [ConnectionActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/ConnectionActivity.java).
 
-Após conectar, `Elm327Manager` envia esta sequência ao adaptador:
+## Conexão e falhas de transporte
 
-1. `ATZ` para reiniciar; aguarda 1.000 ms.
+O transporte é Bluetooth clássico RFCOMM/SPP. Selecionar outro dispositivo encerra a conexão anterior. Seleções repetidas do dispositivo já conectado ou em conexão são ignoradas; após uma falha final, novas tentativas para o mesmo dispositivo são suprimidas por dois segundos.
+
+A camada RFCOMM faz até duas tentativas, com um segundo entre elas. Substituir uma tentativa cancela a anterior e pode aguardar até 750 ms para liberar recursos.
+
+A leitura termina ao encontrar o prompt `>`, o fim do fluxo ou o prazo configurado de cinco segundos. Esse prazo é verificado entre chamadas bloqueantes de `InputStream.read()`; sem timeout no socket, ele **não garante** retorno em cinco segundos se nenhum byte chegar. Uma resposta vazia retorna falha sem fechar por si só o transporte. Exceções de I/O ou segurança no envio/leitura encerram a conexão.
+
+Bluetooth conectado, ECU pronta e protocolo são estados distintos. As telas exibem os erros encaminhados pelos listeners, mas o callback de erro de transporte no gerenciador só trata tentativas em andamento; não há garantia de mensagem para toda resposta inválida durante uma sessão ativa.
+
+Quando o transporte efetivamente se perde, o gerenciador OBD interrompe o monitoramento e limpa seus estados. O painel descarta medições executadas enquanto a ECU está desconectada, inclusive callbacks enfileirados, e restaura os valores iniciais descritos no tópico **"Painel"** deste documento. Uma inicialização que termina sem dispositivo conectado não publica a ECU como pronta.
+
+Implementação: [BluetoothConnection](../app/src/main/java/com/eduardo/obdmonitor/bluetooth/BluetoothConnection.java), [BluetoothManager](../app/src/main/java/com/eduardo/obdmonitor/bluetooth/BluetoothManager.java) e [Elm327Manager](../app/src/main/java/com/eduardo/obdmonitor/elm327/Elm327Manager.java).
+
+## Inicialização ELM327
+
+A sequência implementada é:
+
+1. `ATZ` para reiniciar o adaptador; espera de 1.000 ms.
 2. `ATE0`, `ATL0`, `ATS0` e `ATH0` para desativar eco, quebras de linha, espaços e cabeçalhos.
-3. `ATSP0` para seleção automática do protocolo; aguarda 5.000 ms.
-4. Consulta `0100`, que precisa produzir uma resposta válida para a sessão ser considerada pronta.
-5. Se a máscara de `0100` anunciar suporte ao PID `0x20`, consulta `0120` para o bloco `0x21`–`0x40`.
-6. Se `0120` anunciar suporte ao PID `0x40`, consulta `0140` para identificar suporte ao PID de tensão `0x42`.
-7. Lê o protocolo identificado com `ATDP` e começa o monitoramento.
+3. `ATSP0` para seleção automática do protocolo; espera de 5.000 ms.
+4. `0100` para obter a máscara dos PIDs `0x01`–`0x20`.
+5. `0120`, se a máscara básica anunciar `0x20`, para consultar o bloco `0x21`–`0x40`.
+6. `0140`, se o bloco anterior anunciar `0x40`, para verificar o suporte à tensão pelo PID `0x42`.
+7. `ATDP` para ler o protocolo; publicação do estado pronto e início do monitoramento.
 
-Uma resposta AT é aceita quando contém a identificação ELM327 ou `OK`. Falha de inicialização ou ausência de resposta válida a `0100` resulta em erro, não em uma sessão OBD pronta. Os comandos terminam com carriage return; a resposta é normalizada para maiúsculas, sem prompt, quebras de linha ou espaços excedentes.
+Os comandos recebem `\r` ao final. As respostas são normalizadas para maiúsculas, sem prompt, com quebras de linha substituídas por espaços e espaços consecutivos reduzidos.
 
-### PIDs, fórmulas e agendamento
+Na configuração AT, a resposta é aceita se contiver `ELM327` ou `OK`. A descoberta básica falha quando o parser de `0100` devolve `null`; uma resposta atual inválida pode, porém, reutilizar a máscara de sessão anterior, conforme descrito no tópico **"Validade e indisponibilidade dos dados"** deste documento. Os blocos adicionais são opcionais. O conteúdo de `ATDP` não é validado como condição de sucesso. Uma falha reconhecida na inicialização encerra o transporte e publica erro.
 
-As consultas de leitura usam o Serviço 01. Os intervalos são mínimos entre execuções elegíveis; tarefas prontas são ordenadas por prioridade (HIGH antes de MEDIUM, depois LOW). O ciclo de monitoramento volta a verificar tarefas a cada 10 ms. Os intervalos e prioridades são os configurados atualmente em `Elm327Manager`.
+Implementação: [Elm327Manager](../app/src/main/java/com/eduardo/obdmonitor/elm327/Elm327Manager.java) e [Elm327Commands](../app/src/main/java/com/eduardo/obdmonitor/elm327/Elm327Commands.java). A semântica dos comandos AT é descrita no [datasheet do ELM327](https://www.elmelectronics.com/wp-content/uploads/2017/01/ELM327DS.pdf).
 
-| Dado do painel                            |           PID | Conversão do dado `A` (e `B`, quando indicado)                    | Intervalo | Prioridade |
-|-------------------------------------------|--------------:|-------------------------------------------------------------------|----------:|------------|
-| Rotação                                   |          `0C` | `((A × 256) + B) / 4` RPM                                         |    100 ms | HIGH       |
-| Velocidade                                |          `0D` | `A` km/h                                                          |    100 ms | HIGH       |
-| Borboleta                                 |          `11` | `(A × 100) / 255` %                                               |    300 ms | MEDIUM     |
-| MAP                                       |          `0B` | `A` kPa                                                           |    300 ms | MEDIUM     |
-| Temperatura do motor                      |          `05` | `A - 40` °C                                                       |  1.000 ms | LOW        |
-| Temperatura de admissão                   |          `0F` | `A - 40` °C                                                       |  1.000 ms | LOW        |
-| Tensão da ECU ou alimentação do adaptador | `42` / `ATRV` | `((A × 256) + B) / 1000` V para o PID; decimal em volts para ATRV |  2.000 ms | LOW        |
-| Combustível                               |          `2F` | `(A × 100) / 255` %                                               |  2.000 ms | LOW        |
+## PIDs e agendamento
 
-As tarefas de `0x05`, `0x0B`, `0x0C`, `0x0D` e `0x0F`/`0x11` usam a máscara retornada por `0100`. Combustível `0x2F` usa a máscara de `0120`; portanto, só é marcado suportado se `0100` anunciar `0x20` e a consulta seguinte anunciar `0x2F`. Tarefa não suportada não é consultada.
+As medições OBD usam o Serviço 01. `A` e `B` representam bytes de dados convertidos de hexadecimal. Os valores abaixo são os parâmetros da implementação.
 
-**Comportamento especial da tensão:** a tarefa é habilitada após a descoberta OBD mesmo sem suporte ao PID `0x42`. Quando `0140` anuncia esse PID, a leitura tenta primeiro a ECU; sem suporte ou com resposta inválida, usa `ATRV`. O suporte ao PID e a habilitação da tarefa são estados separados. Respostas inválidas do PID não reutilizam valores anteriores. Se ambas as fontes falharem, o callback recebe `Double.NaN` e o cartão exibe `--` em cor neutra. Zero em resposta válida continua sendo uma medição válida. `ATRV` mede a alimentação do adaptador, enquanto `0142` informa a tensão da ECU. Formatos conferidos no [datasheet ELM327](https://www.elmelectronics.com/wp-content/uploads/2017/01/ELM327DS.pdf) e na [tabela de PIDs da CSS Electronics](https://www.csselectronics.com/pages/obd2-pid-table-on-board-diagnostics-j1979).
+| Medição                                 | PID/comando   | Conversão e unidade                                              | Intervalo configurado | Prioridade |
+|-----------------------------------------|---------------|------------------------------------------------------------------|-----------------------|------------|
+| Rotação                                 | `0C`          | `((A × 256) + B) / 4` rpm                                        | 100 ms                | HIGH       |
+| Velocidade                              | `0D`          | `A` km/h                                                         | 100 ms                | HIGH       |
+| Borboleta                               | `11`          | `(A × 100) / 255` %                                              | 300 ms                | MEDIUM     |
+| Pressão absoluta do coletor (MAP)       | `0B`          | `A` kPa                                                          | 300 ms                | MEDIUM     |
+| Temperatura do líquido de arrefecimento | `05`          | `A - 40` °C                                                      | 1.000 ms              | LOW        |
+| Temperatura do ar de admissão           | `0F`          | `A - 40` °C                                                      | 1.000 ms              | LOW        |
+| Tensão                                  | `42` / `ATRV` | `((A × 256) + B) / 1000` V pelo PID; decimal em volts por `ATRV` | 2.000 ms              | LOW        |
+| Nível de combustível                    | `2F`          | `(A × 100) / 255` %                                              | 2.000 ms              | LOW        |
 
-### Parsing e significado de valores
+RPM, borboleta e combustível usam divisão inteira, descartando a parte fracionária. Tensão usa ponto flutuante; no painel, aparece com uma casa decimal.
 
-`ObdCommand` procura o cabeçalho de resposta `41` seguido do PID e exige o comprimento configurado antes de converter os bytes hexadecimais. Os comandos de medição, exceto tensão, guardam o último valor convertido e retornam esse valor anterior para respostas ausentes, curtas ou com hexadecimal inválido. Esses comandos iniciam em zero; sem sessão, o painel limpa os cartões para `--` e mantém RPM e combustível em zero. Tensão usa a semântica de indisponibilidade descrita acima e seu cartão inicia em `--`.
+A máscara de `0100` habilita as tarefas do bloco básico; a de `0120` habilita combustível. Tarefas não suportadas são excluídas das leituras. Tensão é habilitada após a descoberta mesmo sem suporte ao PID, pois pode usar `ATRV`.
 
-Consequentemente, nas demais métricas o estado exibido **não distingue** uma leitura real igual a zero de uma resposta inválida anterior à primeira leitura válida, nem identifica quando um valor preservado ficou antigo. Uma tarefa marcada não suportada simplesmente não atualiza o widget; seu valor inicial permanece. Não trate esses zeros como uma indicação explícita de dado indisponível.
+O scheduler ordena as tarefas elegíveis por HIGH, MEDIUM e LOW, preservando a ordem de cadastro nos empates. Cada ciclo coleta um lote, executa as consultas em sequência e registra o horário inicial do ciclo para as tarefas executadas; depois espera 10 ms. Os intervalos são critérios de elegibilidade, **não uma frequência garantida**: o tempo das consultas também compõe o ciclo.
+
+Implementação: [comandos OBD](../app/src/main/java/com/eduardo/obdmonitor/obd/commands), [scheduler](../app/src/main/java/com/eduardo/obdmonitor/obd/scheduler) e configuração das tarefas no [Elm327Manager](../app/src/main/java/com/eduardo/obdmonitor/elm327/Elm327Manager.java).
+
+## Validade e indisponibilidade dos dados
+
+`ObdCommand` procura a primeira ocorrência textual do cabeçalho `41` seguido do PID e extrai a quantidade de bytes esperada. Os comandos convertem esses bytes e tratam falhas de conversão. Não há interpretação completa de mensagens negativas ou de respostas de múltiplas ECUs.
+
+### Valores preservados
+
+Os comandos de medição, exceto tensão, começam em zero e preservam o último valor convertido diante de resposta ausente, curta, com cabeçalho incorreto ou hexadecimal inválido. Esses objetos são reutilizados pelo singleton: a desconexão limpa os estados e o suporte das tarefas, mas **não apaga seus valores anteriores**. Em uma nova sessão, uma resposta inválida pode devolver uma medição da sessão anterior.
+
+As máscaras de suporte `0100` e `0120` também preservam a última resposta válida entre sessões. Por isso, uma nova inicialização pode usar suporte antigo quando a consulta atual falha. O comando de `0140` é criado a cada descoberta e não compartilha esse cache entre inicializações.
+
+A interface não sinaliza a idade desses valores nem distingue zero real de zero inicial publicado após resposta inválida. Uma tarefa não suportada não envia medições; seus componentes permanecem no estado inicial até receber atualização.
+
+### Tensão
+
+Se `0140` anunciou suporte a `0x42`, cada leitura tenta primeiro a ECU. Sem suporte ou com resposta inválida, usa `ATRV`. A tarefa permanece habilitada independentemente do suporte ao PID.
+
+O PID informa tensão da ECU; `ATRV` informa alimentação do adaptador. O cartão “Bateria” pode representar qualquer uma dessas fontes e não as diferencia visualmente. O parser de `ATRV` aceita uma ou duas casas antes do ponto, uma casa decimal e sufixo `V`, com espaços opcionais antes da unidade.
+
+Tensão não reutiliza valor antigo em falha. Se nenhuma fonte produzir uma leitura válida, publica `Double.NaN`; o cartão mostra `--` em cor neutra. Zero em resposta válida continua sendo uma medição válida.
+
+Implementação: [ObdCommand](../app/src/main/java/com/eduardo/obdmonitor/obd/commands/ObdCommand.java), [SupportedPidsCommand](../app/src/main/java/com/eduardo/obdmonitor/obd/commands/SupportedPidsCommand.java), [VoltageCommand](../app/src/main/java/com/eduardo/obdmonitor/obd/commands/VoltageCommand.java) e [Elm327Commands](../app/src/main/java/com/eduardo/obdmonitor/elm327/Elm327Commands.java).
 
 ## Painel
 
-O painel apresenta rotação, velocidade, borboleta, MAP, temperaturas do motor e da admissão, tensão e nível de combustível. O indicador de rotação limita o valor visual ao intervalo entre zero e o RPM máximo configurado. O alerta visual pisca quando a leitura alcança ou ultrapassa o RPM inicial do alerta e a Activity está retomada. Ao pausar ou destruir a tela, o animador é cancelado, seus listeners são removidos e o overlay volta à transparência zero. Callbacks atrasados não reiniciam o alerta enquanto a tela estiver inativa; ao retomar, o último RPM recebido é reavaliado.
+O painel apresenta as medições da tabela de PIDs, os indicadores Bluetooth/ECU e o protocolo. Inicialmente e após a notificação de ECU desconectada, os cartões e o protocolo mostram `--`, RPM e combustível ficam em zero e as cores dos cartões voltam ao padrão.
 
-O callback de ECU desconectada restaura o estado original dos cartões com `MetricView.reset()`: valor inicial `--` e a cor padrão do componente. Também limpa o protocolo para `--`, zera RPM e combustível e cancela o alerta de rotação. Callbacks de medições executados enquanto a ECU está desconectada são ignorados, inclusive os que já estavam enfileirados na thread principal. Após uma nova sessão pronta, o painel aceita as medições novamente.
+O indicador de RPM limita o valor numérico e visual entre zero e o máximo configurado. O alerta pisca quando a ECU está conectada, o painel está retomado e o RPM recebido alcança o início do alerta. Ao pausar ou destruir a tela, a animação é cancelada, os listeners são removidos e o overlay volta à transparência zero. Ao retomar, o último RPM recebido é reavaliado.
 
-O simulador temporário presente em `DashboardActivity` pode atualizar as métricas e acionar o alerta de RPM sem uma ECU conectada. Essa exceção fica ativa somente durante os callbacks executados pelo simulador na thread principal; os demais callbacks continuam dependendo da conexão com a ECU. O alerta simulado também respeita o RPM inicial configurado e só pisca com o painel retomado.
+As faixas abaixo são classificações visuais fixas; não constituem diagnóstico mecânico.
 
-As cores dos valores são classificações visuais codificadas na `DashboardActivity` quando o callback de cada métrica é recebido:
+| Medição                                 | Faixas de apresentação                                                                                  |
+|-----------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Temperatura do líquido de arrefecimento | Frio abaixo de 60 °C; normal de 60 a 95 °C; aviso acima de 95 até 105 °C; quente acima de 105 °C.       |
+| Temperatura de admissão                 | Frio abaixo de 20 °C; normal de 20 a 40 °C; aviso acima de 40 até 60 °C; quente acima de 60 °C.         |
+| Tensão disponível                       | Baixa abaixo de 11,8 V; aviso de 11,8 a menos de 12,6 V; normal de 12,6 a 14,7 V; alta acima de 14,7 V. |
 
-- Temperatura do motor: abaixo de 60 °C frio; até 95 °C normal; até 105 °C aviso; acima disso quente.
-- Temperatura de admissão: abaixo de 20 °C frio; até 40 °C normal; até 60 °C aviso; acima disso quente.
-- Tensão exibida: abaixo de 11,8 V baixa; de 11,8 V a menos de 12,6 V aviso; até 14,7 V normal; acima disso alta.
-
-As faixas de cor só mudam a apresentação, não constituem diagnóstico mecânico. A faixa de tensão se aplica à fonte que forneceu a leitura válida; a indicação indisponível usa cor neutra. O painel é mantido ligado enquanto visível.
+Implementação: [DashboardActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/DashboardActivity.java), [ShiftLightView](../app/src/main/java/com/eduardo/obdmonitor/view/ShiftLightView.java) e [layout dos cartões](../app/src/main/res/layout/view_metric.xml).
 
 ## Configurações
 
-A tela agrupa as opções em Aparência, Veículo e Alerta. As alterações só são persistidas ao acionar Salvar; valores inválidos mantêm a tela aberta, selecionam a seção correspondente e mostram erro no campo.
+A tela agrupa as opções em Aparência, Veículo e Alertas. Salvar valida todos os campos antes de persistir e fecha a tela. Valores inválidos mantêm a tela aberta, selecionam a seção correspondente e mostram erro no campo. Voltar descarta as alterações não salvas.
 
-| Opção                   | Valores e padrão atuais                                                                |
-|-------------------------|----------------------------------------------------------------------------------------|
-| Tema                    | Sistema (padrão), Claro ou Escuro                                                      |
-| Idioma                  | Português (padrão) ou Inglês                                                           |
-| RPM máximo do veículo   | 1.000–20.000 rpm; padrão 7.000 rpm                                                     |
-| Início do alerta de RPM | mínimo 1.000 rpm e máximo igual ao RPM do veículo; padrão metade do máximo configurado |
+| Opção                 | Valores                           | Padrão                                                                                           |
+|-----------------------|-----------------------------------|--------------------------------------------------------------------------------------------------|
+| Tema                  | Sistema, Claro ou Escuro          | Sistema                                                                                          |
+| Idioma                | Português ou Inglês               | Português                                                                                        |
+| RPM máximo do veículo | 1.000–20.000 rpm                  | 7.000 rpm                                                                                        |
+| Início do alerta      | De 1.000 rpm ao máximo do veículo | Metade do máximo configurado, respeitando o mínimo de 1.000 rpm, quando ainda não há valor salvo |
 
-As preferências ficam em `SharedPreferences` privadas por `SettingsUtils`. Ao retornar às telas, `BaseActivity` reaplica tema e idioma ao contexto. O painel reaplica o limite de RPM e trata alterações de tema/idioma recebidas da tela de configurações.
+As preferências ficam no arquivo privado `app_preferences`, gerenciado por `SettingsUtils`. As leituras de RPM limitam os valores à faixa aceita; um alerta salvo não acompanha automaticamente a metade de um novo RPM máximo.
 
-## O que ainda não existe
+Tema e idioma são aplicados por `BaseActivity.attachBaseContext()` ao criar a Activity. Ao receber o resultado de Salvar, o painel reaplica os limites de RPM; se o tema mudou, chama a aplicação do tema, e, se apenas o idioma mudou, recria a Activity. A aplicação do tema depende da mudança efetiva do modo noturno do AndroidX.
 
-O código atual não implementa descoberta ou pareamento Bluetooth na própria aplicação, leitura ou limpeza de códigos de falha, freeze frame, nem gravação de histórico de medições. As consultas implementadas são as indicadas na tabela acima, com a particularidade de tensão descrita nesta página.
+Implementação: [SettingsActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/SettingsActivity.java), [SettingsUtils](../app/src/main/java/com/eduardo/obdmonitor/utils/SettingsUtils.java) e retorno das configurações em [DashboardActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/DashboardActivity.java).
+
+## Limites funcionais
+
+O aplicativo não implementa leitura ou limpeza de códigos de falha, freeze frame, gravação de histórico nem exportação de medições. Os estados de suporte e os valores preservados têm as limitações descritas nesta referência. A compatibilidade com um adaptador ou veículo específico exige validação real; consulte [verificação](verification.md), tópico **"Cobertura e limites"**.
