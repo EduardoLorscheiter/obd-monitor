@@ -93,7 +93,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    app:checkedButton="@id/btnAppearance"
+                    app:checkedButton="@id/btnGeneral"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -101,12 +101,12 @@
                     app:singleSelection="true">
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAppearance"
+                        android:id="@+id/btnGeneral"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/appearance"
+                        android:text="@string/general"
                         tools:ignore="TextContrastCheck" />
 
                     <com.google.android.material.button.MaterialButton
@@ -127,7 +127,7 @@
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardAppearance"
+                    android:id="@+id/cardGeneral"
                     style="@style/SettingsCard"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -139,35 +139,19 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/txtAppearanceTitle"
+                            android:id="@+id/txtGeneralTitle"
                             style="@style/SettingsSectionTitle"
-                            android:text="@string/appearance"
+                            android:text="@string/general"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <View
-                            android:id="@+id/appearanceSeparator"
+                            android:id="@+id/generalSeparator"
                             style="@style/SeparatorComponent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtAppearanceTitle" />
-
-                        <TextView
-                            android:id="@+id/txtTheme"
-                            style="@style/SettingsLabel"
-                            android:layout_marginTop="10dp"
-                            android:text="@string/theme"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/appearanceSeparator" />
-
-                        <Spinner
-                            android:id="@+id/spinnerTheme"
-                            style="@style/SettingsSpinner"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/txtTheme" />
+                            app:layout_constraintTop_toBottomOf="@id/txtGeneralTitle" />
 
                         <TextView
                             android:id="@+id/txtLanguage"
@@ -176,7 +160,7 @@
                             android:text="@string/language"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/spinnerTheme" />
+                            app:layout_constraintTop_toBottomOf="@id/generalSeparator" />
 
                         <Spinner
                             android:id="@+id/spinnerLanguage"
@@ -194,7 +178,7 @@
                     android:visibility="gone"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/cardAppearance">
+                    app:layout_constraintTop_toBottomOf="@id/cardGeneral">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"

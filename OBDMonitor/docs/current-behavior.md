@@ -128,18 +128,19 @@ Implementação: [DashboardActivity](../app/src/main/java/com/eduardo/obdmonitor
 
 ## Configurações
 
-A tela agrupa as opções em Aparência, Veículo e Alertas. Salvar valida todos os campos antes de persistir e fecha a tela. Valores inválidos mantêm a tela aberta, selecionam a seção correspondente e mostram erro no campo. Voltar descarta as alterações não salvas.
+A tela agrupa as opções em Geral, Veículo e Alertas. Salvar valida todos os campos antes de persistir e fecha a tela. Valores inválidos mantêm a tela aberta, selecionam a seção correspondente e mostram erro no campo. Voltar descarta as alterações não salvas.
+
+A lista de idiomas usa um fundo cinza opaco ao abrir, para manter as opções legíveis sobre o campo selecionado.
 
 | Opção                 | Valores                           | Padrão                                                                                           |
 |-----------------------|-----------------------------------|--------------------------------------------------------------------------------------------------|
-| Tema                  | Sistema, Claro ou Escuro          | Sistema                                                                                          |
 | Idioma                | Português ou Inglês               | Português                                                                                        |
 | RPM máximo do veículo | 1.000–20.000 rpm                  | 7.000 rpm                                                                                        |
 | Início do alerta      | De 1.000 rpm ao máximo do veículo | Metade do máximo configurado, respeitando o mínimo de 1.000 rpm, quando ainda não há valor salvo |
 
 As preferências ficam no arquivo privado `app_preferences`, gerenciado por `SettingsUtils`. As leituras de RPM limitam os valores à faixa aceita; um alerta salvo não acompanha automaticamente a metade de um novo RPM máximo.
 
-Tema e idioma são aplicados por `BaseActivity.attachBaseContext()` ao criar a Activity. Ao receber o resultado de Salvar, o painel reaplica os limites de RPM; se o tema mudou, chama a aplicação do tema, e, se apenas o idioma mudou, recria a Activity. A aplicação do tema depende da mudança efetiva do modo noturno do AndroidX.
+Os temas claro e escuro permanecem definidos nos recursos do aplicativo e acompanham a aparência do sistema. Não há seleção de tema nas configurações, e preferências antigas de tema não são consultadas. O idioma é aplicado por `BaseActivity.attachBaseContext()` ao criar a Activity. Ao receber o resultado de Salvar, o painel reaplica os limites de RPM e recria a Activity se o idioma mudou.
 
 Implementação: [SettingsActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/SettingsActivity.java), [SettingsUtils](../app/src/main/java/com/eduardo/obdmonitor/utils/SettingsUtils.java) e retorno das configurações em [DashboardActivity](../app/src/main/java/com/eduardo/obdmonitor/ui/DashboardActivity.java).
 

@@ -36,14 +36,13 @@ public class SettingsActivity extends BaseActivity {
      * Componentes da janela da Activity.
      */
     private ImageButton btnBack, btnSave;
-    private Spinner spinnerTheme;
     private Spinner spinnerLanguage;
     private TextInputLayout layoutMaxRpm;
     private TextInputEditText editMaxRpm;
     private TextInputLayout layoutBlinkStartRpm;
     private TextInputEditText editBlinkStartRpm;
     private MaterialButtonToggleGroup groupSettingsCategory;
-    private View cardAppearance;
+    private View cardGeneral;
     private View cardVehicle;
     private View cardAlerts;
 
@@ -72,11 +71,9 @@ public class SettingsActivity extends BaseActivity {
         btnBack = findViewById(R.id.btnBack);
         btnSave = findViewById(R.id.btnSave);
         groupSettingsCategory = findViewById(R.id.groupSettingsCategory);
-        cardAppearance = findViewById(R.id.cardAppearance);
+        cardGeneral = findViewById(R.id.cardGeneral);
         cardVehicle = findViewById(R.id.cardVehicle);
         cardAlerts = findViewById(R.id.cardAlerts);
-        spinnerTheme = findViewById(R.id.spinnerTheme);
-        ViewUtils.configureSpinner(this, spinnerTheme, R.array.theme_options);
         spinnerLanguage = findViewById(R.id.spinnerLanguage);
         ViewUtils.configureSpinner(this, spinnerLanguage, R.array.language_options);
         layoutMaxRpm = findViewById(R.id.layoutMaxRpm);
@@ -96,8 +93,6 @@ public class SettingsActivity extends BaseActivity {
                 R.string.rpm_blink_start_range,
                 SettingsUtils.MIN_BLINK_START_RPM
         ));
-        spinnerTheme.setSelection(Math.max(SettingsUtils.THEME_SYSTEM,
-                Math.min(SettingsUtils.getThemeMode(this), SettingsUtils.THEME_DARK)));
         spinnerLanguage.setSelection(Math.max(0, Math.min(SettingsUtils.getLanguageIndex(this), 1)));
     }
 
@@ -107,7 +102,7 @@ public class SettingsActivity extends BaseActivity {
     private void setListeners() {
         ViewUtils.setClickSoundListener(btnBack, v -> finish());
         ViewUtils.setClickSoundListener(btnSave, v -> saveSettings());
-        ViewUtils.setClickSoundListener(findViewById(R.id.btnAppearance), v -> {
+        ViewUtils.setClickSoundListener(findViewById(R.id.btnGeneral), v -> {
         });
         ViewUtils.setClickSoundListener(findViewById(R.id.btnVehicle), v -> {
         });
@@ -121,7 +116,7 @@ public class SettingsActivity extends BaseActivity {
                         R.string.rpm_blink_start_description));
         groupSettingsCategory.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
-            cardAppearance.setVisibility(checkedId == R.id.btnAppearance
+            cardGeneral.setVisibility(checkedId == R.id.btnGeneral
                     ? View.VISIBLE : View.GONE);
             cardVehicle.setVisibility(checkedId == R.id.btnVehicle
                     ? View.VISIBLE : View.GONE);
@@ -148,7 +143,6 @@ public class SettingsActivity extends BaseActivity {
             return;
         }
 
-        SettingsUtils.setThemeMode(this, spinnerTheme.getSelectedItemPosition());
         SettingsUtils.setLanguageIndex(this, spinnerLanguage.getSelectedItemPosition());
         SettingsUtils.setMaxRpm(this, maxRpm);
         SettingsUtils.setBlinkStartRpm(this, blinkStartRpm);

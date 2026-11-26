@@ -79,18 +79,9 @@
     <string name="settings">Configurações</string>
     <string name="connection">Conexão</string>
     <string name="back">Voltar</string>
-    <string name="appearance">Aparência</string>
+    <string name="general">Geral</string>
     <string name="vehicle">Veículo</string>
     <string name="alerts">Alertas</string>
-    <string name="theme">Tema</string>
-    <string name="theme_system">Sistema</string>
-    <string name="theme_light">Claro</string>
-    <string name="theme_dark">Escuro</string>
-    <string-array name="theme_options">
-        <item>@string/theme_system</item>
-        <item>@string/theme_light</item>
-        <item>@string/theme_dark</item>
-    </string-array>
     <string name="language">Idioma</string>
     <string name="language_portuguese">Português</string>
     <string name="language_english">Inglês</string>

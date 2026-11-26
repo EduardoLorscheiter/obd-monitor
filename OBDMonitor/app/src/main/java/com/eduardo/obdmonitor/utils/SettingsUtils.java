@@ -17,8 +17,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 
-import androidx.appcompat.app.AppCompatDelegate;
-
 import java.util.Locale;
 
 public class SettingsUtils {
@@ -26,10 +24,6 @@ public class SettingsUtils {
      * Nome do arquivo de preferências utilizado pelo aplicativo.
      */
     private static final String APP_PREFERENCES = "app_preferences";
-    /**
-     * Chave utilizada para armazenar o modo de aparência selecionado.
-     */
-    private static final String THEME_MODE = "theme_mode";
     /**
      * Chave utilizada para armazenar o índice do idioma selecionado.
      */
@@ -64,94 +58,6 @@ public class SettingsUtils {
      * Valor mínimo permitido para o RPM inicial da indicação visual de alerta.
      */
     public static final int MIN_BLINK_START_RPM = 1000;
-    /**
-     * Modo de aparência definido automaticamente pelo sistema operacional.
-     */
-    public static final int THEME_SYSTEM = 0;
-    /**
-     * Modo de aparência claro.
-     */
-    public static final int THEME_LIGHT = 1;
-    /**
-     * Modo de aparência escuro.
-     */
-    public static final int THEME_DARK = 2;
-
-    /**
-     * Aplica as configurações do aplicativo ao contexto informado.
-     *
-     * <p>Aplica o modo de aparência e o idioma atualmente configurados.</p>
-     *
-     * @param context Contexto utilizado para acessar e aplicar as configurações.
-     * @return Contexto atualizado com a configuração de idioma aplicada.
-     */
-    public static Context applyConfig(Context context) {
-        applyTheme(context);
-        return applyLocale(context);
-    }
-
-    /**
-     * Aplica o modo de aparência configurado no aplicativo.
-     *
-     * <p>Os modos suportados são:</p>
-     * <ul>
-     *     <li>{@link #THEME_SYSTEM}: acompanha a configuração do sistema;</li>
-     *     <li>{@link #THEME_LIGHT}: força o modo claro;</li>
-     *     <li>{@link #THEME_DARK}: força o modo escuro.</li>
-     * </ul>
-     *
-     * <p>A alteração somente é aplicada ao {@link AppCompatDelegate} quando o modo atualmente
-     * configurado for diferente do modo desejado.</p>
-     *
-     * @param context Contexto utilizado para acessar as preferências.
-     */
-    public static void applyTheme(Context context) {
-        int nightMode;
-
-        switch (getThemeMode(context)) {
-            case THEME_LIGHT:
-                nightMode = AppCompatDelegate.MODE_NIGHT_NO;
-                break;
-            case THEME_DARK:
-                nightMode = AppCompatDelegate.MODE_NIGHT_YES;
-                break;
-            default:
-                nightMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-                break;
-        }
-
-        if (AppCompatDelegate.getDefaultNightMode() != nightMode)
-            AppCompatDelegate.setDefaultNightMode(nightMode);
-    }
-
-    /**
-     * Armazena o modo de aparência selecionado.
-     *
-     * <p>A alteração é apenas persistida e não é aplicada imediatamente.</p>
-     *
-     * @param context   Contexto utilizado para acessar as preferências.
-     * @param themeMode Modo de aparência a ser armazenado.
-     */
-    public static void setThemeMode(Context context, int themeMode) {
-        SharedPreferences prefs = getPreferences(context);
-        int validMode = Math.max(THEME_SYSTEM, Math.min(themeMode, THEME_DARK));
-        prefs.edit().putInt(THEME_MODE, validMode).apply();
-    }
-
-    /**
-     * Retorna o modo de aparência configurado.
-     *
-     * <p>Caso nenhuma configuração esteja disponível, o modo do sistema é utilizado.</p>
-     *
-     * @param context Contexto utilizado para acessar as preferências.
-     * @return Modo de aparência configurado.
-     */
-    public static int getThemeMode(Context context) {
-        SharedPreferences prefs = getPreferences(context);
-        int themeMode = prefs.getInt(THEME_MODE, THEME_SYSTEM);
-        return Math.max(THEME_SYSTEM, Math.min(themeMode, THEME_DARK));
-    }
-
     /**
      * Aplica o idioma configurado ao contexto informado.
      *

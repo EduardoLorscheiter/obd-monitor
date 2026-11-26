@@ -57,16 +57,13 @@ public abstract class BaseActivity extends AppCompatActivity implements Bluetoot
     private boolean clickSoundLoaded;
 
     /**
-     * Aplica as configurações do aplicativo ao contexto base da Activity.
-     *
-     * <p>As configurações aplicadas incluem o modo de aparência e o idioma selecionado pelo
-     * usuário.</p>
+     * Aplica o idioma selecionado ao contexto base da Activity.
      *
      * @param newBase Contexto base fornecido pelo Android durante a criação da Activity.
      */
     @Override
     protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(SettingsUtils.applyConfig(newBase));
+        super.attachBaseContext(SettingsUtils.applyLocale(newBase));
     }
 
     /**

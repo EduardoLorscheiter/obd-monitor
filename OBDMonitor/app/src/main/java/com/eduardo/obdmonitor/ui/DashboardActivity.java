@@ -64,7 +64,6 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     private int blinkStartRpm;
     private int currentRpm;
     private int appliedLanguageIndex;
-    private int appliedThemeMode;
 
     /**
      * Animador responsável pelo efeito de piscar quando o motor atinge alta rotação.
@@ -96,7 +95,6 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
         initViews();
         applyMaxRpmSetting();
         appliedLanguageIndex = SettingsUtils.getLanguageIndex(this);
-        appliedThemeMode = SettingsUtils.getThemeMode(this);
         setupActivityResult();
         setListeners();
     }
@@ -188,13 +186,9 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        boolean themeChanged = appliedThemeMode != SettingsUtils.getThemeMode(this);
                         boolean languageChanged = appliedLanguageIndex != SettingsUtils.getLanguageIndex(this);
                         applyMaxRpmSetting();
-                        if (themeChanged)
-                            SettingsUtils.applyTheme(this);
-
-                        if (languageChanged && !themeChanged)
+                        if (languageChanged)
                             recreate();
                     }
                 }
@@ -366,7 +360,7 @@ public class DashboardActivity extends BaseActivity implements Elm327ConnectionL
     }
 
     /**
-     * Aplica medições na thread principal quando a ECU está conectada ou durante o tick simulado.
+     * Aplica medições na thread principal quando a ECU está conectada.
      *
      * @param update Atualização visual da medição recebida.
      */
